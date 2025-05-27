@@ -1,9 +1,10 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { createContext, useContext, useEffect, useState } from "react"
-import type { User, Session } from "@supabase/supabase-js"
-import { getSupabaseClient } from "./client-singleton"
+import type React from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import type { User, Session } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
+import { getSupabaseClient } from "./client-singleton";
 
 type AuthContextType = {
   user: User | null;
@@ -11,93 +12,84 @@ type AuthContextType = {
   profile: any | null;
   isLoading: boolean;
   signUp: (email: string, password: string, userData: any) => Promise<any>;
-  signIn: (emailOrDocument: string, password: string) => Promise<any>;
+  signIn: (email: string, password: string) => Promise<any>;
+  signInWithEmailOrDocument: (
+    emailOrDocument: string,
+    password: string,
+    inputType: string
+  ) => Promise<any>;
   signOut: () => Promise<void>;
 };
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const supabase = getSupabaseClient()
-  const [user, setUser] = useState<User | null>(null)
-  const [session, setSession] = useState<Session | null>(null)
-  const [profile, setProfile] = useState<any | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-
-  const fetchProfile = async (userId: string, retryCount = 0) => {
-    try {
-      // Adicionar delay para evitar rate limit
-      if (retryCount > 0) {
-        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount))
-      }
-
-      const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
-
-      if (error) {
-        console.error("Erro ao buscar perfil:", error)
-
-        // Se for rate limit, tentar novamente
-        if (error.message?.includes("Too Many") && retryCount < 3) {
-          console.log(`Rate limit detectado, tentando novamente em ${retryCount + 1}s...`)
-          return await fetchProfile(userId, retryCount + 1)
-        }
-
-        // Criar perfil básico se não encontrar
-        return {
-          id: userId,
-          profile_type: "supplier",
-          name: "Usuário",
-          email: user?.email || "",
-        }
-      }
-
-      return data
-    } catch (error) {
-      console.error("Erro inesperado ao buscar perfil:", error)
-
-      // Retornar perfil básico em caso de erro
-      return {
-        id: userId,
-        profile_type: "supplier",
-        name: "Usuário",
-        email: user?.email || "",
-      }
-    }
-  }
+  const supabase = getSupabaseClient();
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<any | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
+    const getInitialSession = async () => {
+      setIsLoading(true);
 
-      if (session?.user) {
-        const profileData = await fetchProfile(session.user.id)
-        setProfile(profileData)
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        console.log("Initial session:", session);
+
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        }
+      } catch (error) {
+        console.error("Error getting initial session:", error);
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      setIsLoading(false)
-    })
+    getInitialSession();
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
+      console.log("Auth state changed:", event, session);
 
-      if (event === "SIGNED_IN" && session?.user) {
-        const profileData = await fetchProfile(session.user.id)
-        setProfile(profileData)
-      } else if (event === "SIGNED_OUT") {
-        setProfile(null)
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      if (session?.user) {
+        await fetchProfile(session.user.id);
+      } else {
+        setProfile(null);
       }
 
-      setIsLoading(false)
-    })
+      setIsLoading(false);
+    });
 
-    return () => subscription.unsubscribe()
-  }, [supabase])
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
+
+      if (error) {
+        console.error("Error fetching profile:", error);
+      } else {
+        setProfile(data);
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
 
   const signUp = async (email: string, password: string, userData: any) => {
     try {
@@ -145,62 +137,104 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signIn = async (emailOrDocument: string, password: string) => {
-    let email = emailOrDocument
+  const signIn = async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    // Se não é email, buscar email pelo documento
-    if (!emailOrDocument.includes("@")) {
-      const cleanDocument = emailOrDocument.replace(/[^\d]/g, "")
-      const documentField = cleanDocument.length <= 11 ? "cpf" : "cnpj"
+      if (error) {
+        throw error;
+      }
 
-      try {
-        const { data: profileData, error } = await supabase
+      return data;
+    } catch (error) {
+      console.error("Error signing in:", error);
+      throw error;
+    }
+  };
+
+  const signInWithEmailOrDocument = async (
+    emailOrDocument: string,
+    password: string,
+    inputType: string
+  ) => {
+    try {
+      let email = emailOrDocument;
+
+      // Se não é email, buscar o email pelo documento
+      if (inputType !== "email") {
+        const documentField = inputType === "cpf" ? "cpf" : "cnpj";
+        const cleanDocument = emailOrDocument.replace(/[^\d]/g, "");
+
+        console.log(`Buscando email para ${documentField}:`, cleanDocument);
+
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("email")
           .eq(documentField, cleanDocument)
-          .single()
+          .single();
 
-        if (error || !profileData?.email) {
-          throw new Error("Documento não encontrado")
+        if (profileError) {
+          console.error("Erro ao buscar perfil:", profileError);
+          throw new Error("Documento não encontrado. Verifique se está cadastrado.");
         }
 
-        email = profileData.email
-      } catch (error) {
-        throw new Error("Documento não encontrado")
+        if (!profile || !profile.email) {
+          throw new Error("Email não encontrado para este documento.");
+        }
+
+        email = profile.email;
+        console.log("Email encontrado:", email);
       }
+
+      // Fazer login com o email encontrado
+      console.log("Tentando login com email:", email);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        console.error("Erro no login:", error);
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Error signing in with email or document:", error);
+      throw error;
     }
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) throw error
-    return data
-  }
+  };
 
   const signOut = async () => {
-    await supabase.auth.signOut()
-    setProfile(null)
-  }
+    try {
+      await supabase.auth.signOut();
+      router.push("/login");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
 
   const value = {
     user,
     session,
     profile,
     isLoading,
-    signIn,
-    signOut,
     signUp,
-  }
+    signIn,
+    signInWithEmailOrDocument,
+    signOut,
+  };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context
+  return context;
 }

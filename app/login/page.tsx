@@ -11,11 +11,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Eye, EyeOff } from "lucide-react"
 import { useAuth } from "@/lib/supabase/auth-context"
 import { useToast } from "@/hooks/use-toast"
+import { getSupabaseClient } from "@/lib/supabase/client-singleton"
+import { detectDocumentType } from "@/lib/utils/document-utils"
+import { signInWithEmailOrDocument } from "@/lib/supabase/auth-utils"
 
 export default function LoginPage() {
   const router = useRouter()
   const { signIn, session, profile, isLoading } = useAuth()
   const { toast } = useToast()
+  const supabase = getSupabaseClient();
+const [inputError, setInputError] = useState("")
 
   const [emailOrDocument, setEmailOrDocument] = useState("")
   const [password, setPassword] = useState("")
@@ -45,26 +50,59 @@ export default function LoginPage() {
   }, [session, profile, isLoading])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const inputType = detectDocumentType(emailOrDocument);
+    if (inputType === "invalid") {
+      setInputError("Formato inválido. Use email, CPF ou CNPJ válido.");
+      return;
+    }
+    setInputError("");
 
     try {
-      await signIn(emailOrDocument, password)
-      toast({
-        title: "Login realizado com sucesso",
-        description: "Redirecionando...",
-      })
-      // O redirecionamento será feito pelo useEffect quando o profile for carregado
+      let result;
+      if (inputType === "email") {
+        // Login direto com email
+        result = await signIn(emailOrDocument, password);
+      } else {
+        // Login com documento (busca email primeiro)
+        result = await signInWithEmailOrDocument(emailOrDocument, password, inputType);
+      }
+
+      const { session, user } = result;
+
+      if (session && user) {
+        toast({
+          title: "Login realizado com sucesso",
+          description: "Você será redirecionado para o painel",
+        });
+
+        // Fetch user profile to determine dashboard
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("profile_type")
+          .eq("id", user.id)
+          .single();
+
+        // Redirect to appropriate dashboard based on user role
+        if (profile && profile.profile_type) {
+          redirectToDashboard(profile.profile_type);
+        } else {
+          redirectToDashboard("citizen"); // Default dashboard
+        }
+      }
     } catch (error: any) {
+      console.error("Erro no login:", error);
       toast({
         title: "Erro ao fazer login",
-        description: error.message || "Verifique suas credenciais",
+        description: error.message || "Verifique suas credenciais e tente novamente",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   // Mostrar loading se estiver carregando
   if (isLoading) {
