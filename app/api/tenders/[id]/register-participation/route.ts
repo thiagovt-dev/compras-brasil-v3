@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
-import { getSession } from "@/lib/auth/auth"
 import { sendNotification } from "@/lib/utils/notifications"
+import { getSession } from "@/lib/supabase/auth-utils"
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { createServerClient } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -11,7 +12,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerClient();
 
     // Verificar se o usuário é um fornecedor
     const { data: profile } = await supabase.from("profiles").select("role").eq("id", session.user.id).single()

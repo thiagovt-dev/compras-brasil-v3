@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { BarChart, FileText, TrendingUp } from "lucide-react"
-import { FinancialReportsList } from "@/components/financial-reports-list"
-import { FinancialReportsSummary } from "@/components/financial-reports-summary"
-import { FinancialReportsChart } from "@/components/financial-reports-chart"
+// import { FinancialReportsList } from "@/components/financial-reports-list"
+// import { FinancialReportsSummary } from "@/components/financial-reports-summary"
+// import { FinancialReportsChart } from "@/components/financial-reports-chart"
 
 export default async function FinancialReportsPage() {
   const supabase = createServerComponentClient({ cookies })
@@ -112,7 +112,7 @@ export default async function FinancialReportsPage() {
           <TabsTrigger value="summary">Resumo</TabsTrigger>
           <TabsTrigger value="charts">Gráficos</TabsTrigger>
         </TabsList>
-        <TabsContent value="list" className="space-y-4">
+        {/* <TabsContent value="list" className="space-y-4">
           <div className="flex justify-end">
             <Button>
               <FileText className="mr-2 h-4 w-4" />
@@ -126,7 +126,7 @@ export default async function FinancialReportsPage() {
         </TabsContent>
         <TabsContent value="charts" className="space-y-4">
           <FinancialReportsChart reports={reports || []} />
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
     </div>
   )

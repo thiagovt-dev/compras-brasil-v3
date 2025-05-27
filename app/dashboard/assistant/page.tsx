@@ -184,7 +184,7 @@ export default function AssistantPage() {
               </Avatar>
               <div>
                 <CardTitle className="text-lg">Assistente Virtual</CardTitle>
-                <CardDescription>Powered by Grok AI</CardDescription>
+                {/* <CardDescription>Powered by Grok AI</CardDescription> */}
               </div>
             </div>
             <Button variant="outline" size="sm" onClick={clearChat}>

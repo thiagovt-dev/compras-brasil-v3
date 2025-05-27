@@ -1,7 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell
+} from "recharts"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -69,7 +72,7 @@ const tenderValueData = [
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState('year')
-  
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -78,7 +81,7 @@ export default function AnalyticsPage() {
       maximumFractionDigits: 0,
     }).format(value)
   }
-  
+
   return (
     <div className="container mx-auto py-10">
       <div className="space-y-6">
@@ -101,9 +104,9 @@ export default function AnalyticsPage() {
             </SelectContent>
           </Select>
         </div>
-        
+
         <Separator />
-        
+
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="pb-2">
@@ -162,7 +165,7 @@ export default function AnalyticsPage() {
             </CardContent>
           </Card>
         </div>
-        
+
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList>
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
@@ -170,7 +173,8 @@ export default function AnalyticsPage() {
             <TabsTrigger value="tenders">Licitações</TabsTrigger>
             <TabsTrigger value="financial">Financeiro</TabsTrigger>
           </TabsList>
-          
+
+          {/* Visão Geral */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
@@ -194,7 +198,7 @@ export default function AnalyticsPage() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle>Status das Licitações</CardTitle>
@@ -220,9 +224,126 @@ export default function AnalyticsPage() {
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value) => [`${value} licitações`, 'Let\'s create a loading state for the analytics dashboard:']} />
+                        <Tooltip formatter={(value) => [`${value} licitações`, 'Quantidade']} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
                 </CardContent>
-              </Card>\
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Usuários */}
+          <TabsContent value="users" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Novos Usuários por Mês</CardTitle>
+                <CardDescription>
+                  Crescimento de usuários por tipo
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={userRegistrationData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="citizen" stackId="a" fill="#0ea5e9" name="Cidadão" />
+                      <Bar dataKey="supplier" stackId="a" fill="#22c55e" name="Fornecedor" />
+                      <Bar dataKey="agency" stackId="a" fill="#f59e0b" name="Órgão" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Licitações */}
+          <TabsContent value="tenders" className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Licitações por Categoria</CardTitle>
+                  <CardDescription>
+                    Distribuição das licitações por categoria
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={tenderCategoryData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {tenderCategoryData.map((entry, index) => (
+                            <Cell key={`cell-cat-${index}`} fill={["#0ea5e9", "#22c55e", "#f59e0b"][index % 3]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => [`${value} licitações`, "Quantidade"]} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Valor das Licitações por Mês</CardTitle>
+                  <CardDescription>
+                    Evolução do valor total das licitações
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={tenderValueData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis tickFormatter={formatCurrency} />
+                        <Tooltip formatter={(value) => [formatCurrency(Number(value)), "Valor"]} />
+                        <Bar dataKey="value" fill="#0ea5e9" name="Valor" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Financeiro */}
+          <TabsContent value="financial" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Valor Total das Licitações</CardTitle>
+                <CardDescription>
+                  Soma dos valores das licitações por mês
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={tenderValueData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis tickFormatter={formatCurrency} />
+                      <Tooltip formatter={(value) => [formatCurrency(Number(value)), "Valor"]} />
+                      <Bar dataKey="value" fill="#22c55e" name="Valor" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  )
+}

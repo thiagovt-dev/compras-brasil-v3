@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
-import { getSession } from "@/lib/auth/auth"
+import { getSession } from "@/lib/supabase/auth-utils"
+import { createServerClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -10,7 +10,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerClient();
 
     // Verificar se o usuário é pregoeiro ou membro da equipe
     const { data: teamMember } = await supabase

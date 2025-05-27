@@ -1,38 +1,38 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useEffect, useState, useRef } from "react"
-import { useParams } from "next/navigation"
-import { createClientSupabaseClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { useToast } from "@/hooks/use-toast"
-import { useAuth } from "@/lib/auth/auth-provider"
+import { useEffect, useState, useRef } from "react";
+import { useParams } from "next/navigation";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/supabase/auth-context";
 
 type Message = {
-  id: string
-  user_id: string
-  content: string
-  created_at: string
-  type: "chat" | "system"
+  id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  type: "chat" | "system";
   user?: {
-    name?: string
-    email?: string
-  }
-}
+    name?: string;
+    email?: string;
+  };
+};
 
 export function SessionChat() {
-  const { id } = useParams<{ id: string }>()
-  const [messages, setMessages] = useState<Message[]>([])
-  const [newMessage, setNewMessage] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const supabase = createClientSupabaseClient()
-  const { toast } = useToast()
-  const { user } = useAuth()
+  const { id } = useParams<{ id: string }>();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const supabase = createClientSupabaseClient();
+  const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     // Carregar mensagens iniciais
@@ -40,7 +40,8 @@ export function SessionChat() {
       try {
         const { data, error } = await supabase
           .from("session_messages")
-          .select(`
+          .select(
+            `
             id, 
             user_id, 
             content, 
@@ -49,12 +50,13 @@ export function SessionChat() {
             auth.users!user_id (
               email
             )
-          `)
+          `
+          )
           .eq("tender_id", id)
           .order("created_at", { ascending: true })
-          .limit(100)
+          .limit(100);
 
-        if (error) throw error
+        if (error) throw error;
 
         if (data) {
           const formattedMessages = data.map((msg) => ({
@@ -62,21 +64,21 @@ export function SessionChat() {
             user: {
               email: msg.auth?.users?.email || "Usuário",
             },
-          }))
-          setMessages(formattedMessages)
-          scrollToBottom()
+          }));
+          setMessages(formattedMessages);
+          scrollToBottom();
         }
       } catch (error) {
-        console.error("Erro ao carregar mensagens:", error)
+        console.error("Erro ao carregar mensagens:", error);
         toast({
           title: "Erro",
           description: "Não foi possível carregar as mensagens da sessão.",
           variant: "destructive",
-        })
+        });
       }
-    }
+    };
 
-    fetchMessages()
+    fetchMessages();
 
     // Inscrever-se para atualizações em tempo real
     const subscription = supabase
@@ -90,14 +92,14 @@ export function SessionChat() {
           filter: `tender_id=eq.${id}`,
         },
         async (payload) => {
-          const newMessage = payload.new as Message
+          const newMessage = payload.new as Message;
 
           // Buscar informações do usuário
           const { data: userData } = await supabase
             .from("auth.users")
             .select("email")
             .eq("id", newMessage.user_id)
-            .single()
+            .single();
 
           setMessages((prev) => [
             ...prev,
@@ -107,29 +109,29 @@ export function SessionChat() {
                 email: userData?.email || "Usuário",
               },
             },
-          ])
-          scrollToBottom()
-        },
+          ]);
+          scrollToBottom();
+        }
       )
-      .subscribe()
+      .subscribe();
 
     return () => {
-      subscription.unsubscribe()
-    }
-  }, [id, supabase, toast])
+      subscription.unsubscribe();
+    };
+  }, [id, supabase, toast]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-    }, 100)
-  }
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  };
 
   const sendMessage = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    if (!newMessage.trim() || !user) return
+    if (!newMessage.trim() || !user) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
       const { error } = await supabase.from("session_messages").insert({
@@ -137,34 +139,34 @@ export function SessionChat() {
         user_id: user.id,
         content: newMessage,
         type: "chat",
-      })
+      });
 
-      if (error) throw error
+      if (error) throw error;
 
-      setNewMessage("")
+      setNewMessage("");
     } catch (error) {
-      console.error("Erro ao enviar mensagem:", error)
+      console.error("Erro ao enviar mensagem:", error);
       toast({
         title: "Erro",
         description: "Não foi possível enviar a mensagem.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = new Date(dateString);
     return date.toLocaleTimeString("pt-BR", {
       hour: "2-digit",
       minute: "2-digit",
-    })
-  }
+    });
+  };
 
   const getInitials = (email: string) => {
-    return email.substring(0, 2).toUpperCase()
-  }
+    return email.substring(0, 2).toUpperCase();
+  };
 
   return (
     <Card className="flex flex-col h-full">
@@ -180,8 +182,9 @@ export function SessionChat() {
           messages.map((message) => (
             <div
               key={message.id}
-              className={`flex gap-3 ${message.type === "system" ? "bg-muted/50 p-3 rounded-md" : ""}`}
-            >
+              className={`flex gap-3 ${
+                message.type === "system" ? "bg-muted/50 p-3 rounded-md" : ""
+              }`}>
               <Avatar className="h-8 w-8">
                 <AvatarFallback>{getInitials(message.user?.email || "US")}</AvatarFallback>
               </Avatar>
@@ -190,7 +193,9 @@ export function SessionChat() {
                   <span className="font-medium text-sm">
                     {message.type === "system" ? "Sistema" : message.user?.email || "Usuário"}
                   </span>
-                  <span className="text-xs text-muted-foreground">{formatDate(message.created_at)}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {formatDate(message.created_at)}
+                  </span>
                 </div>
                 <p className="text-sm">{message.content}</p>
               </div>
@@ -214,5 +219,5 @@ export function SessionChat() {
         </form>
       </CardFooter>
     </Card>
-  )
+  );
 }

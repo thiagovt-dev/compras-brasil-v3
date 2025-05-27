@@ -1,6 +1,4 @@
 import { redirect } from "next/navigation"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
-import { getSession } from "@/lib/auth/auth"
 import { TenderHeader } from "@/components/tender-header"
 import { SystemMessageForm } from "@/components/system-message-form"
 import { TenderSessionControls } from "@/components/tender-session-controls"
@@ -9,6 +7,8 @@ import { SessionChat } from "@/components/session-chat"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { getSession } from "@/lib/supabase/auth-utils"
+import { createServerClient } from "@/lib/supabase/server"
 
 export default async function TenderSessionManagePage({ params }: { params: { id: string } }) {
   const session = await getSession()
@@ -17,7 +17,7 @@ export default async function TenderSessionManagePage({ params }: { params: { id
     redirect("/login?callbackUrl=" + encodeURIComponent(`/tenders/${params.id}/session/manage`))
   }
 
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerClient();
 
   // Verificar se o usuário é pregoeiro ou membro da equipe
   const { data: teamMember } = await supabase
@@ -51,7 +51,7 @@ export default async function TenderSessionManagePage({ params }: { params: { id
       <TenderHeader
         title={tender?.title || "Sessão Pública"}
         number={tender?.number || ""}
-        agency={tender?.agencies?.name || ""}
+        agency={tender?.agencies && tender.agencies.length > 0 ? tender.agencies[0].name : ""}
         id={params.id}
       />
 
