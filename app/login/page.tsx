@@ -1,0 +1,153 @@
+"use client"
+
+import type React from "react"
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Eye, EyeOff } from "lucide-react"
+import { useAuth } from "@/lib/supabase/auth-context"
+import { useToast } from "@/hooks/use-toast"
+
+export default function LoginPage() {
+  const router = useRouter()
+  const { signIn, session, profile, isLoading } = useAuth()
+  const { toast } = useToast()
+
+  const [emailOrDocument, setEmailOrDocument] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Função para redirecionar baseado no perfil
+  const redirectToDashboard = (profileType: string) => {
+    const dashboardRoutes = {
+      citizen: "/dashboard/citizen",
+      supplier: "/dashboard/supplier",
+      agency: "/dashboard/agency",
+      admin: "/dashboard/admin",
+      support: "/dashboard/support",
+      registration: "/dashboard/registration",
+    }
+
+    const route = dashboardRoutes[profileType as keyof typeof dashboardRoutes] || "/dashboard/citizen"
+    router.replace(route)
+  }
+
+  // Redirecionar se já estiver logado
+  useEffect(() => {
+    if (!isLoading && session && profile) {
+      redirectToDashboard(profile.profile_type)
+    }
+  }, [session, profile, isLoading])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+
+    try {
+      await signIn(emailOrDocument, password)
+      toast({
+        title: "Login realizado com sucesso",
+        description: "Redirecionando...",
+      })
+      // O redirecionamento será feito pelo useEffect quando o profile for carregado
+    } catch (error: any) {
+      toast({
+        title: "Erro ao fazer login",
+        description: error.message || "Verifique suas credenciais",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Mostrar loading se estiver carregando
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  // Se já estiver logado, mostrar loading de redirecionamento
+  if (session && profile) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2">Redirecionando para seu dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center px-4">
+      <div className="w-full max-w-md">
+      <div className="mb-6 flex justify-center">
+          <Link href="/" className="flex items-center gap-2">
+            <img src="/logo-canal-compras.png" alt="Canal de Compras Brasil" className="h-12" />
+          </Link>
+        </div>
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold">Entrar</CardTitle>
+            <CardDescription>Acesse sua conta com email ou documento</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="emailOrDocument">E-mail ou Documento</Label>
+                <Input
+                  id="emailOrDocument"
+                  placeholder="seu@email.com ou CPF/CNPJ"
+                  value={emailOrDocument}
+                  onChange={(e) => setEmailOrDocument(e.target.value)}
+                  required
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Senha</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Digite sua senha"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isSubmitting}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2"
+                    onClick={() => setShowPassword(!showPassword)}
+                    disabled={isSubmitting}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Entrando..." : "Entrar"}
+              </Button>
+            </form>
+            <div className="mt-4 text-center text-sm">
+              Não tem uma conta?{" "}
+              <Link href="/register" className="text-blue-600 hover:underline">
+                Cadastre-se
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
