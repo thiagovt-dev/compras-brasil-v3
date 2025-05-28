@@ -1,12 +1,19 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useState } from "react";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -14,85 +21,87 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { toast } from "@/components/ui/use-toast"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
-import { Check, Eye, Loader2, X } from "lucide-react"
+} from "@/components/ui/dialog";
+import { toast } from "@/components/ui/use-toast";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Check, Eye, Loader2, X } from "lucide-react";
 
 interface TenderProposalsProps {
-  tenderId: string
-  lots: any[]
-  isAgencyUser: boolean
+  tenderId: string;
+  lots: any[];
+  isAgencyUser: boolean;
 }
 
 export function TenderProposals({ tenderId, lots, isAgencyUser }: TenderProposalsProps) {
-  const supabase = createClientComponentClient()
-  const [activeTab, setActiveTab] = useState(lots[0]?.id || "")
-  const [proposals, setProposals] = useState<Record<string, any[]>>({})
-  const [isLoading, setIsLoading] = useState<Record<string, boolean>>({})
-  const [selectedProposal, setSelectedProposal] = useState<any>(null)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const supabase = createClientSupabaseClient();
+  const [activeTab, setActiveTab] = useState(lots[0]?.id || "");
+  const [proposals, setProposals] = useState<Record<string, any[]>>({});
+  const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
+  const [selectedProposal, setSelectedProposal] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loadProposals = async (lotId: string) => {
-    if (proposals[lotId] || isLoading[lotId]) return
+    if (proposals[lotId] || isLoading[lotId]) return;
 
     try {
-      setIsLoading((prev) => ({ ...prev, [lotId]: true }))
+      setIsLoading((prev) => ({ ...prev, [lotId]: true }));
 
       const { data, error } = await supabase
         .from("proposals")
-        .select(`
+        .select(
+          `
           *,
           supplier:profiles(id, name, cnpj),
           items:proposal_items(
             *,
             tender_item:tender_items(*)
           )
-        `)
+        `
+        )
         .eq("tender_id", tenderId)
         .eq("lot_id", lotId)
-        .order("total_value", { ascending: true })
+        .order("total_value", { ascending: true });
 
-      if (error) throw error
+      if (error) throw error;
 
-      setProposals((prev) => ({ ...prev, [lotId]: data || [] }))
+      setProposals((prev) => ({ ...prev, [lotId]: data || [] }));
     } catch (error) {
-      console.error("Error loading proposals:", error)
+      console.error("Error loading proposals:", error);
       toast({
         title: "Erro ao carregar propostas",
         description: "Não foi possível carregar as propostas para este lote.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading((prev) => ({ ...prev, [lotId]: false }))
+      setIsLoading((prev) => ({ ...prev, [lotId]: false }));
     }
-  }
+  };
 
   const handleTabChange = (value: string) => {
-    setActiveTab(value)
-    loadProposals(value)
-  }
+    setActiveTab(value);
+    loadProposals(value);
+  };
 
   const handleViewProposal = (proposal: any) => {
-    setSelectedProposal(proposal)
-    setIsDialogOpen(true)
-  }
+    setSelectedProposal(proposal);
+    setIsDialogOpen(true);
+  };
 
   const handleAcceptProposal = async () => {
-    if (!selectedProposal) return
+    if (!selectedProposal) return;
 
     try {
-      setIsSubmitting(true)
+      setIsSubmitting(true);
 
       // Update proposal status
       const { error: updateError } = await supabase
         .from("proposals")
         .update({ status: "accepted" })
-        .eq("id", selectedProposal.id)
+        .eq("id", selectedProposal.id);
 
-      if (updateError) throw updateError
+      if (updateError) throw updateError;
 
       // Update other proposals for the same lot to rejected
       const { error: rejectError } = await supabase
@@ -100,60 +109,63 @@ export function TenderProposals({ tenderId, lots, isAgencyUser }: TenderProposal
         .update({ status: "rejected" })
         .eq("tender_id", tenderId)
         .eq("lot_id", selectedProposal.lot_id)
-        .neq("id", selectedProposal.id)
+        .neq("id", selectedProposal.id);
 
-      if (rejectError) throw rejectError
+      if (rejectError) throw rejectError;
 
       toast({
         title: "Proposta aceita",
         description: "A proposta foi aceita com sucesso.",
-      })
+      });
 
       // Refresh proposals
-      loadProposals(selectedProposal.lot_id)
-      setIsDialogOpen(false)
+      loadProposals(selectedProposal.lot_id);
+      setIsDialogOpen(false);
     } catch (error: any) {
-      console.error("Error accepting proposal:", error)
+      console.error("Error accepting proposal:", error);
       toast({
         title: "Erro ao aceitar proposta",
         description: error.message || "Ocorreu um erro ao aceitar a proposta.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleRejectProposal = async () => {
-    if (!selectedProposal) return
+    if (!selectedProposal) return;
 
     try {
-      setIsSubmitting(true)
+      setIsSubmitting(true);
 
       // Update proposal status
-      const { error } = await supabase.from("proposals").update({ status: "rejected" }).eq("id", selectedProposal.id)
+      const { error } = await supabase
+        .from("proposals")
+        .update({ status: "rejected" })
+        .eq("id", selectedProposal.id);
 
-      if (error) throw error
+      if (error) throw error;
 
       toast({
         title: "Proposta rejeitada",
         description: "A proposta foi rejeitada com sucesso.",
-      })
+      });
 
       // Refresh proposals
-      loadProposals(selectedProposal.lot_id)
-      setIsDialogOpen(false)
+      loadProposals(selectedProposal.lot_id);
+      setIsDialogOpen(false);
     } catch (error: any) {
-      console.error("Error rejecting proposal:", error)
+      console.error("Error rejecting proposal:", error);
       toast({
         title: "Erro ao rejeitar proposta",
         description: error.message || "Ocorreu um erro ao rejeitar a proposta.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<
@@ -184,32 +196,32 @@ export function TenderProposals({ tenderId, lots, isAgencyUser }: TenderProposal
         label: "Vencedora",
         variant: "success",
       },
-    }
+    };
 
-    const config = statusConfig[status] || { label: status, variant: "outline" }
+    const config = statusConfig[status] || { label: status, variant: "outline" };
 
-    return <Badge variant={config.variant as any}>{config.label}</Badge>
-  }
+    return <Badge variant={config.variant as any}>{config.label}</Badge>;
+  };
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return "Data não definida"
+    if (!dateString) return "Data não definida";
     try {
-      return format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: ptBR })
+      return format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: ptBR });
     } catch (error) {
-      return "Data inválida"
+      return "Data inválida";
     }
-  }
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
-    }).format(value)
-  }
+    }).format(value);
+  };
 
   // Load proposals for the initial tab
   if (activeTab && !proposals[activeTab] && !isLoading[activeTab]) {
-    loadProposals(activeTab)
+    loadProposals(activeTab);
   }
 
   return (
@@ -250,12 +262,17 @@ export function TenderProposals({ tenderId, lots, isAgencyUser }: TenderProposal
                     <TableBody>
                       {proposals[lot.id].map((proposal) => (
                         <TableRow key={proposal.id}>
-                          <TableCell>{isAgencyUser ? proposal.supplier?.name : "Fornecedor Confidencial"}</TableCell>
+                          <TableCell>
+                            {isAgencyUser ? proposal.supplier?.name : "Fornecedor Confidencial"}
+                          </TableCell>
                           <TableCell>{formatCurrency(proposal.total_value || 0)}</TableCell>
                           <TableCell>{formatDate(proposal.created_at || "")}</TableCell>
                           <TableCell>{getStatusBadge(proposal.status)}</TableCell>
                           <TableCell className="text-right">
-                            <Button variant="outline" size="sm" onClick={() => handleViewProposal(proposal)}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewProposal(proposal)}>
                               <Eye className="h-4 w-4 mr-1" />
                               Detalhes
                             </Button>
@@ -265,7 +282,9 @@ export function TenderProposals({ tenderId, lots, isAgencyUser }: TenderProposal
                     </TableBody>
                   </Table>
                 ) : (
-                  <div className="text-center p-8 text-muted-foreground">Nenhuma proposta recebida para este lote.</div>
+                  <div className="text-center p-8 text-muted-foreground">
+                    Nenhuma proposta recebida para este lote.
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -279,7 +298,11 @@ export function TenderProposals({ tenderId, lots, isAgencyUser }: TenderProposal
             <DialogHeader>
               <DialogTitle>Detalhes da Proposta</DialogTitle>
               <DialogDescription>
-                {isAgencyUser ? <>Proposta enviada por {selectedProposal.supplier?.name}</> : <>Detalhes da proposta</>}
+                {isAgencyUser ? (
+                  <>Proposta enviada por {selectedProposal.supplier?.name}</>
+                ) : (
+                  <>Detalhes da proposta</>
+                )}
               </DialogDescription>
             </DialogHeader>
 
@@ -287,7 +310,9 @@ export function TenderProposals({ tenderId, lots, isAgencyUser }: TenderProposal
               <div className="flex justify-between items-center">
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Valor Total</h3>
-                  <p className="text-lg font-semibold">{formatCurrency(selectedProposal.total_value || 0)}</p>
+                  <p className="text-lg font-semibold">
+                    {formatCurrency(selectedProposal.total_value || 0)}
+                  </p>
                 </div>
                 <div>{getStatusBadge(selectedProposal.status)}</div>
               </div>
@@ -299,7 +324,9 @@ export function TenderProposals({ tenderId, lots, isAgencyUser }: TenderProposal
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Última Atualização</h3>
-                  <p>{formatDate(selectedProposal.updated_at || selectedProposal.created_at || "")}</p>
+                  <p>
+                    {formatDate(selectedProposal.updated_at || selectedProposal.created_at || "")}
+                  </p>
                 </div>
               </div>
 
@@ -328,13 +355,21 @@ export function TenderProposals({ tenderId, lots, isAgencyUser }: TenderProposal
 
                           <div className="space-y-2">
                             <div>
-                              <h5 className="text-sm font-medium text-muted-foreground">Preço Unitário</h5>
-                              <p className="font-semibold">{formatCurrency(item.unit_price || 0)}</p>
+                              <h5 className="text-sm font-medium text-muted-foreground">
+                                Preço Unitário
+                              </h5>
+                              <p className="font-semibold">
+                                {formatCurrency(item.unit_price || 0)}
+                              </p>
                             </div>
 
                             <div>
-                              <h5 className="text-sm font-medium text-muted-foreground">Valor Total</h5>
-                              <p className="font-semibold">{formatCurrency(item.total_price || 0)}</p>
+                              <h5 className="text-sm font-medium text-muted-foreground">
+                                Valor Total
+                              </h5>
+                              <p className="font-semibold">
+                                {formatCurrency(item.total_price || 0)}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -350,14 +385,18 @@ export function TenderProposals({ tenderId, lots, isAgencyUser }: TenderProposal
 
                             {item.model && (
                               <div>
-                                <h5 className="text-sm font-medium text-muted-foreground">Modelo</h5>
+                                <h5 className="text-sm font-medium text-muted-foreground">
+                                  Modelo
+                                </h5>
                                 <p>{item.model}</p>
                               </div>
                             )}
 
                             {item.description && (
                               <div className="md:col-span-2">
-                                <h5 className="text-sm font-medium text-muted-foreground">Descrição Detalhada</h5>
+                                <h5 className="text-sm font-medium text-muted-foreground">
+                                  Descrição Detalhada
+                                </h5>
                                 <p className="whitespace-pre-line">{item.description}</p>
                               </div>
                             )}
@@ -376,9 +415,12 @@ export function TenderProposals({ tenderId, lots, isAgencyUser }: TenderProposal
                     variant="outline"
                     onClick={handleRejectProposal}
                     disabled={isSubmitting}
-                    className="border-red-600 text-red-600 hover:bg-red-50"
-                  >
-                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <X className="mr-2 h-4 w-4" />}
+                    className="border-red-600 text-red-600 hover:bg-red-50">
+                    {isSubmitting ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <X className="mr-2 h-4 w-4" />
+                    )}
                     Rejeitar
                   </Button>
                   <Button onClick={handleAcceptProposal} disabled={isSubmitting}>
@@ -396,5 +438,5 @@ export function TenderProposals({ tenderId, lots, isAgencyUser }: TenderProposal
         </Dialog>
       )}
     </div>
-  )
+  );
 }

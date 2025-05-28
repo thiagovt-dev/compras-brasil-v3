@@ -784,7 +784,7 @@ export default function NotificationsPage() {
                                 </Badge>
                               )}
                               <Badge
-                                variant="warning"
+                                variant="outline"
                                 className="ml-2 bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80"
                               >
                                 Média

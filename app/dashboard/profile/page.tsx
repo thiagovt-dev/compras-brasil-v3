@@ -1,18 +1,25 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { Save, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useToast } from "@/components/ui/use-toast"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Save, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 // Esquema de validação para o formulário de perfil
 const profileFormSchema = z.object({
@@ -20,26 +27,26 @@ const profileFormSchema = z.object({
   email: z.string().email({ message: "Email inválido" }),
   phone: z.string().optional(),
   address: z.string().optional(),
-})
+});
 
 // Esquema de validação para o formulário de empresa
 const companyFormSchema = z.object({
   company_name: z.string().min(2, { message: "Nome da empresa deve ter pelo menos 2 caracteres" }),
   cnpj: z.string().min(14, { message: "CNPJ deve ter pelo menos 14 caracteres" }),
-})
+});
 
 // Esquema de validação para o formulário de pessoa física
 const personFormSchema = z.object({
   cpf: z.string().min(11, { message: "CPF deve ter pelo menos 11 caracteres" }),
-})
+});
 
 export default function ProfilePage() {
-  const [loading, setLoading] = useState(false)
-  const [profile, setProfile] = useState<any>(null)
-  const [activeTab, setActiveTab] = useState("personal")
-  const router = useRouter()
-  const { toast } = useToast()
-  const supabase = createClientComponentClient()
+  const [loading, setLoading] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState("personal");
+  const router = useRouter();
+  const { toast } = useToast();
+  const supabase = createClientSupabaseClient();
 
   // Formulário de perfil pessoal
   const profileForm = useForm<z.infer<typeof profileFormSchema>>({
@@ -50,7 +57,7 @@ export default function ProfilePage() {
       phone: "",
       address: "",
     },
-  })
+  });
 
   // Formulário de empresa
   const companyForm = useForm<z.infer<typeof companyFormSchema>>({
@@ -59,7 +66,7 @@ export default function ProfilePage() {
       company_name: "",
       cnpj: "",
     },
-  })
+  });
 
   // Formulário de pessoa física
   const personForm = useForm<z.infer<typeof personFormSchema>>({
@@ -67,28 +74,32 @@ export default function ProfilePage() {
     defaultValues: {
       cpf: "",
     },
-  })
+  });
 
   // Carregar dados do perfil
   useEffect(() => {
     const fetchProfile = async () => {
       const {
         data: { user },
-      } = await supabase.auth.getUser()
+      } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push("/login")
-        return
+        router.push("/login");
+        return;
       }
 
-      const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
 
       if (error) {
-        console.error("Erro ao buscar perfil:", error)
-        return
+        console.error("Erro ao buscar perfil:", error);
+        return;
       }
 
-      setProfile(data)
+      setProfile(data);
 
       // Preencher formulário de perfil
       profileForm.reset({
@@ -96,30 +107,30 @@ export default function ProfilePage() {
         email: data.email || "",
         phone: data.phone || "",
         address: data.address || "",
-      })
+      });
 
       // Preencher formulário de empresa
       if (data.profile_type === "supplier" || data.profile_type === "agency") {
         companyForm.reset({
           company_name: data.company_name || "",
           cnpj: data.cnpj || "",
-        })
+        });
       }
 
       // Preencher formulário de pessoa física
       if (data.profile_type === "citizen") {
         personForm.reset({
           cpf: data.cpf || "",
-        })
+        });
       }
-    }
+    };
 
-    fetchProfile()
-  }, [supabase, router])
+    fetchProfile();
+  }, [supabase, router]);
 
   // Atualizar perfil pessoal
   const onProfileSubmit = async (values: z.infer<typeof profileFormSchema>) => {
-    setLoading(true)
+    setLoading(true);
 
     try {
       const { error } = await supabase
@@ -131,29 +142,29 @@ export default function ProfilePage() {
           address: values.address,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", profile.id)
+        .eq("id", profile.id);
 
-      if (error) throw error
+      if (error) throw error;
 
       toast({
         title: "Perfil atualizado",
         description: "Suas informações pessoais foram atualizadas com sucesso.",
-      })
+      });
     } catch (error) {
-      console.error("Erro ao atualizar perfil:", error)
+      console.error("Erro ao atualizar perfil:", error);
       toast({
         title: "Erro ao atualizar perfil",
         description: "Ocorreu um erro ao atualizar suas informações. Tente novamente.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Atualizar informações da empresa
   const onCompanySubmit = async (values: z.infer<typeof companyFormSchema>) => {
-    setLoading(true)
+    setLoading(true);
 
     try {
       const { error } = await supabase
@@ -163,29 +174,29 @@ export default function ProfilePage() {
           cnpj: values.cnpj,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", profile.id)
+        .eq("id", profile.id);
 
-      if (error) throw error
+      if (error) throw error;
 
       toast({
         title: "Informações da empresa atualizadas",
         description: "Os dados da sua empresa foram atualizados com sucesso.",
-      })
+      });
     } catch (error) {
-      console.error("Erro ao atualizar empresa:", error)
+      console.error("Erro ao atualizar empresa:", error);
       toast({
         title: "Erro ao atualizar empresa",
         description: "Ocorreu um erro ao atualizar os dados da empresa. Tente novamente.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Atualizar informações de pessoa física
   const onPersonSubmit = async (values: z.infer<typeof personFormSchema>) => {
-    setLoading(true)
+    setLoading(true);
 
     try {
       const { error } = await supabase
@@ -194,32 +205,32 @@ export default function ProfilePage() {
           cpf: values.cpf,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", profile.id)
+        .eq("id", profile.id);
 
-      if (error) throw error
+      if (error) throw error;
 
       toast({
         title: "CPF atualizado",
         description: "Seu CPF foi atualizado com sucesso.",
-      })
+      });
     } catch (error) {
-      console.error("Erro ao atualizar CPF:", error)
+      console.error("Erro ao atualizar CPF:", error);
       toast({
         title: "Erro ao atualizar CPF",
         description: "Ocorreu um erro ao atualizar seu CPF. Tente novamente.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   if (!profile) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-200px)]">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
-    )
+    );
   }
 
   return (
@@ -235,7 +246,9 @@ export default function ProfilePage() {
           {(profile.profile_type === "supplier" || profile.profile_type === "agency") && (
             <TabsTrigger value="company">Dados da Empresa</TabsTrigger>
           )}
-          {profile.profile_type === "citizen" && <TabsTrigger value="person">Dados Pessoais</TabsTrigger>}
+          {profile.profile_type === "citizen" && (
+            <TabsTrigger value="person">Dados Pessoais</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="personal" className="space-y-4">
@@ -427,5 +440,5 @@ export default function ProfilePage() {
         )}
       </Tabs>
     </div>
-  )
+  );
 }

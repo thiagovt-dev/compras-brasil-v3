@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { StepProgress } from "@/components/step-progress";
 import { useToast } from "@/hooks/use-toast";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/supabase/auth-context";
 import {
   Building2,
@@ -47,7 +47,7 @@ export default function RegisterSupplierPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { user, profile } = useAuth();
-  const supabase = createClientComponentClient();
+  const supabase = createClientSupabaseClient();
 
   const { data: cepData, loading: cepLoading, error: cepError, fetchCep } = useCepLookup();
 
@@ -317,7 +317,6 @@ export default function RegisterSupplierPage() {
 
       router.push("/dashboard/citizen");
       // Redirect to dashboard
-      
     } catch (error: any) {
       toast({
         title: "Erro ao enviar cadastro",

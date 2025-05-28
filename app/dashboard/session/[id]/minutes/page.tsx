@@ -1,118 +1,126 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useToast } from "@/components/ui/use-toast"
-import { Badge } from "@/components/ui/badge"
-import { FileText, Download, FileIcon as FilePdf, FileSpreadsheet, FileJson, Trash2, Eye } from "lucide-react"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/components/ui/use-toast";
+import { Badge } from "@/components/ui/badge";
+import {
+  FileText,
+  Download,
+  FileIcon as FilePdf,
+  FileSpreadsheet,
+  FileJson,
+  Trash2,
+  Eye,
+} from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function SessionMinutesPage() {
-  const params = useParams()
-  const router = useRouter()
-  const { toast } = useToast()
-  const supabase = createClientComponentClient()
-  const [isLoading, setIsLoading] = useState(true)
-  const [minutes, setMinutes] = useState<any[]>([])
-  const [tender, setTender] = useState<any>(null)
+  const params = useParams();
+  const router = useRouter();
+  const { toast } = useToast();
+  const supabase = createClientSupabaseClient();
+  const [isLoading, setIsLoading] = useState(true);
+  const [minutes, setMinutes] = useState<any[]>([]);
+  const [tender, setTender] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true)
+      setIsLoading(true);
       try {
         // Buscar dados da licitação
         const { data: tenderData, error: tenderError } = await supabase
           .from("tenders")
           .select("id, title, number")
           .eq("id", params.id)
-          .single()
+          .single();
 
-        if (tenderError) throw tenderError
+        if (tenderError) throw tenderError;
 
         // Buscar atas exportadas
         const { data: minutesData, error: minutesError } = await supabase
           .from("session_minutes")
           .select("*")
           .eq("tender_id", params.id)
-          .order("created_at", { ascending: false })
+          .order("created_at", { ascending: false });
 
-        if (minutesError) throw minutesError
+        if (minutesError) throw minutesError;
 
-        setTender(tenderData)
-        setMinutes(minutesData)
+        setTender(tenderData);
+        setMinutes(minutesData);
       } catch (error) {
-        console.error("Erro ao buscar dados:", error)
+        console.error("Erro ao buscar dados:", error);
         toast({
           title: "Erro ao carregar dados",
           description: "Não foi possível carregar as atas exportadas. Tente novamente mais tarde.",
           variant: "destructive",
-        })
+        });
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
     if (params.id) {
-      fetchData()
+      fetchData();
     }
-  }, [params.id, supabase, toast])
+  }, [params.id, supabase, toast]);
 
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await supabase.from("session_minutes").delete().eq("id", id)
+      const { error } = await supabase.from("session_minutes").delete().eq("id", id);
 
-      if (error) throw error
+      if (error) throw error;
 
-      setMinutes((prev) => prev.filter((minute) => minute.id !== id))
+      setMinutes((prev) => prev.filter((minute) => minute.id !== id));
 
       toast({
         title: "Ata excluída com sucesso",
         description: "A ata foi excluída permanentemente.",
-      })
+      });
     } catch (error) {
-      console.error("Erro ao excluir ata:", error)
+      console.error("Erro ao excluir ata:", error);
       toast({
         title: "Erro ao excluir ata",
         description: "Não foi possível excluir a ata. Tente novamente mais tarde.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   const getFormatIcon = (format: string) => {
     switch (format) {
       case "pdf":
-        return <FilePdf className="h-4 w-4" />
+        return <FilePdf className="h-4 w-4" />;
       case "docx":
-        return <FileText className="h-4 w-4" />
+        return <FileText className="h-4 w-4" />;
       case "xlsx":
-        return <FileSpreadsheet className="h-4 w-4" />
+        return <FileSpreadsheet className="h-4 w-4" />;
       case "json":
-        return <FileJson className="h-4 w-4" />
+        return <FileJson className="h-4 w-4" />;
       default:
-        return <FileText className="h-4 w-4" />
+        return <FileText className="h-4 w-4" />;
     }
-  }
+  };
 
   const getFormatLabel = (format: string) => {
     switch (format) {
       case "pdf":
-        return "PDF"
+        return "PDF";
       case "docx":
-        return "Word"
+        return "Word";
       case "xlsx":
-        return "Excel"
+        return "Excel";
       case "json":
-        return "JSON"
+        return "JSON";
       default:
-        return format.toUpperCase()
+        return format.toUpperCase();
     }
-  }
+  };
 
   if (isLoading) {
     return (
@@ -125,7 +133,7 @@ export default function SessionMinutesPage() {
           <Skeleton className="h-24 w-full" />
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -133,7 +141,8 @@ export default function SessionMinutesPage() {
       <div className="flex flex-col space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Atas Exportadas</h1>
         <p className="text-muted-foreground">
-          Visualize e gerencie as atas exportadas para a licitação {tender?.title} ({tender?.number}).
+          Visualize e gerencie as atas exportadas para a licitação {tender?.title} ({tender?.number}
+          ).
         </p>
       </div>
 
@@ -159,7 +168,9 @@ export default function SessionMinutesPage() {
             <p className="text-sm text-muted-foreground mt-1 mb-4">
               Você ainda não exportou nenhuma ata para esta sessão.
             </p>
-            <Button onClick={() => router.push(`/dashboard/session/${params.id}/export`)}>Exportar Ata</Button>
+            <Button onClick={() => router.push(`/dashboard/session/${params.id}/export`)}>
+              Exportar Ata
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -203,5 +214,5 @@ export default function SessionMinutesPage() {
         </div>
       )}
     </div>
-  )
+  );
 }

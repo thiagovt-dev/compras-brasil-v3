@@ -1,66 +1,79 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useToast } from "@/hooks/use-toast"
-import { useAuth } from "@/lib/supabase/auth-context"
-import { Loader2 } from "lucide-react"
+import { useState, useEffect } from "react";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/supabase/auth-context";
+import { Loader2 } from "lucide-react";
 
 interface MeEppTiebreakerProps {
-  tenderId: string
-  lotId: string
-  bestPrice: number
-  currentPrice: number
-  onSubmit: () => void
+  tenderId: string;
+  lotId: string;
+  bestPrice: number;
+  currentPrice: number;
+  onSubmit: () => void;
 }
 
-export function MeEppTiebreaker({ tenderId, lotId, bestPrice, currentPrice, onSubmit }: MeEppTiebreakerProps) {
-  const supabase = createClientComponentClient()
-  const { user, profile } = useAuth()
-  const { toast } = useToast()
-  const [isLoading, setIsLoading] = useState(false)
-  const [newPrice, setNewPrice] = useState<string>("")
-  const [timeLeft, setTimeLeft] = useState<number>(300) // 5 minutes in seconds
+export function MeEppTiebreaker({
+  tenderId,
+  lotId,
+  bestPrice,
+  currentPrice,
+  onSubmit,
+}: MeEppTiebreakerProps) {
+  const supabase = createClientSupabaseClient();
+  const { user, profile } = useAuth();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [newPrice, setNewPrice] = useState<string>("");
+  const [timeLeft, setTimeLeft] = useState<number>(300); // 5 minutes in seconds
 
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft((prevTime) => {
         if (prevTime <= 1) {
-          clearInterval(timer)
-          return 0
+          clearInterval(timer);
+          return 0;
         }
-        return prevTime - 1
-      })
-    }, 1000)
+        return prevTime - 1;
+      });
+    }, 1000);
 
-    return () => clearInterval(timer)
-  }, [])
+    return () => clearInterval(timer);
+  }, []);
 
   const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60)
-    const remainingSeconds = seconds % 60
-    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`
-  }
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!user || !profile) {
       toast({
         title: "Erro",
         description: "Você precisa estar logado para enviar uma proposta.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
-    const priceValue = Number.parseFloat(newPrice.replace(",", "."))
+    const priceValue = Number.parseFloat(newPrice.replace(",", "."));
 
     if (isNaN(priceValue) || priceValue >= bestPrice) {
       toast({
@@ -70,11 +83,11 @@ export function MeEppTiebreaker({ tenderId, lotId, bestPrice, currentPrice, onSu
           currency: "BRL",
         })}`,
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
       // Update proposal with new price
@@ -84,12 +97,12 @@ export function MeEppTiebreaker({ tenderId, lotId, bestPrice, currentPrice, onSu
         .eq("tender_id", tenderId)
         .eq("lot_id", lotId)
         .eq("supplier_id", profile.id)
-        .single()
+        .single();
 
-      if (checkError) throw checkError
+      if (checkError) throw checkError;
 
       // Calculate percentage reduction
-      const percentageReduction = ((currentPrice - priceValue) / currentPrice) * 100
+      const percentageReduction = ((currentPrice - priceValue) / currentPrice) * 100;
 
       // Update proposal
       await supabase
@@ -101,32 +114,33 @@ export function MeEppTiebreaker({ tenderId, lotId, bestPrice, currentPrice, onSu
           me_epp_tiebreaker_reduction: percentageReduction,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", existingProposal.id)
+        .eq("id", existingProposal.id);
 
       toast({
         title: "Proposta atualizada",
         description: "Sua proposta foi atualizada com sucesso no desempate ficto.",
-      })
+      });
 
-      onSubmit()
+      onSubmit();
     } catch (error) {
-      console.error("Error submitting tiebreaker proposal:", error)
+      console.error("Error submitting tiebreaker proposal:", error);
       toast({
         title: "Erro ao enviar proposta",
         description: "Ocorreu um erro ao enviar sua proposta de desempate.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Desempate Ficto - ME/EPP</CardTitle>
         <CardDescription>
-          Como ME/EPP, você tem direito a apresentar uma nova proposta com valor inferior à melhor classificada
+          Como ME/EPP, você tem direito a apresentar uma nova proposta com valor inferior à melhor
+          classificada
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -201,5 +215,5 @@ export function MeEppTiebreaker({ tenderId, lotId, bestPrice, currentPrice, onSu
         Conforme Lei Complementar 123/2006, Art. 44 e 45
       </CardFooter>
     </Card>
-  )
+  );
 }

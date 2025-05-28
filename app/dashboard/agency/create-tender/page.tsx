@@ -4,7 +4,7 @@ import type React from "react";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,7 +37,6 @@ import { DocumentList } from "@/components/document-list";
 import { FileUploadField } from "@/components/file-upload-field";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { toast } from "@/components/ui/use-toast";
-import { createClientSupabaseClient } from "@/lib/supabase/client";
 
 export default function CreateTenderPage() {
   const router = useRouter();

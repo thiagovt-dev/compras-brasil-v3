@@ -1,49 +1,62 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { useRouter } from "next/navigation"
-import { FileText, CheckCircle, Shield, Loader2, Download } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/components/ui/use-toast"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Progress } from "@/components/ui/progress"
+import { useState, useEffect } from "react";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { FileText, CheckCircle, Shield, Loader2, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/components/ui/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 
 export default function SignDocumentPage() {
-  const [certificates, setCertificates] = useState<any[]>([])
-  const [documents, setDocuments] = useState<any[]>([])
-  const [selectedCertificate, setSelectedCertificate] = useState<string>("")
-  const [selectedDocument, setSelectedDocument] = useState<string>("")
-  const [password, setPassword] = useState("")
-  const [reason, setReason] = useState("")
-  const [location, setLocation] = useState("")
-  const [loading, setLoading] = useState(true)
-  const [signing, setSigning] = useState(false)
-  const [signedDocuments, setSignedDocuments] = useState<any[]>([])
-  const [progress, setProgress] = useState(0)
-  const router = useRouter()
-  const { toast } = useToast()
-  const supabase = createClientComponentClient()
+  const [certificates, setCertificates] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [selectedCertificate, setSelectedCertificate] = useState<string>("");
+  const [selectedDocument, setSelectedDocument] = useState<string>("");
+  const [password, setPassword] = useState("");
+  const [reason, setReason] = useState("");
+  const [location, setLocation] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [signing, setSigning] = useState(false);
+  const [signedDocuments, setSignedDocuments] = useState<any[]>([]);
+  const [progress, setProgress] = useState(0);
+  const router = useRouter();
+  const { toast } = useToast();
+  const supabase = createClientSupabaseClient();
 
   // Carregar certificados e documentos do usuário
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true)
+      setLoading(true);
 
       try {
         const {
           data: { user },
-        } = await supabase.auth.getUser()
+        } = await supabase.auth.getUser();
 
         if (!user) {
-          router.push("/login")
-          return
+          router.push("/login");
+          return;
         }
 
         // Buscar certificados ativos
@@ -52,62 +65,63 @@ export default function SignDocumentPage() {
           .select("*")
           .eq("user_id", user.id)
           .eq("status", "active")
-          .order("created_at", { ascending: false })
+          .order("created_at", { ascending: false });
 
-        if (certificatesError) throw certificatesError
+        if (certificatesError) throw certificatesError;
 
         // Filtrar certificados expirados
-        const activeCertificates = certificatesData?.filter((cert) => new Date(cert.valid_to) > new Date()) || []
+        const activeCertificates =
+          certificatesData?.filter((cert) => new Date(cert.valid_to) > new Date()) || [];
 
-        setCertificates(activeCertificates)
+        setCertificates(activeCertificates);
 
         // Buscar documentos
         const { data: documentsData, error: documentsError } = await supabase
           .from("documents")
           .select("*")
           .eq("uploaded_by", user.id)
-          .order("created_at", { ascending: false })
+          .order("created_at", { ascending: false });
 
-        if (documentsError) throw documentsError
+        if (documentsError) throw documentsError;
 
-        setDocuments(documentsData || [])
+        setDocuments(documentsData || []);
 
         // Buscar documentos assinados
         const { data: signedDocsData, error: signedDocsError } = await supabase
           .from("signed_documents")
           .select("*")
           .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
+          .order("created_at", { ascending: false });
 
-        if (signedDocsError) throw signedDocsError
+        if (signedDocsError) throw signedDocsError;
 
-        setSignedDocuments(signedDocsData || [])
+        setSignedDocuments(signedDocsData || []);
       } catch (error) {
-        console.error("Erro ao buscar dados:", error)
+        console.error("Erro ao buscar dados:", error);
         toast({
           title: "Erro ao carregar dados",
           description: "Não foi possível carregar seus certificados e documentos. Tente novamente.",
           variant: "destructive",
-        })
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchData()
-  }, [supabase, router, toast])
+    fetchData();
+  }, [supabase, router, toast]);
 
   // Assinar documento
   const signDocument = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!selectedCertificate) {
       toast({
         title: "Certificado não selecionado",
         description: "Por favor, selecione um certificado para assinar o documento.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     if (!selectedDocument) {
@@ -115,8 +129,8 @@ export default function SignDocumentPage() {
         title: "Documento não selecionado",
         description: "Por favor, selecione um documento para assinar.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     if (!password) {
@@ -124,65 +138,67 @@ export default function SignDocumentPage() {
         title: "Senha não fornecida",
         description: "Por favor, digite a senha do certificado.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
-    setSigning(true)
-    setProgress(0)
+    setSigning(true);
+    setProgress(0);
 
     try {
       const {
         data: { user },
-      } = await supabase.auth.getUser()
+      } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push("/login")
-        return
+        router.push("/login");
+        return;
       }
 
       // Simular progresso
       const progressInterval = setInterval(() => {
         setProgress((prev) => {
           if (prev >= 95) {
-            clearInterval(progressInterval)
-            return prev
+            clearInterval(progressInterval);
+            return prev;
           }
-          return prev + 5
-        })
-      }, 200)
+          return prev + 5;
+        });
+      }, 200);
 
       // Buscar informações do documento e certificado
       const { data: documentData, error: documentError } = await supabase
         .from("documents")
         .select("*")
         .eq("id", selectedDocument)
-        .single()
+        .single();
 
-      if (documentError) throw documentError
+      if (documentError) throw documentError;
 
       const { data: certificateData, error: certificateError } = await supabase
         .from("digital_certificates")
         .select("*")
         .eq("id", selectedCertificate)
-        .single()
+        .single();
 
-      if (certificateError) throw certificateError
+      if (certificateError) throw certificateError;
 
       // Simular assinatura do documento
       // Em um ambiente de produção, você enviaria o documento e o certificado para um serviço de assinatura
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Gerar nome para o documento assinado
-      const originalName = documentData.name
-      const fileExt = originalName.split(".").pop()
-      const baseName = originalName.replace(`.${fileExt}`, "")
-      const signedName = `${baseName}_assinado.${fileExt}`
-      const signedPath = `signed_documents/${user.id}/${Date.now()}_${signedName}`
+      const originalName = documentData.name;
+      const fileExt = originalName.split(".").pop();
+      const baseName = originalName.replace(`.${fileExt}`, "");
+      const signedName = `${baseName}_assinado.${fileExt}`;
+      const signedPath = `signed_documents/${user.id}/${Date.now()}_${signedName}`;
 
       // Em um ambiente real, você faria upload do documento assinado
       // Aqui estamos apenas simulando
-      const { data: publicUrlData } = supabase.storage.from("documents").getPublicUrl(documentData.file_path)
+      const { data: publicUrlData } = supabase.storage
+        .from("documents")
+        .getPublicUrl(documentData.file_path);
 
       // Salvar informações do documento assinado
       const { data: signedDoc, error: signedError } = await supabase
@@ -201,43 +217,45 @@ export default function SignDocumentPage() {
           created_at: new Date().toISOString(),
         })
         .select()
-        .single()
+        .single();
 
-      if (signedError) throw signedError
+      if (signedError) throw signedError;
 
       // Atualizar lista de documentos assinados
-      setSignedDocuments([signedDoc, ...signedDocuments])
+      setSignedDocuments([signedDoc, ...signedDocuments]);
 
-      clearInterval(progressInterval)
-      setProgress(100)
+      clearInterval(progressInterval);
+      setProgress(100);
 
       toast({
         title: "Documento assinado com sucesso",
         description: "O documento foi assinado digitalmente e está disponível para download.",
-      })
+      });
 
       // Limpar formulário
-      setSelectedDocument("")
-      setPassword("")
-      setReason("")
-      setLocation("")
+      setSelectedDocument("");
+      setPassword("");
+      setReason("");
+      setLocation("");
     } catch (error: any) {
-      console.error("Erro ao assinar documento:", error)
+      console.error("Erro ao assinar documento:", error);
       toast({
         title: "Erro ao assinar documento",
         description: error.message || "Ocorreu um erro ao assinar o documento. Tente novamente.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setSigning(false)
+      setSigning(false);
     }
-  }
+  };
 
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="space-y-1">
         <h2 className="text-2xl font-bold tracking-tight">Assinatura Digital</h2>
-        <p className="text-muted-foreground">Assine documentos digitalmente usando seus certificados</p>
+        <p className="text-muted-foreground">
+          Assine documentos digitalmente usando seus certificados
+        </p>
       </div>
 
       <Tabs defaultValue="sign">
@@ -255,36 +273,50 @@ export default function SignDocumentPage() {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-10">
                 <Shield className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-center text-muted-foreground mb-4">Você não possui certificados digitais ativos.</p>
-                <Button onClick={() => router.push("/dashboard/certificates")}>Gerenciar Certificados</Button>
+                <p className="text-center text-muted-foreground mb-4">
+                  Você não possui certificados digitais ativos.
+                </p>
+                <Button onClick={() => router.push("/dashboard/certificates")}>
+                  Gerenciar Certificados
+                </Button>
               </CardContent>
             </Card>
           ) : documents.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-10">
                 <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-center text-muted-foreground mb-4">Você não possui documentos para assinar.</p>
-                <Button onClick={() => router.push("/dashboard/documents")}>Gerenciar Documentos</Button>
+                <p className="text-center text-muted-foreground mb-4">
+                  Você não possui documentos para assinar.
+                </p>
+                <Button onClick={() => router.push("/dashboard/documents")}>
+                  Gerenciar Documentos
+                </Button>
               </CardContent>
             </Card>
           ) : (
             <Card>
               <CardHeader>
                 <CardTitle>Assinar Documento</CardTitle>
-                <CardDescription>Selecione um certificado e um documento para assinar digitalmente</CardDescription>
+                <CardDescription>
+                  Selecione um certificado e um documento para assinar digitalmente
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={signDocument} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="certificate">Certificado Digital</Label>
-                    <Select value={selectedCertificate} onValueChange={setSelectedCertificate} required>
+                    <Select
+                      value={selectedCertificate}
+                      onValueChange={setSelectedCertificate}
+                      required>
                       <SelectTrigger id="certificate">
                         <SelectValue placeholder="Selecione um certificado" />
                       </SelectTrigger>
                       <SelectContent>
                         {certificates.map((cert) => (
                           <SelectItem key={cert.id} value={cert.id}>
-                            {cert.subject_name} ({new Date(cert.valid_to).toLocaleDateString("pt-BR")})
+                            {cert.subject_name} (
+                            {new Date(cert.valid_to).toLocaleDateString("pt-BR")})
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -374,7 +406,9 @@ export default function SignDocumentPage() {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-10">
                 <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-center text-muted-foreground">Você ainda não assinou nenhum documento.</p>
+                <p className="text-center text-muted-foreground">
+                  Você ainda não assinou nenhum documento.
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -425,5 +459,5 @@ export default function SignDocumentPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

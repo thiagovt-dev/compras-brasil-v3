@@ -1,15 +1,29 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { AlertCircle, CheckCircle, Download, TrendingUp, ArrowUpRight, DollarSign } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { format, subMonths, startOfMonth, endOfMonth } from "date-fns"
-import { ptBR } from "date-fns/locale"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
+import { useState, useEffect } from "react";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertCircle,
+  CheckCircle,
+  Download,
+  TrendingUp,
+  ArrowUpRight,
+  DollarSign,
+} from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -18,68 +32,74 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function FinancialDashboardPage() {
-  const supabase = createClientComponentClient()
+  const supabase = createClientSupabaseClient();
 
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
-  const [profile, setProfile] = useState<any>(null)
-  const [subscription, setSubscription] = useState<any>(null)
-  const [invoices, setInvoices] = useState<any[]>([])
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [subscription, setSubscription] = useState<any>(null);
+  const [invoices, setInvoices] = useState<any[]>([]);
   const [tenderStats, setTenderStats] = useState<any>({
     participated: 0,
     won: 0,
     totalValue: 0,
-  })
-  const [paymentMethod, setPaymentMethod] = useState("pix")
-  const [cardNumber, setCardNumber] = useState("")
-  const [cardName, setCardName] = useState("")
-  const [cardExpiry, setCardExpiry] = useState("")
-  const [cardCvv, setCardCvv] = useState("")
-  const [selectedPlan, setSelectedPlan] = useState("monthly")
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false)
-  const [processingPayment, setProcessingPayment] = useState(false)
-  const [monthlyActivity, setMonthlyActivity] = useState<any[]>([])
+  });
+  const [paymentMethod, setPaymentMethod] = useState("pix");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardName, setCardName] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvv, setCardCvv] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState("monthly");
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
+  const [monthlyActivity, setMonthlyActivity] = useState<any[]>([]);
 
   useEffect(() => {
     async function fetchData() {
-      setLoading(true)
+      setLoading(true);
 
       try {
         // Get user info
         const {
           data: { user },
-        } = await supabase.auth.getUser()
+        } = await supabase.auth.getUser();
         if (!user) {
-          setError("Usuário não autenticado")
-          setLoading(false)
-          return
+          setError("Usuário não autenticado");
+          setLoading(false);
+          return;
         }
 
-        setUserId(user.id)
+        setUserId(user.id);
 
         // Get profile
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", user.id)
-          .single()
+          .single();
 
         if (profileError) {
-          console.error("Error fetching profile:", profileError)
-          setError("Erro ao carregar dados do perfil")
-          setLoading(false)
-          return
+          console.error("Error fetching profile:", profileError);
+          setError("Erro ao carregar dados do perfil");
+          setLoading(false);
+          return;
         }
 
-        setProfile(profileData)
+        setProfile(profileData);
 
         // Get subscription
         const { data: subscriptionData, error: subscriptionError } = await supabase
@@ -88,10 +108,10 @@ export default function FinancialDashboardPage() {
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(1)
-          .single()
+          .single();
 
         if (!subscriptionError) {
-          setSubscription(subscriptionData)
+          setSubscription(subscriptionData);
         }
 
         // Get invoices
@@ -99,47 +119,48 @@ export default function FinancialDashboardPage() {
           .from("invoices")
           .select("*")
           .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
+          .order("created_at", { ascending: false });
 
         if (invoicesError) {
-          console.error("Error fetching invoices:", invoicesError)
+          console.error("Error fetching invoices:", invoicesError);
         } else {
-          setInvoices(invoicesData || [])
+          setInvoices(invoicesData || []);
         }
 
         // Get tender stats
         const { data: participatedData, error: participatedError } = await supabase
           .from("tender_suppliers")
           .select("tender_id")
-          .eq("supplier_id", user.id)
+          .eq("supplier_id", user.id);
 
         if (participatedError) {
-          console.error("Error fetching participated tenders:", participatedError)
+          console.error("Error fetching participated tenders:", participatedError);
         } else {
-          const participated = participatedData?.length || 0
-          setTenderStats((prev) => ({ ...prev, participated }))
+          const participated = participatedData?.length || 0;
+          setTenderStats((prev:any) => ({ ...prev, participated }));
         }
 
         // Get won tenders
         const { data: wonData, error: wonError } = await supabase
           .from("tender_lots")
           .select("id, value")
-          .eq("winner_id", user.id)
+          .eq("winner_id", user.id);
 
         if (wonError) {
-          console.error("Error fetching won tenders:", wonError)
+          console.error("Error fetching won tenders:", wonError);
         } else {
-          const won = wonData?.length || 0
-          const totalValue = wonData?.reduce((sum, lot) => sum + Number.parseFloat(lot.value || "0"), 0) || 0
-          setTenderStats((prev) => ({ ...prev, won, totalValue }))
+          const won = wonData?.length || 0;
+          const totalValue =
+            wonData?.reduce((sum, lot) => sum + Number.parseFloat(lot.value || "0"), 0) || 0;
+          setTenderStats((prev:any) => ({ ...prev, won, totalValue }));
         }
 
         // Generate monthly activity data
-        const months = []
+        const months = [];
         for (let i = 0; i < 6; i++) {
-          const month = subMonths(new Date(), i)
-          const startDate = startOfMonth(month)
-          const endDate = endOfMonth(month)
+          const month = subMonths(new Date(), i);
+          const startDate = startOfMonth(month);
+          const endDate = endOfMonth(month);
 
           // Get tenders participated in this month
           const { data: monthParticipatedData } = await supabase
@@ -147,7 +168,7 @@ export default function FinancialDashboardPage() {
             .select("created_at")
             .eq("supplier_id", user.id)
             .gte("created_at", startDate.toISOString())
-            .lte("created_at", endDate.toISOString())
+            .lte("created_at", endDate.toISOString());
 
           // Get tenders won in this month
           const { data: monthWonData } = await supabase
@@ -155,54 +176,54 @@ export default function FinancialDashboardPage() {
             .select("created_at")
             .eq("winner_id", user.id)
             .gte("created_at", startDate.toISOString())
-            .lte("created_at", endDate.toISOString())
+            .lte("created_at", endDate.toISOString());
 
           months.push({
             month: format(month, "MMM", { locale: ptBR }),
             participated: monthParticipatedData?.length || 0,
             won: monthWonData?.length || 0,
-          })
+          });
         }
 
-        setMonthlyActivity(months.reverse())
+        setMonthlyActivity(months.reverse());
       } catch (err) {
-        console.error("Error:", err)
-        setError("Ocorreu um erro ao carregar os dados")
+        console.error("Error:", err);
+        setError("Ocorreu um erro ao carregar os dados");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    fetchData()
-  }, [supabase])
+    fetchData();
+  }, [supabase]);
 
   const handlePayment = async () => {
-    setProcessingPayment(true)
-    setError(null)
+    setProcessingPayment(true);
+    setError(null);
 
     try {
       // Simulate payment processing
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Create subscription
-      const now = new Date()
-      const endDate = new Date()
+      const now = new Date();
+      const endDate = new Date();
 
       if (selectedPlan === "monthly") {
-        endDate.setMonth(now.getMonth() + 1)
+        endDate.setMonth(now.getMonth() + 1);
       } else if (selectedPlan === "quarterly") {
-        endDate.setMonth(now.getMonth() + 3)
+        endDate.setMonth(now.getMonth() + 3);
       } else if (selectedPlan === "yearly") {
-        endDate.setFullYear(now.getFullYear() + 1)
+        endDate.setFullYear(now.getFullYear() + 1);
       }
 
       const planPrices = {
         monthly: 99.9,
         quarterly: 269.7,
         yearly: 999.0,
-      }
+      };
 
-      const price = planPrices[selectedPlan as keyof typeof planPrices]
+      const price = planPrices[selectedPlan as keyof typeof planPrices];
 
       // Create subscription
       const { data: subscriptionData, error: subscriptionError } = await supabase
@@ -216,13 +237,13 @@ export default function FinancialDashboardPage() {
           price,
         })
         .select()
-        .single()
+        .single();
 
       if (subscriptionError) {
-        console.error("Error creating subscription:", subscriptionError)
-        setError("Erro ao criar assinatura")
-        setProcessingPayment(false)
-        return
+        console.error("Error creating subscription:", subscriptionError);
+        setError("Erro ao criar assinatura");
+        setProcessingPayment(false);
+        return;
       }
 
       // Create invoice
@@ -232,40 +253,46 @@ export default function FinancialDashboardPage() {
         amount: price,
         status: "paid",
         payment_method: paymentMethod,
-        description: `Assinatura ${selectedPlan === "monthly" ? "Mensal" : selectedPlan === "quarterly" ? "Trimestral" : "Anual"}`,
-      })
+        description: `Assinatura ${
+          selectedPlan === "monthly"
+            ? "Mensal"
+            : selectedPlan === "quarterly"
+            ? "Trimestral"
+            : "Anual"
+        }`,
+      });
 
       if (invoiceError) {
-        console.error("Error creating invoice:", invoiceError)
-        setError("Erro ao criar fatura")
-        setProcessingPayment(false)
-        return
+        console.error("Error creating invoice:", invoiceError);
+        setError("Erro ao criar fatura");
+        setProcessingPayment(false);
+        return;
       }
 
-      setSubscription(subscriptionData)
-      setShowPaymentDialog(false)
-      setSuccess("Pagamento processado com sucesso! Sua assinatura está ativa.")
+      setSubscription(subscriptionData);
+      setShowPaymentDialog(false);
+      setSuccess("Pagamento processado com sucesso! Sua assinatura está ativa.");
 
       // Refresh invoices
       const { data: invoicesData } = await supabase
         .from("invoices")
         .select("*")
         .eq("user_id", userId)
-        .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false });
 
-      setInvoices(invoicesData || [])
+      setInvoices(invoicesData || []);
     } catch (err) {
-      console.error("Error:", err)
-      setError("Ocorreu um erro ao processar o pagamento")
+      console.error("Error:", err);
+      setError("Ocorreu um erro ao processar o pagamento");
     } finally {
-      setProcessingPayment(false)
+      setProcessingPayment(false);
     }
-  }
+  };
 
   const downloadInvoice = (invoice: any) => {
     // In a real application, this would generate and download a PDF invoice
-    alert(`Baixando fatura ${invoice.id}`)
-  }
+    alert(`Baixando fatura ${invoice.id}`);
+  };
 
   if (loading) {
     return (
@@ -275,11 +302,13 @@ export default function FinancialDashboardPage() {
           <p className="text-sm text-muted-foreground">Carregando dados financeiros...</p>
         </div>
       </div>
-    )
+    );
   }
 
   const isSubscriptionActive =
-    subscription && subscription.status === "active" && new Date(subscription.end_date) > new Date()
+    subscription &&
+    subscription.status === "active" &&
+    new Date(subscription.end_date) > new Date();
 
   return (
     <div className="container mx-auto py-6">
@@ -313,7 +342,9 @@ export default function FinancialDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{tenderStats.participated}</div>
-              <p className="text-xs text-muted-foreground">Total de licitações que você participou</p>
+              <p className="text-xs text-muted-foreground">
+                Total de licitações que você participou
+              </p>
             </CardContent>
           </Card>
           <Card>
@@ -348,7 +379,10 @@ export default function FinancialDashboardPage() {
             <CardContent>
               <div className="text-2xl font-bold">
                 R${" "}
-                {tenderStats.totalValue.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {tenderStats.totalValue.toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </div>
               <p className="text-xs text-muted-foreground">Valor total das licitações vencidas</p>
             </CardContent>
@@ -361,7 +395,8 @@ export default function FinancialDashboardPage() {
             Gerenciamento de Impugnações e Clarificações de Licitações
           </h2>
           <p className="text-muted-foreground">
-            Aqui você pode gerenciar suas impugnações e solicitações de esclarecimento de licitações.
+            Aqui você pode gerenciar suas impugnações e solicitações de esclarecimento de
+            licitações.
           </p>
         </div>
 
@@ -407,10 +442,14 @@ export default function FinancialDashboardPage() {
                   <TableCell>{invoice.id}</TableCell>
                   <TableCell>{format(new Date(invoice.created_at), "dd/MM/yyyy")}</TableCell>
                   <TableCell>
-                    R$ {invoice.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    R${" "}
+                    {invoice.amount.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={invoice.status === "paid" ? "success" : "default"}>
+                    <Badge variant={invoice.status === "paid" ? "default" : "secondary"}>
                       {invoice.status === "paid" ? "Pago" : "Pendente"}
                     </Badge>
                   </TableCell>
@@ -436,7 +475,9 @@ export default function FinancialDashboardPage() {
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Assinar Plano</DialogTitle>
-              <DialogDescription>Selecione o plano que deseja assinar e conclua o pagamento.</DialogDescription>
+              <DialogDescription>
+                Selecione o plano que deseja assinar e conclua o pagamento.
+              </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
@@ -472,23 +513,28 @@ export default function FinancialDashboardPage() {
                 <div className="grid gap-2">
                   <Input
                     id="cardNumber"
-                    label="Número do Cartão"
+                    placeholder="Número do Cartão"
                     value={cardNumber}
                     onChange={(e) => setCardNumber(e.target.value)}
                   />
                   <Input
                     id="cardName"
-                    label="Nome no Cartão"
+                    placeholder="Nome no Cartão"
                     value={cardName}
                     onChange={(e) => setCardName(e.target.value)}
                   />
                   <Input
                     id="cardExpiry"
-                    label="Validade"
+                    placeholder="Validade"
                     value={cardExpiry}
                     onChange={(e) => setCardExpiry(e.target.value)}
                   />
-                  <Input id="cardCvv" label="CVV" value={cardCvv} onChange={(e) => setCardCvv(e.target.value)} />
+                  <Input
+                    id="cardCvv"
+                    placeholder="CVV"
+                    value={cardCvv}
+                    onChange={(e) => setCardCvv(e.target.value)}
+                  />
                 </div>
               )}
             </div>
@@ -504,5 +550,5 @@ export default function FinancialDashboardPage() {
         </Dialog>
       </div>
     </div>
-  )
+  );
 }

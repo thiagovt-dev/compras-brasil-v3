@@ -1,59 +1,70 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { AlertCircle, CheckCircle, Clock, FileText } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { AlertCircle, CheckCircle, Clock, FileText } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function ImpugnationPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const tenderId = searchParams.get("id")
-  const supabase = createClientComponentClient()
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tenderId = searchParams.get("id");
+  const supabase = createClientSupabaseClient();
 
-  const [tender, setTender] = useState<any>(null)
-  const [impugnations, setImpugnations] = useState<any[]>([])
-  const [clarifications, setClarifications] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [userRole, setUserRole] = useState<string | null>(null)
-  const [newImpugnation, setNewImpugnation] = useState("")
-  const [newClarification, setNewClarification] = useState("")
-  const [attachmentFile, setAttachmentFile] = useState<File | null>(null)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
+  const [tender, setTender] = useState<any>(null);
+  const [impugnations, setImpugnations] = useState<any[]>([]);
+  const [clarifications, setClarifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [newImpugnation, setNewImpugnation] = useState("");
+  const [newClarification, setNewClarification] = useState("");
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (!tenderId) {
-      router.push("/dashboard/search")
-      return
+      router.push("/dashboard/search");
+      return;
     }
 
     async function fetchData() {
-      setLoading(true)
+      setLoading(true);
 
       // Get user role
       const {
         data: { user },
-      } = await supabase.auth.getUser()
+      } = await supabase.auth.getUser();
       if (user) {
-        const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
 
         if (profile) {
-          setUserRole(profile.role)
+          setUserRole(profile.role);
         }
       }
 
@@ -62,99 +73,105 @@ export default function ImpugnationPage() {
         .from("tenders")
         .select("*")
         .eq("id", tenderId)
-        .single()
+        .single();
 
       if (tenderError) {
-        console.error("Error fetching tender:", tenderError)
-        setError("Erro ao carregar dados da licitação")
+        console.error("Error fetching tender:", tenderError);
+        setError("Erro ao carregar dados da licitação");
       } else {
-        setTender(tenderData)
+        setTender(tenderData);
       }
 
       // Get impugnations
       const { data: impugnationsData, error: impugnationsError } = await supabase
         .from("impugnations")
-        .select(`
+        .select(
+          `
           *,
           profiles:user_id(name, role)
-        `)
+        `
+        )
         .eq("tender_id", tenderId)
-        .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false });
 
       if (impugnationsError) {
-        console.error("Error fetching impugnations:", impugnationsError)
+        console.error("Error fetching impugnations:", impugnationsError);
       } else {
-        setImpugnations(impugnationsData || [])
+        setImpugnations(impugnationsData || []);
       }
 
       // Get clarifications
       const { data: clarificationsData, error: clarificationsError } = await supabase
         .from("clarifications")
-        .select(`
+        .select(
+          `
           *,
           profiles:user_id(name, role)
-        `)
+        `
+        )
         .eq("tender_id", tenderId)
-        .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false });
 
       if (clarificationsError) {
-        console.error("Error fetching clarifications:", clarificationsError)
+        console.error("Error fetching clarifications:", clarificationsError);
       } else {
-        setClarifications(clarificationsData || [])
+        setClarifications(clarificationsData || []);
       }
 
-      setLoading(false)
+      setLoading(false);
     }
 
-    fetchData()
-  }, [tenderId, router, supabase])
+    fetchData();
+  }, [tenderId, router, supabase]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setAttachmentFile(e.target.files[0])
+      setAttachmentFile(e.target.files[0]);
     }
-  }
+  };
 
   const submitImpugnation = async () => {
     if (!newImpugnation.trim()) {
-      setError("Por favor, preencha o texto da impugnação")
-      return
+      setError("Por favor, preencha o texto da impugnação");
+      return;
     }
 
-    setSubmitting(true)
-    setError(null)
+    setSubmitting(true);
+    setError(null);
 
     try {
       const {
         data: { user },
-      } = await supabase.auth.getUser()
+      } = await supabase.auth.getUser();
 
       if (!user) {
-        setError("Usuário não autenticado")
-        setSubmitting(false)
-        return
+        setError("Usuário não autenticado");
+        setSubmitting(false);
+        return;
       }
 
-      let attachmentUrl = null
+      let attachmentUrl = null;
 
       // Upload attachment if exists
       if (attachmentFile) {
-        const fileExt = attachmentFile.name.split(".").pop()
-        const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`
-        const filePath = `impugnations/${fileName}`
+        const fileExt = attachmentFile.name.split(".").pop();
+        const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+        const filePath = `impugnations/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage.from("attachments").upload(filePath, attachmentFile)
+        const { error: uploadError } = await supabase.storage
+          .from("attachments")
+          .upload(filePath, attachmentFile);
 
         if (uploadError) {
-          console.error("Error uploading file:", uploadError)
-          setError("Erro ao fazer upload do arquivo")
-          setSubmitting(false)
-          return
+          console.error("Error uploading file:", uploadError);
+          setError("Erro ao fazer upload do arquivo");
+          setSubmitting(false);
+          return;
         }
 
-        const { data: urlData } = supabase.storage.from("attachments").getPublicUrl(filePath)
+        const { data: urlData } = supabase.storage.from("attachments").getPublicUrl(filePath);
 
-        attachmentUrl = urlData.publicUrl
+        attachmentUrl = urlData.publicUrl;
       }
 
       // Insert impugnation
@@ -164,29 +181,31 @@ export default function ImpugnationPage() {
         content: newImpugnation,
         attachment_url: attachmentUrl,
         status: "pending",
-      })
+      });
 
       if (insertError) {
-        console.error("Error submitting impugnation:", insertError)
-        setError("Erro ao enviar impugnação")
-        setSubmitting(false)
-        return
+        console.error("Error submitting impugnation:", insertError);
+        setError("Erro ao enviar impugnação");
+        setSubmitting(false);
+        return;
       }
 
       // Refresh impugnations
       const { data: impugnationsData } = await supabase
         .from("impugnations")
-        .select(`
+        .select(
+          `
           *,
           profiles:user_id(name, role)
-        `)
+        `
+        )
         .eq("tender_id", tenderId)
-        .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false });
 
-      setImpugnations(impugnationsData || [])
-      setNewImpugnation("")
-      setAttachmentFile(null)
-      setSuccess("Impugnação enviada com sucesso")
+      setImpugnations(impugnationsData || []);
+      setNewImpugnation("");
+      setAttachmentFile(null);
+      setSuccess("Impugnação enviada com sucesso");
 
       // Create notification for agency users
       await supabase.from("notifications").insert({
@@ -196,55 +215,57 @@ export default function ImpugnationPage() {
         type: "impugnation",
         reference_id: tenderId,
         read: false,
-      })
+      });
     } catch (err) {
-      console.error("Error:", err)
-      setError("Ocorreu um erro ao processar sua solicitação")
+      console.error("Error:", err);
+      setError("Ocorreu um erro ao processar sua solicitação");
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const submitClarification = async () => {
     if (!newClarification.trim()) {
-      setError("Por favor, preencha o texto do pedido de esclarecimento")
-      return
+      setError("Por favor, preencha o texto do pedido de esclarecimento");
+      return;
     }
 
-    setSubmitting(true)
-    setError(null)
+    setSubmitting(true);
+    setError(null);
 
     try {
       const {
         data: { user },
-      } = await supabase.auth.getUser()
+      } = await supabase.auth.getUser();
 
       if (!user) {
-        setError("Usuário não autenticado")
-        setSubmitting(false)
-        return
+        setError("Usuário não autenticado");
+        setSubmitting(false);
+        return;
       }
 
-      let attachmentUrl = null
+      let attachmentUrl = null;
 
       // Upload attachment if exists
       if (attachmentFile) {
-        const fileExt = attachmentFile.name.split(".").pop()
-        const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`
-        const filePath = `clarifications/${fileName}`
+        const fileExt = attachmentFile.name.split(".").pop();
+        const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+        const filePath = `clarifications/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage.from("attachments").upload(filePath, attachmentFile)
+        const { error: uploadError } = await supabase.storage
+          .from("attachments")
+          .upload(filePath, attachmentFile);
 
         if (uploadError) {
-          console.error("Error uploading file:", uploadError)
-          setError("Erro ao fazer upload do arquivo")
-          setSubmitting(false)
-          return
+          console.error("Error uploading file:", uploadError);
+          setError("Erro ao fazer upload do arquivo");
+          setSubmitting(false);
+          return;
         }
 
-        const { data: urlData } = supabase.storage.from("attachments").getPublicUrl(filePath)
+        const { data: urlData } = supabase.storage.from("attachments").getPublicUrl(filePath);
 
-        attachmentUrl = urlData.publicUrl
+        attachmentUrl = urlData.publicUrl;
       }
 
       // Insert clarification
@@ -254,29 +275,31 @@ export default function ImpugnationPage() {
         content: newClarification,
         attachment_url: attachmentUrl,
         status: "pending",
-      })
+      });
 
       if (insertError) {
-        console.error("Error submitting clarification:", insertError)
-        setError("Erro ao enviar pedido de esclarecimento")
-        setSubmitting(false)
-        return
+        console.error("Error submitting clarification:", insertError);
+        setError("Erro ao enviar pedido de esclarecimento");
+        setSubmitting(false);
+        return;
       }
 
       // Refresh clarifications
       const { data: clarificationsData } = await supabase
         .from("clarifications")
-        .select(`
+        .select(
+          `
           *,
           profiles:user_id(name, role)
-        `)
+        `
+        )
         .eq("tender_id", tenderId)
-        .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false });
 
-      setClarifications(clarificationsData || [])
-      setNewClarification("")
-      setAttachmentFile(null)
-      setSuccess("Pedido de esclarecimento enviado com sucesso")
+      setClarifications(clarificationsData || []);
+      setNewClarification("");
+      setAttachmentFile(null);
+      setSuccess("Pedido de esclarecimento enviado com sucesso");
 
       // Create notification for agency users
       await supabase.from("notifications").insert({
@@ -286,14 +309,14 @@ export default function ImpugnationPage() {
         type: "clarification",
         reference_id: tenderId,
         read: false,
-      })
+      });
     } catch (err) {
-      console.error("Error:", err)
-      setError("Ocorreu um erro ao processar sua solicitação")
+      console.error("Error:", err);
+      setError("Ocorreu um erro ao processar sua solicitação");
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const respondToImpugnation = async (id: string, response: string) => {
     try {
@@ -304,29 +327,31 @@ export default function ImpugnationPage() {
           response_date: new Date().toISOString(),
           status: "answered",
         })
-        .eq("id", id)
+        .eq("id", id);
 
       if (error) {
-        console.error("Error responding to impugnation:", error)
-        setError("Erro ao responder impugnação")
-        return
+        console.error("Error responding to impugnation:", error);
+        setError("Erro ao responder impugnação");
+        return;
       }
 
       // Refresh impugnations
       const { data: impugnationsData } = await supabase
         .from("impugnations")
-        .select(`
+        .select(
+          `
           *,
           profiles:user_id(name, role)
-        `)
+        `
+        )
         .eq("tender_id", tenderId)
-        .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false });
 
-      setImpugnations(impugnationsData || [])
-      setSuccess("Resposta enviada com sucesso")
+      setImpugnations(impugnationsData || []);
+      setSuccess("Resposta enviada com sucesso");
 
       // Create notification for the impugnation creator
-      const impugnation = impugnations.find((imp) => imp.id === id)
+      const impugnation = impugnations.find((imp) => imp.id === id);
       if (impugnation) {
         await supabase.from("notifications").insert({
           user_id: impugnation.user_id,
@@ -335,13 +360,13 @@ export default function ImpugnationPage() {
           type: "impugnation_response",
           reference_id: tenderId,
           read: false,
-        })
+        });
       }
     } catch (err) {
-      console.error("Error:", err)
-      setError("Ocorreu um erro ao processar sua solicitação")
+      console.error("Error:", err);
+      setError("Ocorreu um erro ao processar sua solicitação");
     }
-  }
+  };
 
   const respondToClarification = async (id: string, response: string) => {
     try {
@@ -352,29 +377,31 @@ export default function ImpugnationPage() {
           response_date: new Date().toISOString(),
           status: "answered",
         })
-        .eq("id", id)
+        .eq("id", id);
 
       if (error) {
-        console.error("Error responding to clarification:", error)
-        setError("Erro ao responder pedido de esclarecimento")
-        return
+        console.error("Error responding to clarification:", error);
+        setError("Erro ao responder pedido de esclarecimento");
+        return;
       }
 
       // Refresh clarifications
       const { data: clarificationsData } = await supabase
         .from("clarifications")
-        .select(`
+        .select(
+          `
           *,
           profiles:user_id(name, role)
-        `)
+        `
+        )
         .eq("tender_id", tenderId)
-        .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false });
 
-      setClarifications(clarificationsData || [])
-      setSuccess("Resposta enviada com sucesso")
+      setClarifications(clarificationsData || []);
+      setSuccess("Resposta enviada com sucesso");
 
       // Create notification for the clarification creator
-      const clarification = clarifications.find((clar) => clar.id === id)
+      const clarification = clarifications.find((clar) => clar.id === id);
       if (clarification) {
         await supabase.from("notifications").insert({
           user_id: clarification.user_id,
@@ -383,13 +410,13 @@ export default function ImpugnationPage() {
           type: "clarification_response",
           reference_id: tenderId,
           read: false,
-        })
+        });
       }
     } catch (err) {
-      console.error("Error:", err)
-      setError("Ocorreu um erro ao processar sua solicitação")
+      console.error("Error:", err);
+      setError("Ocorreu um erro ao processar sua solicitação");
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -399,7 +426,7 @@ export default function ImpugnationPage() {
           <p className="text-sm text-muted-foreground">Carregando...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!tender) {
@@ -408,15 +435,19 @@ export default function ImpugnationPage() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Erro</AlertTitle>
-          <AlertDescription>Licitação não encontrada ou você não tem permissão para acessá-la.</AlertDescription>
+          <AlertDescription>
+            Licitação não encontrada ou você não tem permissão para acessá-la.
+          </AlertDescription>
         </Alert>
       </div>
-    )
+    );
   }
 
-  const canSubmit = ["citizen", "supplier"].includes(userRole || "")
-  const canRespond = ["agency", "admin"].includes(userRole || "")
-  const isBeforeDeadline = tender.impugnation_deadline ? new Date() < new Date(tender.impugnation_deadline) : false
+  const canSubmit = ["citizen", "supplier"].includes(userRole || "");
+  const canRespond = ["agency", "admin"].includes(userRole || "");
+  const isBeforeDeadline = tender.impugnation_deadline
+    ? new Date() < new Date(tender.impugnation_deadline)
+    : false;
 
   return (
     <div className="container mx-auto py-6">
@@ -450,14 +481,19 @@ export default function ImpugnationPage() {
         )}
 
         {tender.impugnation_deadline && (
-          <Alert className={isBeforeDeadline ? "bg-blue-50 border-blue-200" : "bg-red-50 border-red-200"}>
+          <Alert
+            className={
+              isBeforeDeadline ? "bg-blue-50 border-blue-200" : "bg-red-50 border-red-200"
+            }>
             <Clock className={`h-4 w-4 ${isBeforeDeadline ? "text-blue-600" : "text-red-600"}`} />
             <AlertTitle className={isBeforeDeadline ? "text-blue-600" : "text-red-600"}>
               {isBeforeDeadline ? "Prazo em andamento" : "Prazo encerrado"}
             </AlertTitle>
             <AlertDescription className={isBeforeDeadline ? "text-blue-600" : "text-red-600"}>
               Data limite para impugnações e esclarecimentos:{" "}
-              {format(new Date(tender.impugnation_deadline), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+              {format(new Date(tender.impugnation_deadline), "dd/MM/yyyy 'às' HH:mm", {
+                locale: ptBR,
+              })}
             </AlertDescription>
           </Alert>
         )}
@@ -474,8 +510,8 @@ export default function ImpugnationPage() {
                 <CardHeader>
                   <CardTitle>Nova Impugnação</CardTitle>
                   <CardDescription>
-                    Envie uma impugnação para esta licitação. Você pode anexar documentos para fundamentar sua
-                    solicitação.
+                    Envie uma impugnação para esta licitação. Você pode anexar documentos para
+                    fundamentar sua solicitação.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -498,7 +534,9 @@ export default function ImpugnationPage() {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button onClick={submitImpugnation} disabled={submitting || !newImpugnation.trim()}>
+                  <Button
+                    onClick={submitImpugnation}
+                    disabled={submitting || !newImpugnation.trim()}>
                     {submitting ? "Enviando..." : "Enviar Impugnação"}
                   </Button>
                 </CardFooter>
@@ -509,7 +547,9 @@ export default function ImpugnationPage() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-6">
                   <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Nenhuma impugnação registrada para esta licitação.</p>
+                  <p className="text-muted-foreground">
+                    Nenhuma impugnação registrada para esta licitação.
+                  </p>
                 </CardContent>
               </Card>
             ) : (
@@ -521,13 +561,16 @@ export default function ImpugnationPage() {
                         <div>
                           <CardTitle className="flex items-center gap-2">
                             Impugnação
-                            <Badge variant={impugnation.status === "pending" ? "outline" : "default"}>
+                            <Badge
+                              variant={impugnation.status === "pending" ? "outline" : "default"}>
                               {impugnation.status === "pending" ? "Pendente" : "Respondida"}
                             </Badge>
                           </CardTitle>
                           <CardDescription>
                             Enviada por {impugnation.profiles?.name || "Usuário"} em{" "}
-                            {format(new Date(impugnation.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                            {format(new Date(impugnation.created_at), "dd/MM/yyyy 'às' HH:mm", {
+                              locale: ptBR,
+                            })}
                           </CardDescription>
                         </div>
                       </div>
@@ -535,7 +578,9 @@ export default function ImpugnationPage() {
                     <CardContent className="space-y-4">
                       <div>
                         <h4 className="font-medium mb-2">Conteúdo da Impugnação:</h4>
-                        <div className="bg-muted p-3 rounded-md whitespace-pre-wrap">{impugnation.content}</div>
+                        <div className="bg-muted p-3 rounded-md whitespace-pre-wrap">
+                          {impugnation.content}
+                        </div>
                       </div>
 
                       {impugnation.attachment_url && (
@@ -545,8 +590,7 @@ export default function ImpugnationPage() {
                             href={impugnation.attachment_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-blue-600 hover:underline"
-                          >
+                            className="flex items-center gap-2 text-blue-600 hover:underline">
                             <FileText className="h-4 w-4" />
                             Visualizar anexo
                           </a>
@@ -558,10 +602,16 @@ export default function ImpugnationPage() {
                           <Separator />
                           <div>
                             <h4 className="font-medium mb-2">Resposta:</h4>
-                            <div className="bg-muted p-3 rounded-md whitespace-pre-wrap">{impugnation.response}</div>
+                            <div className="bg-muted p-3 rounded-md whitespace-pre-wrap">
+                              {impugnation.response}
+                            </div>
                             <p className="text-sm text-muted-foreground mt-2">
                               Respondido em{" "}
-                              {format(new Date(impugnation.response_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                              {format(
+                                new Date(impugnation.response_date),
+                                "dd/MM/yyyy 'às' HH:mm",
+                                { locale: ptBR }
+                              )}
                             </p>
                           </div>
                         </>
@@ -571,16 +621,21 @@ export default function ImpugnationPage() {
                         <>
                           <Separator />
                           <div className="space-y-2">
-                            <Label htmlFor={`response-${impugnation.id}`}>Resposta à Impugnação</Label>
-                            <Textarea id={`response-${impugnation.id}`} placeholder="Digite sua resposta..." rows={3} />
+                            <Label htmlFor={`response-${impugnation.id}`}>
+                              Resposta à Impugnação
+                            </Label>
+                            <Textarea
+                              id={`response-${impugnation.id}`}
+                              placeholder="Digite sua resposta..."
+                              rows={3}
+                            />
                             <Button
                               onClick={(e) => {
                                 const textarea = document.getElementById(
-                                  `response-${impugnation.id}`,
-                                ) as HTMLTextAreaElement
-                                respondToImpugnation(impugnation.id, textarea.value)
-                              }}
-                            >
+                                  `response-${impugnation.id}`
+                                ) as HTMLTextAreaElement;
+                                respondToImpugnation(impugnation.id, textarea.value);
+                              }}>
                               Responder
                             </Button>
                           </div>
@@ -599,8 +654,8 @@ export default function ImpugnationPage() {
                 <CardHeader>
                   <CardTitle>Novo Pedido de Esclarecimento</CardTitle>
                   <CardDescription>
-                    Envie um pedido de esclarecimento para esta licitação. Você pode anexar documentos para fundamentar
-                    sua solicitação.
+                    Envie um pedido de esclarecimento para esta licitação. Você pode anexar
+                    documentos para fundamentar sua solicitação.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -623,7 +678,9 @@ export default function ImpugnationPage() {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button onClick={submitClarification} disabled={submitting || !newClarification.trim()}>
+                  <Button
+                    onClick={submitClarification}
+                    disabled={submitting || !newClarification.trim()}>
                     {submitting ? "Enviando..." : "Enviar Pedido de Esclarecimento"}
                   </Button>
                 </CardFooter>
@@ -648,13 +705,16 @@ export default function ImpugnationPage() {
                         <div>
                           <CardTitle className="flex items-center gap-2">
                             Pedido de Esclarecimento
-                            <Badge variant={clarification.status === "pending" ? "outline" : "default"}>
+                            <Badge
+                              variant={clarification.status === "pending" ? "outline" : "default"}>
                               {clarification.status === "pending" ? "Pendente" : "Respondido"}
                             </Badge>
                           </CardTitle>
                           <CardDescription>
                             Enviado por {clarification.profiles?.name || "Usuário"} em{" "}
-                            {format(new Date(clarification.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                            {format(new Date(clarification.created_at), "dd/MM/yyyy 'às' HH:mm", {
+                              locale: ptBR,
+                            })}
                           </CardDescription>
                         </div>
                       </div>
@@ -662,7 +722,9 @@ export default function ImpugnationPage() {
                     <CardContent className="space-y-4">
                       <div>
                         <h4 className="font-medium mb-2">Conteúdo do Pedido:</h4>
-                        <div className="bg-muted p-3 rounded-md whitespace-pre-wrap">{clarification.content}</div>
+                        <div className="bg-muted p-3 rounded-md whitespace-pre-wrap">
+                          {clarification.content}
+                        </div>
                       </div>
 
                       {clarification.attachment_url && (
@@ -672,8 +734,7 @@ export default function ImpugnationPage() {
                             href={clarification.attachment_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-blue-600 hover:underline"
-                          >
+                            className="flex items-center gap-2 text-blue-600 hover:underline">
                             <FileText className="h-4 w-4" />
                             Visualizar anexo
                           </a>
@@ -685,10 +746,16 @@ export default function ImpugnationPage() {
                           <Separator />
                           <div>
                             <h4 className="font-medium mb-2">Resposta:</h4>
-                            <div className="bg-muted p-3 rounded-md whitespace-pre-wrap">{clarification.response}</div>
+                            <div className="bg-muted p-3 rounded-md whitespace-pre-wrap">
+                              {clarification.response}
+                            </div>
                             <p className="text-sm text-muted-foreground mt-2">
                               Respondido em{" "}
-                              {format(new Date(clarification.response_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                              {format(
+                                new Date(clarification.response_date),
+                                "dd/MM/yyyy 'às' HH:mm",
+                                { locale: ptBR }
+                              )}
                             </p>
                           </div>
                         </>
@@ -698,7 +765,9 @@ export default function ImpugnationPage() {
                         <>
                           <Separator />
                           <div className="space-y-2">
-                            <Label htmlFor={`response-${clarification.id}`}>Resposta ao Pedido de Esclarecimento</Label>
+                            <Label htmlFor={`response-${clarification.id}`}>
+                              Resposta ao Pedido de Esclarecimento
+                            </Label>
                             <Textarea
                               id={`response-${clarification.id}`}
                               placeholder="Digite sua resposta..."
@@ -707,11 +776,10 @@ export default function ImpugnationPage() {
                             <Button
                               onClick={(e) => {
                                 const textarea = document.getElementById(
-                                  `response-${clarification.id}`,
-                                ) as HTMLTextAreaElement
-                                respondToClarification(clarification.id, textarea.value)
-                              }}
-                            >
+                                  `response-${clarification.id}`
+                                ) as HTMLTextAreaElement;
+                                respondToClarification(clarification.id, textarea.value);
+                              }}>
                               Responder
                             </Button>
                           </div>
@@ -726,5 +794,5 @@ export default function ImpugnationPage() {
         </Tabs>
       </div>
     </div>
-  )
+  );
 }

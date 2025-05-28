@@ -59,8 +59,8 @@ export function SessionChat() {
         if (error) throw error;
 
         if (data) {
-          const formattedMessages = data.map((msg) => ({
-            ...msg,
+          const formattedMessages = data.map((msg: any) => ({
+            msg,
             user: {
               email: msg.auth?.users?.email || "Usuário",
             },
