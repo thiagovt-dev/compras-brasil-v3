@@ -24,12 +24,13 @@ export default async function AgencyActiveTendersPage() {
       `
       *,
       agency:agencies(name)
-    `,
+    `
     )
-    .eq("status", "active")
-    .eq("created_by", user?.id)
+    .eq("status", "published")
     .order("opening_date", { ascending: true })
-    .limit(12)
+    .limit(12);
+
+    console.log("Initial tenders:", initialTenders)
 
   return (
     <div className="space-y-6">

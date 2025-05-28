@@ -66,7 +66,7 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
       <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
         <div>
           <h1 className="text-3xl font-bold">{tender.title}</h1>
-          <p className="text-muted-foreground">Nº {tender.number}</p>
+          <p className="text-muted-foreground">Nº {tender.tender_number}</p>
         </div>
 
         <TenderActions tender={tender} />
@@ -88,7 +88,7 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
             <div className="space-y-4">
               <div>
                 <h2 className="text-lg font-medium">Descrição</h2>
-                <p className="whitespace-pre-line">{tender.description}</p>
+                <p className="whitespace-pre-line">{tender.description ?? "N/A"}</p>
               </div>
 
               <div>
@@ -152,13 +152,13 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
 
         <TabsContent value="lots">
           <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-            <TenderLots lots={tender.lots || []} />
+            <TenderLots tender={tender || []} />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="documents">
           <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-            <TenderDocuments tenderId={tender.id} />
+            <TenderDocuments tender={tender} />
           </Suspense>
         </TabsContent>
 
