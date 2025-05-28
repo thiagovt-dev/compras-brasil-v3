@@ -30,7 +30,7 @@ export default function CitizenDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        {/* <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">Cadastrar Fornecedor</CardTitle>
             <CardDescription>Registre uma empresa para participar de licitações</CardDescription>
@@ -58,7 +58,7 @@ export default function CitizenDashboard() {
               </Button>
             </Link>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       <div className="rounded-lg border p-6">

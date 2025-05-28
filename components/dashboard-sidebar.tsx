@@ -65,7 +65,7 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
 
       <SidebarContent className="px-2">
         {/* Main Navigation */}
-        <SidebarGroup className="py-6">
+        <SidebarGroup className="pt-4">
           <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
             Principal
           </SidebarGroupLabel>
@@ -246,9 +246,9 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
         <SidebarSeparator className="my-2" />
 
         {/* Registration Section - Only for Citizens */}
-        {userRole === "citizen" && (
+        {userRole === "admin" && (
           <>
-            <SidebarGroup className="py-6">
+            <SidebarGroup className="pt-4">
               <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                 Cadastros
               </SidebarGroupLabel>
@@ -257,10 +257,10 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
-                      isActive={isActive("/dashboard/citizen/register-supplier")}
+                      isActive={isActive("/dashboard/admin/register-supplier")}
                       className="h-12 px-4 rounded-lg hover:bg-green-50 hover:text-green-700 data-[active=true]:bg-green-100 data-[active=true]:text-green-700 data-[active=true]:font-medium gap-3"
                     >
-                      <Link href="/dashboard/citizen/register-supplier">
+                      <Link href="/dashboard/admin/register-supplier">
                         <ShoppingBag className="h-6 w-6" />
                         <span className="font-medium">Cadastrar Fornecedor</span>
                       </Link>
@@ -269,10 +269,10 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
-                      isActive={isActive("/dashboard/citizen/register-agency")}
+                      isActive={isActive("/dashboard/admin/register-agency")}
                       className="h-12 px-4 rounded-lg hover:bg-green-50 hover:text-green-700 data-[active=true]:bg-green-100 data-[active=true]:text-green-700 data-[active=true]:font-medium gap-3"
                     >
-                      <Link href="/dashboard/citizen/register-agency">
+                      <Link href="/dashboard/admin/register-agency">
                         <Building2 className="h-6 w-6" />
                         <span className="font-medium">Cadastrar Órgão</span>
                       </Link>
@@ -288,7 +288,7 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
         {/* Financial Section - Only for Suppliers */}
         {userRole === "supplier" && (
           <>
-            <SidebarGroup className="py-6">
+            <SidebarGroup className="pt-4">
               <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                 Financeiro
               </SidebarGroupLabel>
@@ -338,72 +338,103 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
         )}
 
         {/* Tools Section */}
-        <SidebarGroup className="py-6">
+        <SidebarGroup className="pt-4">
           <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
             Ferramentas
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-2">
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive("/dashboard/assistant")}
-                  className="h-12 px-4 rounded-lg hover:bg-purple-50 hover:text-purple-700 data-[active=true]:bg-purple-100 data-[active=true]:text-purple-700 data-[active=true]:font-medium gap-3"
-                >
-                  <Link href="/dashboard/assistant">
-                    <Bot className="h-6 w-6" />
-                    <span className="font-medium">Assistente IA</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive("/dashboard/notifications")}
-                  className="h-12 px-4 rounded-lg hover:bg-purple-50 hover:text-purple-700 data-[active=true]:bg-purple-100 data-[active=true]:text-purple-700 data-[active=true]:font-medium gap-3"
-                >
-                  <Link href="/dashboard/notifications">
-                    <Bell className="h-6 w-6" />
-                    <span className="font-medium">Notificações</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive("/dashboard/certificates")}
-                  className="h-12 px-4 rounded-lg hover:bg-purple-50 hover:text-purple-700 data-[active=true]:bg-purple-100 data-[active=true]:text-purple-700 data-[active=true]:font-medium gap-3"
-                >
-                  <Link href="/dashboard/certificates">
-                    <Shield className="h-6 w-6" />
-                    <span className="font-medium">Certificados Digitais</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive("/dashboard/sign-document")}
-                  className="h-12 px-4 rounded-lg hover:bg-purple-50 hover:text-purple-700 data-[active=true]:bg-purple-100 data-[active=true]:text-purple-700 data-[active=true]:font-medium gap-3"
-                >
-                  <Link href="/dashboard/sign-document">
-                    <PenTool className="h-6 w-6" />
-                    <span className="font-medium">Assinar Documentos</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive("/dashboard/integrations/brasil")}
-                  className="h-12 px-4 rounded-lg hover:bg-purple-50 hover:text-purple-700 data-[active=true]:bg-purple-100 data-[active=true]:text-purple-700 data-[active=true]:font-medium gap-3"
-                >
-                  <Link href="/dashboard/integrations/brasil">
-                    <Globe className="h-6 w-6" />
-                    <span className="font-medium">Integração +Brasil</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {userRole === "citizen" ? (
+                <>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/dashboard/assistant")}
+                      className="h-12 px-4 rounded-lg hover:bg-purple-50 hover:text-purple-700 data-[active=true]:bg-purple-100 data-[active=true]:text-purple-700 data-[active=true]:font-medium gap-3"
+                    >
+                      <Link href="/dashboard/assistant">
+                        <Bot className="h-6 w-6" />
+                        <span className="font-medium">Assistente Virtual</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/dashboard/notifications")}
+                      className="h-12 px-4 rounded-lg hover:bg-purple-50 hover:text-purple-700 data-[active=true]:bg-purple-100 data-[active=true]:text-purple-700 data-[active=true]:font-medium gap-3"
+                    >
+                      <Link href="/dashboard/notifications">
+                        <Bell className="h-6 w-6" />
+                        <span className="font-medium">Notificações</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </>
+              ) : (
+                <>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/dashboard/assistant")}
+                      className="h-12 px-4 rounded-lg hover:bg-purple-50 hover:text-purple-700 data-[active=true]:bg-purple-100 data-[active=true]:text-purple-700 data-[active=true]:font-medium gap-3"
+                    >
+                      <Link href="/dashboard/assistant">
+                        <Bot className="h-6 w-6" />
+                        <span className="font-medium">Assistente Virtual</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/dashboard/notifications")}
+                      className="h-12 px-4 rounded-lg hover:bg-purple-50 hover:text-purple-700 data-[active=true]:bg-purple-100 data-[active=true]:text-purple-700 data-[active=true]:font-medium gap-3"
+                    >
+                      <Link href="/dashboard/notifications">
+                        <Bell className="h-6 w-6" />
+                        <span className="font-medium">Notificações</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/dashboard/certificates")}
+                      className="h-12 px-4 rounded-lg hover:bg-purple-50 hover:text-purple-700 data-[active=true]:bg-purple-100 data-[active=true]:text-purple-700 data-[active=true]:font-medium gap-3"
+                    >
+                      <Link href="/dashboard/certificates">
+                        <Shield className="h-6 w-6" />
+                        <span className="font-medium">Certificados Digitais</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/dashboard/sign-document")}
+                      className="h-12 px-4 rounded-lg hover:bg-purple-50 hover:text-purple-700 data-[active=true]:bg-purple-100 data-[active=true]:text-purple-700 data-[active=true]:font-medium gap-3"
+                    >
+                      <Link href="/dashboard/sign-document">
+                        <PenTool className="h-6 w-6" />
+                        <span className="font-medium">Assinar Documentos</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/dashboard/integrations/brasil")}
+                      className="h-12 px-4 rounded-lg hover:bg-purple-50 hover:text-purple-700 data-[active=true]:bg-purple-100 data-[active=true]:text-purple-700 data-[active=true]:font-medium gap-3"
+                    >
+                      <Link href="/dashboard/integrations/brasil">
+                        <Globe className="h-6 w-6" />
+                        <span className="font-medium">Integração +Brasil</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -413,7 +444,7 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
         {/* Support Section */}
         {(userRole === "support" || userRole === "admin") && (
           <>
-            <SidebarGroup className="py-6">
+            <SidebarGroup className="pt-4">
               <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                 Suporte
               </SidebarGroupLabel>
@@ -451,7 +482,7 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
         )}
 
         {/* Settings Section */}
-        <SidebarGroup className="py-6">
+        <SidebarGroup className="pt-4">
           <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
             Configurações
           </SidebarGroupLabel>
@@ -487,7 +518,7 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
       </SidebarContent>
 
       <SidebarFooter className="py-4 px-4 border-t border-gray-100">
-        <div className="text-xs text-gray-500 text-center">© 2023 Central de Compras Brasil</div>
+        <div className="text-xs text-gray-500 text-center">© 2025 Central de Compras Brasil</div>
       </SidebarFooter>
 
       <SidebarRail />

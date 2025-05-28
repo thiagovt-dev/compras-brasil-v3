@@ -96,7 +96,7 @@ const [inputError, setInputError] = useState("")
       console.error("Erro no login:", error);
       toast({
         title: "Erro ao fazer login",
-        description: error.message || "Verifique suas credenciais e tente novamente",
+        description: "Verifique suas credenciais e tente novamente",
         variant: "destructive",
       });
     } finally {
