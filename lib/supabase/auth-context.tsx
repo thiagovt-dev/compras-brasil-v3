@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { User, Session } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { getSupabaseClient } from "./client-singleton";
+import { createClientSupabaseClient } from "./client";
 
 type AuthContextType = {
   user: User | null;
@@ -24,7 +25,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const supabase = getSupabaseClient();
+  const supabase = createClientSupabaseClient();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -34,17 +35,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const getInitialSession = async () => {
       setIsLoading(true);
-
       try {
         const {
           data: { session },
         } = await supabase.auth.getSession();
-
         console.log("Initial session:", session);
-
         setSession(session);
         setUser(session?.user ?? null);
-
         if (session?.user) {
           await fetchProfile(session.user.id);
         }
@@ -61,21 +58,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session);
-
       setSession(session);
       setUser(session?.user ?? null);
-
       if (session?.user) {
         await fetchProfile(session.user.id);
       } else {
         setProfile(null);
       }
-
       setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+  }, [supabase]);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -207,11 +201,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw error;
     }
   };
-
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
-      router.push("/login");
+      console.log("Signing out user:", user?.id);
+
+      document.cookie.split(";").forEach((cookie) => {
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${window.location.pathname}`;
+      });
+
+      localStorage.removeItem("sb-jfbuistvgwkfpnujygwx-auth-token");
+
+      window.location.href = "/login";
     } catch (error) {
       console.error("Error signing out:", error);
     }

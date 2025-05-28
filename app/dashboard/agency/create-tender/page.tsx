@@ -1,44 +1,59 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
-import { CalendarIcon, Plus, Trash2, Upload, Save, Loader2, Clock } from "lucide-react"
-import { StepProgress } from "@/components/step-progress"
-import { DocumentList } from "@/components/document-list"
-import { FileUploadField } from "@/components/file-upload-field"
-import { useAuth } from "@/lib/supabase/auth-context"
-import { toast } from "@/components/ui/use-toast"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { CalendarIcon, Plus, Trash2, Upload, Save, Loader2, Clock } from "lucide-react";
+import { StepProgress } from "@/components/step-progress";
+import { DocumentList } from "@/components/document-list";
+import { FileUploadField } from "@/components/file-upload-field";
+import { useAuth } from "@/lib/supabase/auth-context";
+import { toast } from "@/components/ui/use-toast";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
 
 export default function CreateTenderPage() {
-  const router = useRouter()
-  const supabase = createClientComponentClient()
-  const { user, profile } = useAuth()
-  const [currentStep, setCurrentStep] = useState(1)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [agencies, setAgencies] = useState<any[]>([])
-  const [users, setUsers] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter();
+  const supabase = createClientSupabaseClient();
+  const { user, profile } = useAuth();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [agencies, setAgencies] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     agency_id: "", // Movido para o topo
     modality: "",
     category: "",
+    editalTitle: "",
     editalNumber: "",
     processNumber: "",
     judgmentCriteria: "",
@@ -76,13 +91,18 @@ export default function CreateTenderPage() {
             quantity: "",
             unit: "",
             unitPrice: "",
-            benefitType: "open",
+            benefitType: "",
           },
         ],
       },
     ],
-    documents: [] as { name: string; file: File | null; document_id?: string; file_path?: string }[],
-  })
+    documents: [] as {
+      name: string;
+      file: File | null;
+      document_id?: string;
+      file_path?: string;
+    }[],
+  });
 
   // Fetch agencies and users
   useEffect(() => {
@@ -91,57 +111,55 @@ export default function CreateTenderPage() {
         // Fetch agencies
         const { data: agenciesData, error: agenciesError } = await supabase
           .from("agencies")
-          .select("*")
-          
+          .select("*");
 
+        if (agenciesError) throw agenciesError;
 
-        if (agenciesError) throw agenciesError
-
-        setAgencies(agenciesData || [])
+        setAgencies(agenciesData || []);
 
         // Fetch users (for team selection)
         const { data: usersData, error: usersError } = await supabase
           .from("profiles")
           .select("*")
-          .in("profile_type", ["agency", "admin"])
+          .in("profile_type", ["agency", "admin"]);
 
-        if (usersError) throw usersError
+        if (usersError) throw usersError;
 
-        setUsers(usersData || [])
+        setUsers(usersData || []);
       } catch (error: any) {
-        console.error("Error fetching data:", error)
+        console.error("Error fetching data:", error);
         toast({
           title: "Erro ao carregar dados",
           description: error.message || "Ocorreu um erro ao carregar os dados necessários.",
           variant: "destructive",
-        })
+        });
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchData()
-  }, [supabase])
+    fetchData();
+  }, [supabase]);
 
   const handleChange = (field: string, value: any) => {
-    setFormData({ ...formData, [field]: value })
-  }
+    setFormData({ ...formData, [field]: value });
+  };
 
   const handleTeamChange = (field: string, value: any) => {
     setFormData({
       ...formData,
       team: { ...formData.team, [field]: value },
-    })
-  }
+    });
+  };
 
   const handleSupportTeamChange = (index: number, value: string) => {
-    const newSupportTeam = [...formData.team.supportTeam]
-    newSupportTeam[index] = value
+    const newSupportTeam = [...formData.team.supportTeam];
+    newSupportTeam[index] = value;
     setFormData({
       ...formData,
       team: { ...formData.team, supportTeam: newSupportTeam },
-    })
-  }
+    });
+  };
 
   const addSupportTeamMember = () => {
     setFormData({
@@ -150,35 +168,36 @@ export default function CreateTenderPage() {
         ...formData.team,
         supportTeam: [...formData.team.supportTeam, ""],
       },
-    })
-  }
+    });
+  };
 
   const removeSupportTeamMember = (index: number) => {
-    const newSupportTeam = [...formData.team.supportTeam]
-    newSupportTeam.splice(index, 1)
+    const newSupportTeam = [...formData.team.supportTeam];
+    newSupportTeam.splice(index, 1);
     setFormData({
       ...formData,
       team: { ...formData.team, supportTeam: newSupportTeam },
-    })
-  }
+    });
+  };
 
   const handleGroupChange = (groupIndex: number, field: string, value: any) => {
-    const newGroups = [...formData.groups]
-    newGroups[groupIndex] = { ...newGroups[groupIndex], [field]: value }
-    setFormData({ ...formData, groups: newGroups })
-  }
+    const newGroups = [...formData.groups];
+    newGroups[groupIndex] = { ...newGroups[groupIndex], [field]: value };
+    setFormData({ ...formData, groups: newGroups });
+  };
 
   const handleItemChange = (groupIndex: number, itemIndex: number, field: string, value: any) => {
-    const newGroups = [...formData.groups]
+    const newGroups = [...formData.groups];
     newGroups[groupIndex].items[itemIndex] = {
       ...newGroups[groupIndex].items[itemIndex],
       [field]: value,
-    }
-    setFormData({ ...formData, groups: newGroups })
-  }
+    };
+    setFormData({ ...formData, groups: newGroups });
+  };
 
   const addGroup = () => {
-    const newGroupId = formData.groups.length > 0 ? Math.max(...formData.groups.map((group) => group.id)) + 1 : 1
+    const newGroupId =
+      formData.groups.length > 0 ? Math.max(...formData.groups.map((group) => group.id)) + 1 : 1;
 
     setFormData({
       ...formData,
@@ -202,19 +221,21 @@ export default function CreateTenderPage() {
           ],
         },
       ],
-    })
-  }
+    });
+  };
 
   const removeGroup = (index: number) => {
-    const newGroups = [...formData.groups]
-    newGroups.splice(index, 1)
-    setFormData({ ...formData, groups: newGroups })
-  }
+    const newGroups = [...formData.groups];
+    newGroups.splice(index, 1);
+    setFormData({ ...formData, groups: newGroups });
+  };
 
   const addItem = (groupIndex: number) => {
-    const newGroups = [...formData.groups]
+    const newGroups = [...formData.groups];
     const newItemId =
-      newGroups[groupIndex].items.length > 0 ? Math.max(...newGroups[groupIndex].items.map((item) => item.id)) + 1 : 1
+      newGroups[groupIndex].items.length > 0
+        ? Math.max(...newGroups[groupIndex].items.map((item) => item.id)) + 1
+        : 1;
 
     newGroups[groupIndex].items.push({
       id: newItemId,
@@ -222,72 +243,75 @@ export default function CreateTenderPage() {
       quantity: "",
       unit: "",
       unitPrice: "",
-      benefitType: "open",
-    })
+      benefitType: "",
+    });
 
-    setFormData({ ...formData, groups: newGroups })
-  }
+    setFormData({ ...formData, groups: newGroups });
+  };
 
   const removeItem = (groupIndex: number, itemIndex: number) => {
-    const newGroups = [...formData.groups]
-    newGroups[groupIndex].items.splice(itemIndex, 1)
-    setFormData({ ...formData, groups: newGroups })
-  }
+    const newGroups = [...formData.groups];
+    newGroups[groupIndex].items.splice(itemIndex, 1);
+    setFormData({ ...formData, groups: newGroups });
+  };
 
   const handleDocumentNameChange = (index: number, name: string) => {
-    const newDocuments = [...formData.documents]
-    newDocuments[index] = { ...newDocuments[index], name }
-    setFormData({ ...formData, documents: newDocuments })
-  }
+    const newDocuments = [...formData.documents];
+    newDocuments[index] = { ...newDocuments[index], name };
+    setFormData({ ...formData, documents: newDocuments });
+  };
 
   const addDocument = () => {
     setFormData({
       ...formData,
       documents: [...formData.documents, { name: "", file: null }],
-    })
-  }
+    });
+  };
 
   const removeDocument = (index: number) => {
-    const newDocuments = [...formData.documents]
-    newDocuments.splice(index, 1)
-    setFormData({ ...formData, documents: newDocuments })
-  }
+    const newDocuments = [...formData.documents];
+    newDocuments.splice(index, 1);
+    setFormData({ ...formData, documents: newDocuments });
+  };
 
   const handleFileUploadComplete = (index: number, fileData: any) => {
-    const newDocuments = [...formData.documents]
+    const newDocuments = [...formData.documents];
     newDocuments[index] = {
       ...newDocuments[index],
       document_id: fileData.document?.id,
       file_path: fileData.filePath,
-    }
-    setFormData({ ...formData, documents: newDocuments })
-  }
+    };
+    setFormData({ ...formData, documents: newDocuments });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+    console.log("Submitting form data:", formData);
+    e.preventDefault();
+    setIsSubmitting(true);
 
     try {
       if (!user) {
-        router.push("/login")
-        return
+        router.push("/login");
+        return;
       }
-
+      console.log("User ID:", user.id);
       // Combinar data e horário para criar datetime completo
       const impugnationDateTime =
         formData.impugnationDate && formData.impugnationTime
-          ? new Date(`${format(formData.impugnationDate, "yyyy-MM-dd")}T${formData.impugnationTime}:00`)
-          : null
+          ? new Date(
+              `${format(formData.impugnationDate, "yyyy-MM-dd")}T${formData.impugnationTime}:00`
+            )
+          : null;
 
       const proposalDateTime =
         formData.proposalDate && formData.proposalTime
           ? new Date(`${format(formData.proposalDate, "yyyy-MM-dd")}T${formData.proposalTime}:00`)
-          : null
+          : null;
 
       const openingDateTime =
         formData.openingDate && formData.openingTime
           ? new Date(`${format(formData.openingDate, "yyyy-MM-dd")}T${formData.openingTime}:00`)
-          : null
+          : null;
 
       // Create tender in Supabase
       // Mapear o valor de formData.modality para o valor aceito na coluna tender_type
@@ -295,24 +319,29 @@ export default function CreateTenderPage() {
         "pregao-eletronico": "pregao_eletronico",
         "concorrencia-eletronica": "concorrencia",
         "dispensa-eletronica": "tomada_de_precos",
-      }
+      };
+
+      console.log("Opening date and time:", openingDateTime);
 
       const { data: tenderData, error: tenderError } = await supabase
         .from("tenders")
         .insert({
-          title: formData.object,
+          title: formData.editalTitle,
           description: formData.object,
           tender_number: formData.editalNumber,
           tender_type: tenderTypeMap[formData.modality] || formData.modality,
           agency_id: formData.agency_id,
           opening_date: openingDateTime,
-          status: "draft",
+          closing_date: proposalDateTime,
+          status: "published",
           created_by: user.id,
         })
         .select()
-        .single()
+        .single();
 
-      if (tenderError) throw tenderError
+      console.log("Tender data:", tenderData);
+      if (tenderError) console.log("Error creating tender:", tenderError);
+      if (tenderError) throw tenderError;
 
       // Create groups (anteriormente lots)
       for (const group of formData.groups) {
@@ -328,24 +357,27 @@ export default function CreateTenderPage() {
             status: "active",
           })
           .select()
-          .single()
+          .single();
 
-        if (groupError) throw groupError
+        if (groupError) throw groupError;
+
+        console.log("Group data:", groupData);
 
         // Create items for this group
         for (const item of group.items) {
           const { error: itemError } = await supabase.from("tender_items").insert({
             lot_id: groupData.id,
             tender_id: tenderData.id,
-            number: item.id,
+            item_number: item.id,
             description: item.description,
             quantity: Number.parseFloat(item.quantity) || 0,
             unit: item.unit,
-            unit_price: Number.parseFloat(item.unitPrice) || 0,
+            estimated_unit_price: Number.parseFloat(item.unitPrice) || 0,
             benefit_type: item.benefitType,
-          })
+          });
 
-          if (itemError) throw itemError
+          console.log("Item data:", item);
+          if (itemError) throw itemError;
         }
       }
 
@@ -358,54 +390,57 @@ export default function CreateTenderPage() {
               entity_id: tenderData.id,
               entity_type: "tender",
             })
-            .eq("id", doc.document_id)
+            .eq("id", doc.document_id);
 
-          if (docUpdateError) throw docUpdateError
+          if (docUpdateError) throw docUpdateError;
         }
+        console.log("Document data:", doc);
       }
 
       toast({
         title: "Licitação criada com sucesso",
         description: "A licitação foi criada e está em modo de rascunho.",
-      })
+      });
 
       // Redirect to the active tenders page
       setTimeout(() => {
-        router.push("/dashboard/agency/active-tenders")
-      }, 2000)
+        router.push("/dashboard/agency/active-tenders");
+      }, 2000);
     } catch (error: any) {
-      console.error("Error creating tender:", error)
+      console.error("Error creating tender:", error);
       toast({
         title: "Erro ao criar licitação",
         description: error.message || "Ocorreu um erro ao criar a licitação.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const prevStep = () => {
-    setCurrentStep((prev) => Math.max(prev - 1, 1))
-  }
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
+  };
 
   const nextStep = () => {
-    setCurrentStep((prev) => Math.min(prev + 1, 4))
-  }
+    setCurrentStep((prev) => Math.min(prev + 1, 4));
+  };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-200px)]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Criar Nova Licitação</h1>
-        <p className="text-muted-foreground">Preencha os dados para criar um novo processo licitatório</p>
+        <p className="text-muted-foreground">
+          Preencha os dados para criar um novo processo licitatório
+        </p>
       </div>
 
       <Card>
@@ -438,7 +473,9 @@ export default function CreateTenderPage() {
                       <Label htmlFor="agency_id" className="text-base font-medium">
                         Órgão *
                       </Label>
-                      <Select value={formData.agency_id} onValueChange={(value) => handleChange("agency_id", value)}>
+                      <Select
+                        value={formData.agency_id}
+                        onValueChange={(value) => handleChange("agency_id", value)}>
                         <SelectTrigger id="agency_id" className="h-12">
                           <SelectValue placeholder="Selecione o órgão responsável" />
                         </SelectTrigger>
@@ -457,13 +494,17 @@ export default function CreateTenderPage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="modality">Modalidade</Label>
-                    <Select value={formData.modality} onValueChange={(value) => handleChange("modality", value)}>
+                    <Select
+                      value={formData.modality}
+                      onValueChange={(value) => handleChange("modality", value)}>
                       <SelectTrigger id="modality">
                         <SelectValue placeholder="Selecione a modalidade" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="pregao-eletronico">Pregão Eletrônico</SelectItem>
-                        <SelectItem value="concorrencia-eletronica">Concorrência Eletrônica</SelectItem>
+                        <SelectItem value="concorrencia-eletronica">
+                          Concorrência Eletrônica
+                        </SelectItem>
                         <SelectItem value="dispensa-eletronica">Dispensa Eletrônica</SelectItem>
                       </SelectContent>
                     </Select>
@@ -471,7 +512,9 @@ export default function CreateTenderPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="category">Categoria</Label>
-                    <Select value={formData.category} onValueChange={(value) => handleChange("category", value)}>
+                    <Select
+                      value={formData.category}
+                      onValueChange={(value) => handleChange("category", value)}>
                       <SelectTrigger id="category">
                         <SelectValue placeholder="Selecione a categoria" />
                       </SelectTrigger>
@@ -480,18 +523,24 @@ export default function CreateTenderPage() {
                           <>
                             <SelectItem value="aquisicao-bens">Aquisição de bens</SelectItem>
                             <SelectItem value="servicos-comuns">Serviços comuns</SelectItem>
-                            <SelectItem value="servicos-comuns-engenharia">Serviços comuns de engenharia</SelectItem>
+                            <SelectItem value="servicos-comuns-engenharia">
+                              Serviços comuns de engenharia
+                            </SelectItem>
                           </>
                         )}
                         {formData.modality === "concorrencia-eletronica" && (
                           <>
-                            <SelectItem value="aquisicao-bens-especiais">Aquisição de bens especiais</SelectItem>
+                            <SelectItem value="aquisicao-bens-especiais">
+                              Aquisição de bens especiais
+                            </SelectItem>
                             <SelectItem value="servicos-especiais">Serviços especiais</SelectItem>
                             <SelectItem value="obras">Obras</SelectItem>
                             <SelectItem value="servicos-especiais-engenharia">
                               Serviços especiais de engenharia
                             </SelectItem>
-                            <SelectItem value="servicos-comuns-engenharia">Serviços comuns de engenharia</SelectItem>
+                            <SelectItem value="servicos-comuns-engenharia">
+                              Serviços comuns de engenharia
+                            </SelectItem>
                           </>
                         )}
                       </SelectContent>
@@ -500,6 +549,15 @@ export default function CreateTenderPage() {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="editalNumber">Titulo do Edital</Label>
+                    <Input
+                      id="editalTitle"
+                      value={formData.editalTitle}
+                      onChange={(e) => handleChange("editalTitle", e.target.value)}
+                      placeholder="Ex:Edital de Pregão Eletrônico"
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="editalNumber">Número do Edital</Label>
                     <Input
@@ -526,13 +584,13 @@ export default function CreateTenderPage() {
                     <Label htmlFor="judgmentCriteria">Critério de Julgamento</Label>
                     <Select
                       value={formData.judgmentCriteria}
-                      onValueChange={(value) => handleChange("judgmentCriteria", value)}
-                    >
+                      onValueChange={(value) => handleChange("judgmentCriteria", value)}>
                       <SelectTrigger id="judgmentCriteria">
                         <SelectValue placeholder="Selecione o critério" />
                       </SelectTrigger>
                       <SelectContent>
-                        {(formData.modality === "pregao-eletronico" || formData.modality === "dispensa-eletronica") && (
+                        {(formData.modality === "pregao-eletronico" ||
+                          formData.modality === "dispensa-eletronica") && (
                           <>
                             <SelectItem value="menor-preco-item">Menor Preço por item</SelectItem>
                             <SelectItem value="menor-preco-lote">Menor Preço por grupo</SelectItem>
@@ -543,9 +601,13 @@ export default function CreateTenderPage() {
                         {formData.modality === "concorrencia-eletronica" && (
                           <>
                             <SelectItem value="menor-preco">Menor Preço R$</SelectItem>
-                            <SelectItem value="melhor-tecnica">Melhor técnica ou conteúdo artístico</SelectItem>
+                            <SelectItem value="melhor-tecnica">
+                              Melhor técnica ou conteúdo artístico
+                            </SelectItem>
                             <SelectItem value="tecnica-preco">Técnica e preço R$</SelectItem>
-                            <SelectItem value="maior-retorno">Maior retorno econômico R$ ou %</SelectItem>
+                            <SelectItem value="maior-retorno">
+                              Maior retorno econômico R$ ou %
+                            </SelectItem>
                             <SelectItem value="maior-desconto">Maior Desconto (%)</SelectItem>
                             <SelectItem value="menor-taxa">Menor taxa administrativa %</SelectItem>
                           </>
@@ -556,7 +618,9 @@ export default function CreateTenderPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="disputeMode">Modo de Disputa</Label>
-                    <Select value={formData.disputeMode} onValueChange={(value) => handleChange("disputeMode", value)}>
+                    <Select
+                      value={formData.disputeMode}
+                      onValueChange={(value) => handleChange("disputeMode", value)}>
                       <SelectTrigger id="disputeMode">
                         <SelectValue placeholder="Selecione o modo" />
                       </SelectTrigger>
@@ -590,8 +654,7 @@ export default function CreateTenderPage() {
                     <Label htmlFor="priceDecimals">Decimais dos Preços</Label>
                     <Select
                       value={formData.priceDecimals}
-                      onValueChange={(value) => handleChange("priceDecimals", value)}
-                    >
+                      onValueChange={(value) => handleChange("priceDecimals", value)}>
                       <SelectTrigger id="priceDecimals">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -640,7 +703,9 @@ export default function CreateTenderPage() {
                         <div className="grid grid-cols-2 gap-2">
                           <Popover>
                             <PopoverTrigger asChild>
-                              <Button variant="outline" className="justify-start text-left font-normal">
+                              <Button
+                                variant="outline"
+                                className="justify-start text-left font-normal">
                                 <CalendarIcon className="mr-2 h-4 w-4" />
                                 {formData.impugnationDate ? (
                                   format(formData.impugnationDate, "dd/MM/yyyy", { locale: ptBR })
@@ -668,11 +733,15 @@ export default function CreateTenderPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="font-medium text-orange-800">Data e Horário Limite para Propostas</Label>
+                        <Label className="font-medium text-orange-800">
+                          Data e Horário Limite para Propostas
+                        </Label>
                         <div className="grid grid-cols-2 gap-2">
                           <Popover>
                             <PopoverTrigger asChild>
-                              <Button variant="outline" className="justify-start text-left font-normal">
+                              <Button
+                                variant="outline"
+                                className="justify-start text-left font-normal">
                                 <CalendarIcon className="mr-2 h-4 w-4" />
                                 {formData.proposalDate ? (
                                   format(formData.proposalDate, "dd/MM/yyyy", { locale: ptBR })
@@ -700,11 +769,15 @@ export default function CreateTenderPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="font-medium text-orange-800">Data e Horário de Abertura da Sessão</Label>
+                        <Label className="font-medium text-orange-800">
+                          Data e Horário de Abertura da Sessão
+                        </Label>
                         <div className="grid grid-cols-2 gap-2">
                           <Popover>
                             <PopoverTrigger asChild>
-                              <Button variant="outline" className="justify-start text-left font-normal">
+                              <Button
+                                variant="outline"
+                                className="justify-start text-left font-normal">
                                 <CalendarIcon className="mr-2 h-4 w-4" />
                                 {formData.openingDate ? (
                                   format(formData.openingDate, "dd/MM/yyyy", { locale: ptBR })
@@ -738,8 +811,7 @@ export default function CreateTenderPage() {
                   <Label>Documentos de Habilitação</Label>
                   <RadioGroup
                     value={formData.documentationMode}
-                    onValueChange={(value) => handleChange("documentationMode", value)}
-                  >
+                    onValueChange={(value) => handleChange("documentationMode", value)}>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="all" id="all" />
                       <Label htmlFor="all">Todos apresentam na fase de proposta</Label>
@@ -777,12 +849,13 @@ export default function CreateTenderPage() {
               <div className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="auctioneer">
-                    {formData.modality === "pregao-eletronico" ? "Pregoeiro" : "Agente de Contratação"}
+                    {formData.modality === "pregao-eletronico"
+                      ? "Pregoeiro"
+                      : "Agente de Contratação"}
                   </Label>
                   <Select
                     value={formData.team.auctioneer}
-                    onValueChange={(value) => handleTeamChange("auctioneer", value)}
-                  >
+                    onValueChange={(value) => handleTeamChange("auctioneer", value)}>
                     <SelectTrigger id="auctioneer">
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
@@ -800,8 +873,7 @@ export default function CreateTenderPage() {
                   <Label htmlFor="authority">Autoridade Superior</Label>
                   <Select
                     value={formData.team.authority}
-                    onValueChange={(value) => handleTeamChange("authority", value)}
-                  >
+                    onValueChange={(value) => handleTeamChange("authority", value)}>
                     <SelectTrigger id="authority">
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
@@ -818,7 +890,11 @@ export default function CreateTenderPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label>Equipe de Apoio</Label>
-                    <Button type="button" variant="outline" size="sm" onClick={addSupportTeamMember}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addSupportTeamMember}>
                       <Plus className="mr-2 h-4 w-4" />
                       Adicionar
                     </Button>
@@ -826,7 +902,9 @@ export default function CreateTenderPage() {
 
                   {formData.team.supportTeam.map((member, index) => (
                     <div key={index} className="flex items-center gap-2">
-                      <Select value={member} onValueChange={(value) => handleSupportTeamChange(index, value)}>
+                      <Select
+                        value={member}
+                        onValueChange={(value) => handleSupportTeamChange(index, value)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
@@ -844,8 +922,7 @@ export default function CreateTenderPage() {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          onClick={() => removeSupportTeamMember(index)}
-                        >
+                          onClick={() => removeSupportTeamMember(index)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       )}
@@ -878,7 +955,11 @@ export default function CreateTenderPage() {
                               : `Grupo ${String(groupIndex + 1).padStart(2, "0")}`}
                           </CardTitle>
                           {formData.groups.length > 1 && (
-                            <Button type="button" variant="ghost" size="icon" onClick={() => removeGroup(groupIndex)}>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeGroup(groupIndex)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           )}
@@ -890,8 +971,9 @@ export default function CreateTenderPage() {
                             <Label>Tipo de Itens</Label>
                             <Select
                               value={group.type}
-                              onValueChange={(value) => handleGroupChange(groupIndex, "type", value)}
-                            >
+                              onValueChange={(value) =>
+                                handleGroupChange(groupIndex, "type", value)
+                              }>
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecione" />
                               </SelectTrigger>
@@ -904,11 +986,14 @@ export default function CreateTenderPage() {
 
                           <div className="space-y-2">
                             <Label>
-                              Descrição do {formData.judgmentCriteria === "menor-preco-item" ? "Item" : "Grupo"}
+                              Descrição do{" "}
+                              {formData.judgmentCriteria === "menor-preco-item" ? "Item" : "Grupo"}
                             </Label>
                             <Input
                               value={group.description}
-                              onChange={(e) => handleGroupChange(groupIndex, "description", e.target.value)}
+                              onChange={(e) =>
+                                handleGroupChange(groupIndex, "description", e.target.value)
+                              }
                               placeholder="Descrição"
                             />
                           </div>
@@ -920,9 +1005,13 @@ export default function CreateTenderPage() {
                               <Checkbox
                                 id={`requireBrand-${groupIndex}`}
                                 checked={group.requireBrand}
-                                onCheckedChange={(checked) => handleGroupChange(groupIndex, "requireBrand", checked)}
+                                onCheckedChange={(checked) =>
+                                  handleGroupChange(groupIndex, "requireBrand", checked)
+                                }
                               />
-                              <Label htmlFor={`requireBrand-${groupIndex}`}>Requer Marca, Modelo e Fabricante</Label>
+                              <Label htmlFor={`requireBrand-${groupIndex}`}>
+                                Requer Marca, Modelo e Fabricante
+                              </Label>
                             </div>
                           )}
 
@@ -934,7 +1023,9 @@ export default function CreateTenderPage() {
                                 handleGroupChange(groupIndex, "allowDescriptionChange", checked)
                               }
                             />
-                            <Label htmlFor={`allowDescriptionChange-${groupIndex}`}>Permitir Alterar a Descrição</Label>
+                            <Label htmlFor={`allowDescriptionChange-${groupIndex}`}>
+                              Permitir Alterar a Descrição
+                            </Label>
                           </div>
                         </div>
 
@@ -942,7 +1033,11 @@ export default function CreateTenderPage() {
                           <>
                             <div className="flex items-center justify-between mt-4">
                               <h4 className="font-medium">Itens do Grupo</h4>
-                              <Button type="button" variant="outline" size="sm" onClick={() => addItem(groupIndex)}>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => addItem(groupIndex)}>
                                 <Plus className="mr-2 h-4 w-4" />
                                 Adicionar Item
                               </Button>
@@ -954,17 +1049,19 @@ export default function CreateTenderPage() {
                           {group.items.map((item, itemIndex) => (
                             <div key={item.id} className="border rounded-md p-4">
                               <div className="flex items-center justify-between mb-4">
-                                <h5 className="font-medium">Item {String(itemIndex + 1).padStart(2, "0")}</h5>
-                                {group.items.length > 1 && formData.judgmentCriteria === "menor-preco-lote" && (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => removeItem(groupIndex, itemIndex)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                )}
+                                <h5 className="font-medium">
+                                  Item {String(itemIndex + 1).padStart(2, "0")}
+                                </h5>
+                                {group.items.length > 1 &&
+                                  formData.judgmentCriteria === "menor-preco-lote" && (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => removeItem(groupIndex, itemIndex)}>
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  )}
                               </div>
 
                               <div className="grid gap-4 md:grid-cols-2">
@@ -973,7 +1070,12 @@ export default function CreateTenderPage() {
                                   <Input
                                     value={item.description}
                                     onChange={(e) =>
-                                      handleItemChange(groupIndex, itemIndex, "description", e.target.value)
+                                      handleItemChange(
+                                        groupIndex,
+                                        itemIndex,
+                                        "description",
+                                        e.target.value
+                                      )
                                     }
                                     placeholder="Descrição do item"
                                   />
@@ -985,17 +1087,20 @@ export default function CreateTenderPage() {
                                     value={item.benefitType}
                                     onValueChange={(value) =>
                                       handleItemChange(groupIndex, itemIndex, "benefitType", value)
-                                    }
-                                  >
+                                    }>
                                     <SelectTrigger>
                                       <SelectValue placeholder="Selecione" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="exclusive">Exclusivo ME/EPP</SelectItem>
-                                      <SelectItem value="benefit">
+                                      <SelectItem value="exclusive_for_me_epp">
+                                        Exclusivo ME/EPP
+                                      </SelectItem>
+                                      <SelectItem value="open_competition_with_benefit_for_me_epp">
                                         Ampla concorrência com benefício para ME/EPP
                                       </SelectItem>
-                                      <SelectItem value="open">Ampla concorrência sem benefício</SelectItem>
+                                      <SelectItem value="open_competition_without_benefit">
+                                        Ampla concorrência sem benefício
+                                      </SelectItem>
                                       <SelectItem value="regional">Regional</SelectItem>
                                     </SelectContent>
                                   </Select>
@@ -1008,7 +1113,12 @@ export default function CreateTenderPage() {
                                   <Input
                                     value={item.quantity}
                                     onChange={(e) =>
-                                      handleItemChange(groupIndex, itemIndex, "quantity", e.target.value)
+                                      handleItemChange(
+                                        groupIndex,
+                                        itemIndex,
+                                        "quantity",
+                                        e.target.value
+                                      )
                                     }
                                     placeholder="Quantidade"
                                   />
@@ -1018,7 +1128,14 @@ export default function CreateTenderPage() {
                                   <Label>Unidade de Medida</Label>
                                   <Input
                                     value={item.unit}
-                                    onChange={(e) => handleItemChange(groupIndex, itemIndex, "unit", e.target.value)}
+                                    onChange={(e) =>
+                                      handleItemChange(
+                                        groupIndex,
+                                        itemIndex,
+                                        "unit",
+                                        e.target.value
+                                      )
+                                    }
                                     placeholder="Ex: UN, KG, CX"
                                   />
                                 </div>
@@ -1028,7 +1145,12 @@ export default function CreateTenderPage() {
                                   <Input
                                     value={item.unitPrice}
                                     onChange={(e) =>
-                                      handleItemChange(groupIndex, itemIndex, "unitPrice", e.target.value)
+                                      handleItemChange(
+                                        groupIndex,
+                                        itemIndex,
+                                        "unitPrice",
+                                        e.target.value
+                                      )
                                     }
                                     placeholder="R$ 0,00"
                                   />
@@ -1088,8 +1210,7 @@ export default function CreateTenderPage() {
                         variant="ghost"
                         size="icon"
                         className="mt-6"
-                        onClick={() => removeDocument(index)}
-                      >
+                        onClick={() => removeDocument(index)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -1114,7 +1235,9 @@ export default function CreateTenderPage() {
                         <Label>Data de Publicação</Label>
                         <Popover>
                           <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start text-left font-normal">
+                            <Button
+                              variant="outline"
+                              className="w-full justify-start text-left font-normal">
                               <CalendarIcon className="mr-2 h-4 w-4" />
                               <span>Selecionar data</span>
                             </Button>
@@ -1154,8 +1277,7 @@ export default function CreateTenderPage() {
               type="submit"
               onClick={handleSubmit}
               className="bg-primary hover:bg-primary/90"
-              disabled={isSubmitting}
-            >
+              disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1172,5 +1294,5 @@ export default function CreateTenderPage() {
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }

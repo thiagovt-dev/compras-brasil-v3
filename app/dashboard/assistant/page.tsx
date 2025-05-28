@@ -290,7 +290,7 @@ export default function AssistantPage() {
               )}
             </Button>
           </div>
-          <div className="mt-2 text-xs text-muted-foreground w-full">Pressione Enter para enviar</div>
+          <div className="mt-2 text-xs text-muted-foreground w-full pl-4">Pressione Enter para enviar</div>
         </CardFooter>
       </Card>
 

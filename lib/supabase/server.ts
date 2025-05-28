@@ -14,10 +14,10 @@ export function createServerClient() {
   );
 }
 
-export async function createServerClientWithAuth() {
-  const cookieStore = cookies(); // Isso agora é assíncrono
+export function createServerClientWithAuth() {
+  const cookieStore = cookies();
   return createServerComponentClient(
-    { cookies: () => cookieStore }, // Simplificado
+    { cookies: () => cookieStore },
     {
       supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
       supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

@@ -52,7 +52,7 @@ export function TenderList({
   useEffect(() => {
     const fetchAgencies = async () => {
       try {
-        const { data, error } = await supabase.from("agencies").select("id, name").eq("status", "active")
+        const { data, error } = await supabase.from("agencies").select("id, name").eq("status", "published")
 
         if (error) throw error
 
@@ -102,7 +102,7 @@ export function TenderList({
       if (filters.status) {
         query = query.eq("status", filters.status)
       } else if (filters.onlyOpen) {
-        query = query.eq("status", "active")
+        query = query.eq("status", "published")
       }
 
       if (filters.startDate) {

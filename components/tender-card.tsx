@@ -7,32 +7,33 @@ import { Calendar, Clock, FileText, Building, Tag } from "lucide-react"
 
 interface TenderCardProps {
   tender: {
-    id: string
-    title: string
-    number: string
-    modality: string
-    category: string
-    agency_id: string
+    id: string;
+    title: string;
+    tender_number: string;
+    modality: string;
+    category: string;
+    agency_id: string;
+    tender_type: string;
     agency?: {
-      name: string
-    }
-    opening_date: string
-    proposal_deadline: string
-    status: string
-    value?: number
-    is_value_secret: boolean
-    created_at: string
-  }
-  showAgency?: boolean
+      name: string;
+    };
+    opening_date: string;
+    closing_date: string;
+    status: string;
+    value?: number;
+    is_value_secret: boolean;
+    created_at: string;
+  };
+  showAgency?: boolean;
 }
 
 export function TenderCard({ tender, showAgency = true }: TenderCardProps) {
   const getModalityLabel = (modality: string) => {
     const modalityMap: Record<string, string> = {
-      "pregao-eletronico": "Pregão Eletrônico",
-      "concorrencia-eletronica": "Concorrência Eletrônica",
-      "dispensa-eletronica": "Dispensa Eletrônica",
-    }
+      "pregao_eletronico": "Pregão Eletrônico",
+      "concorrencia": "Concorrência Eletrônica",
+      "tomada_de_precos": "Dispensa Eletrônica",
+    };
     return modalityMap[modality] || modality
   }
 
@@ -58,7 +59,7 @@ export function TenderCard({ tender, showAgency = true }: TenderCardProps) {
         label: "Rascunho",
         variant: "outline",
       },
-      active: {
+      published: {
         label: "Aberta",
         variant: "default",
       },
@@ -105,15 +106,13 @@ export function TenderCard({ tender, showAgency = true }: TenderCardProps) {
           {getStatusBadge(tender.status)}
         </div>
         <div className="text-sm text-muted-foreground">
-          <span className="font-medium">Nº {tender.number}</span>
+          <span className="font-medium">Nº {tender.tender_number}</span>
         </div>
       </CardHeader>
       <CardContent className="pb-2 space-y-2">
         <div className="flex items-center gap-2 text-sm">
           <Tag className="h-4 w-4 text-muted-foreground" />
-          <span>
-            {getModalityLabel(tender.modality)} - {getCategoryLabel(tender.category)}
-          </span>
+          <span>{getModalityLabel(tender.tender_type)}</span>
         </div>
 
         {showAgency && tender.agency && (
@@ -130,7 +129,7 @@ export function TenderCard({ tender, showAgency = true }: TenderCardProps) {
 
         <div className="flex items-center gap-2 text-sm">
           <Clock className="h-4 w-4 text-muted-foreground" />
-          <span>Propostas até: {formatDate(tender.proposal_deadline)}</span>
+          <span>Propostas até: {formatDate(tender.closing_date)}</span>
         </div>
 
         {!tender.is_value_secret && tender.value && (
@@ -148,12 +147,11 @@ export function TenderCard({ tender, showAgency = true }: TenderCardProps) {
       <CardFooter>
         <Link
           href={`/dashboard/tenders/${tender.id}`}
-          className="text-sm text-primary hover:underline flex items-center gap-1"
-        >
+          className="text-sm text-primary hover:underline flex items-center gap-1">
           <FileText className="h-4 w-4" />
           Ver detalhes
         </Link>
       </CardFooter>
     </Card>
-  )
+  );
 }
