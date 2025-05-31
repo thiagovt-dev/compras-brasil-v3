@@ -1,21 +1,22 @@
-import { Suspense } from "react"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
-import { SessionChat } from "@/components/session-chat"
-import { TenderSessionInfo } from "@/components/tender-session-info"
-import { TenderSessionParticipants } from "@/components/tender-session-participants"
-import { RegisterParticipationButton } from "@/components/register-participation-button"
-import { TenderHeader } from "@/components/tender-header"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Separator } from "@/components/ui/separator"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Suspense } from "react";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { SessionChat } from "@/components/session-chat";
+import { TenderSessionInfo } from "@/components/tender-session-info";
+import { TenderSessionParticipants } from "@/components/tender-session-participants";
+import { RegisterParticipationButton } from "@/components/register-participation-button";
+import { TenderHeader } from "@/components/tender-header";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function TenderSessionPage({ params }: { params: { id: string } }) {
-  const supabase = createServerSupabaseClient()
+  const supabase = createServerSupabaseClient();
 
   // Buscar informações da licitação
   const { data: tender } = await supabase
     .from("tenders")
-    .select(`
+    .select(
+      `
       id,
       title,
       number,
@@ -24,12 +25,13 @@ export default async function TenderSessionPage({ params }: { params: { id: stri
       agencies!inner (
         name
       )
-    `)
+    `
+    )
     .eq("id", params.id)
-    .single()
+    .single();
 
   // Verificar se a sessão está ativa
-  const isSessionActive = tender?.status === "active" || tender?.status === "in_progress"
+  const isSessionActive = tender?.status === "active" || tender?.status === "in_progress";
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -58,7 +60,7 @@ export default async function TenderSessionPage({ params }: { params: { id: stri
 
               {!isSessionActive && (
                 <div className="mt-4 p-4 bg-muted rounded-md">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[1rem] text-muted-foreground">
                     A sessão pública será iniciada em{" "}
                     {tender?.opening_date
                       ? new Date(tender.opening_date).toLocaleString("pt-BR")
@@ -97,15 +99,21 @@ export default async function TenderSessionPage({ params }: { params: { id: stri
               <Separator />
 
               <div className="space-y-2">
-                <h3 className="text-sm font-medium">Links Rápidos</h3>
+                <h3 className="text-[1rem] font-medium">Links Rápidos</h3>
                 <div className="grid gap-2">
-                  <a href={`/tenders/${params.id}`} className="text-sm text-blue-600 hover:underline">
+                  <a
+                    href={`/tenders/${params.id}`}
+                    className="text-[1rem] text-blue-600 hover:underline">
                     Detalhes da Licitação
                   </a>
-                  <a href={`/tenders/${params.id}/documents`} className="text-sm text-blue-600 hover:underline">
+                  <a
+                    href={`/tenders/${params.id}/documents`}
+                    className="text-[1rem] text-blue-600 hover:underline">
                     Documentos
                   </a>
-                  <a href={`/tenders/${params.id}/clarifications`} className="text-sm text-blue-600 hover:underline">
+                  <a
+                    href={`/tenders/${params.id}/clarifications`}
+                    className="text-[1rem] text-blue-600 hover:underline">
                     Esclarecimentos
                   </a>
                 </div>
@@ -115,5 +123,5 @@ export default async function TenderSessionPage({ params }: { params: { id: stri
         </div>
       </div>
     </div>
-  )
+  );
 }

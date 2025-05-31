@@ -245,25 +245,25 @@ export default function DocumentsPage() {
             <CardContent>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Aprovados</span>
+                  <span className="text-[1rem]">Aprovados</span>
                   <Badge variant="outline" className="bg-green-500/10">
                     {approvedDocuments.length}
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Em análise</span>
+                  <span className="text-[1rem]">Em análise</span>
                   <Badge variant="outline" className="bg-yellow-500/10">
                     {pendingDocuments.length}
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Rejeitados</span>
+                  <span className="text-[1rem]">Rejeitados</span>
                   <Badge variant="outline" className="bg-red-500/10">
                     {rejectedDocuments.length}
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Expirados</span>
+                  <span className="text-[1rem]">Expirados</span>
                   <Badge variant="outline" className="bg-gray-500/10">
                     {expiredDocuments.length}
                   </Badge>
@@ -271,8 +271,8 @@ export default function DocumentsPage() {
                 <Separator />
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Progresso</span>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-[1rem] font-medium">Progresso</span>
+                    <span className="text-[1rem] text-muted-foreground">
                       {approvedDocuments.length}/{requiredDocuments.length}
                     </span>
                   </div>
@@ -334,8 +334,10 @@ export default function DocumentsPage() {
                     {isUploading && (
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Enviando...</span>
-                          <span className="text-sm text-muted-foreground">{uploadProgress}%</span>
+                          <span className="text-[1rem] text-muted-foreground">Enviando...</span>
+                          <span className="text-[1rem] text-muted-foreground">
+                            {uploadProgress}%
+                          </span>
                         </div>
                         <Progress value={uploadProgress} />
                       </div>
@@ -412,7 +414,7 @@ export default function DocumentsPage() {
                               <FileText className="h-5 w-5 text-muted-foreground" />
                               <span>{doc.name}</span>
                             </div>
-                            <div className="text-sm text-muted-foreground mt-1">
+                            <div className="text-[1rem] text-muted-foreground mt-1">
                               Enviado em {formatDate(doc.created_at)}
                             </div>
                           </div>
@@ -443,7 +445,7 @@ export default function DocumentsPage() {
                               <FileText className="h-5 w-5 text-muted-foreground" />
                               <span>{doc.name}</span>
                             </div>
-                            <div className="text-sm text-muted-foreground mt-1">
+                            <div className="text-[1rem] text-muted-foreground mt-1">
                               Aprovado em {formatDate(doc.updated_at)}
                               {doc.expires_at && ` • Válido até ${formatDate(doc.expires_at)}`}
                             </div>
@@ -475,11 +477,11 @@ export default function DocumentsPage() {
                               <FileText className="h-5 w-5 text-muted-foreground" />
                               <span>{doc.name}</span>
                             </div>
-                            <div className="text-sm text-muted-foreground mt-1">
+                            <div className="text-[1rem] text-muted-foreground mt-1">
                               Rejeitado em {formatDate(doc.updated_at)}
                             </div>
                             {doc.rejection_reason && (
-                              <div className="text-sm text-red-500 mt-1">
+                              <div className="text-[1rem] text-red-500 mt-1">
                                 Motivo: {doc.rejection_reason}
                               </div>
                             )}
@@ -521,7 +523,7 @@ export default function DocumentsPage() {
                               <FileText className="h-5 w-5 text-muted-foreground" />
                               <span>{doc.name}</span>
                             </div>
-                            <div className="text-sm text-muted-foreground mt-1">
+                            <div className="text-[1rem] text-muted-foreground mt-1">
                               Expirado em {formatDate(doc.expires_at || doc.updated_at)}
                             </div>
                           </div>

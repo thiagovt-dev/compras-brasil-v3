@@ -593,7 +593,7 @@ export default function LiveSessionPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-2">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          <p className="text-sm text-muted-foreground">Carregando sessão...</p>
+          <p className="text-[1rem] text-muted-foreground">Carregando sessão...</p>
         </div>
       </div>
     );
@@ -629,7 +629,7 @@ export default function LiveSessionPage() {
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="text-xl">Sessão Pública: {tender.title}</CardTitle>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[1rem] text-muted-foreground">
                 Status:{" "}
                 <Badge
                   variant={
@@ -665,19 +665,19 @@ export default function LiveSessionPage() {
         <CardContent className="pb-2">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <h3 className="text-sm font-medium mb-1">Órgão</h3>
+              <h3 className="text-[1rem] font-medium mb-1">Órgão</h3>
               <div className="flex items-center space-x-2">
                 <Avatar className="h-6 w-6">
                   <AvatarFallback>{tender.agency_name?.charAt(0) || "A"}</AvatarFallback>
                 </Avatar>
-                <span className="text-sm">{tender.agency_name}</span>
+                <span className="text-[1rem]">{tender.agency_name}</span>
               </div>
             </div>
             <div>
-              <h3 className="text-sm font-medium mb-1">Data da Sessão</h3>
+              <h3 className="text-[1rem] font-medium mb-1">Data da Sessão</h3>
               <div className="flex items-center space-x-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">
+                <span className="text-[1rem]">
                   {tender.session_date
                     ? format(new Date(tender.session_date), "dd/MM/yyyy 'às' HH:mm", {
                         locale: ptBR,
@@ -687,17 +687,17 @@ export default function LiveSessionPage() {
               </div>
             </div>
             <div>
-              <h3 className="text-sm font-medium mb-1">Participantes</h3>
+              <h3 className="text-[1rem] font-medium mb-1">Participantes</h3>
               <div className="flex items-center space-x-2">
                 <Users className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">{suppliers.length} fornecedores</span>
+                <span className="text-[1rem]">{suppliers.length} fornecedores</span>
               </div>
             </div>
           </div>
 
           {timer !== null && timer > 0 && (
             <div className="mt-4 flex items-center justify-between bg-muted p-2 rounded-md">
-              <span className="text-sm font-medium">Tempo restante:</span>
+              <span className="text-[1rem] font-medium">Tempo restante:</span>
               <span className="text-lg font-bold">{formatTime(timer)}</span>
             </div>
           )}
@@ -753,8 +753,8 @@ export default function LiveSessionPage() {
                       <AvatarFallback>{message.profiles?.name?.charAt(0) || "U"}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">{message.profiles?.name}</p>
-                      <p className="text-sm">{message.content}</p>
+                      <p className="text-[1rem] font-medium">{message.profiles?.name}</p>
+                      <p className="text-[1rem]">{message.content}</p>
                     </div>
                   </div>
                 ))}
@@ -790,8 +790,8 @@ export default function LiveSessionPage() {
                       <AvatarFallback>{document.profiles?.name?.charAt(0) || "U"}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">{document.profiles?.name}</p>
-                      <p className="text-sm">{document.title}</p>
+                      <p className="text-[1rem] font-medium">{document.profiles?.name}</p>
+                      <p className="text-[1rem]">{document.title}</p>
                     </div>
                   </div>
                 ))}
@@ -812,8 +812,8 @@ export default function LiveSessionPage() {
                       <AvatarFallback>{proposal.profiles?.name?.charAt(0) || "U"}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">{proposal.profiles?.name}</p>
-                      <p className="text-sm">Valor: R$ {proposal.value.toFixed(2)}</p>
+                      <p className="text-[1rem] font-medium">{proposal.profiles?.name}</p>
+                      <p className="text-[1rem]">Valor: R$ {proposal.value.toFixed(2)}</p>
                     </div>
                   </div>
                 ))}
@@ -830,7 +830,7 @@ export default function LiveSessionPage() {
             <CardContent className="space-y-4">
               {lots.map((lot, index) => (
                 <div key={index} className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Lote {lot.number}</span>
+                  <span className="text-[1rem] font-medium">Lote {lot.number}</span>
                   <Button variant="outline" size="sm" onClick={() => setCurrentLot(lot.id)}>
                     Selecionar
                   </Button>
@@ -863,7 +863,7 @@ export default function LiveSessionPage() {
               <CardContent className="space-y-4">
                 {suppliers.map((supplier, index) => (
                   <div key={index} className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{supplier.profiles?.name}</span>
+                    <span className="text-[1rem] font-medium">{supplier.profiles?.name}</span>
                     <Button
                       variant="outline"
                       size="sm"

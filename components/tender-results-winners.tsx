@@ -141,7 +141,7 @@ export function TenderResultsWinners({ tenderId }: TenderResultsWinnersProps) {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex flex-col space-y-1">
-                          <span className="text-sm text-muted-foreground">Fornecedor</span>
+                          <span className="text-[1rem] text-muted-foreground">Fornecedor</span>
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-muted-foreground" />
                             <span>{winner.supplier?.company_name || winner.supplier?.name}</span>
@@ -149,7 +149,7 @@ export function TenderResultsWinners({ tenderId }: TenderResultsWinnersProps) {
                         </div>
 
                         <div className="flex flex-col space-y-1">
-                          <span className="text-sm text-muted-foreground">Valor Total</span>
+                          <span className="text-[1rem] text-muted-foreground">Valor Total</span>
                           <div className="flex items-center gap-2">
                             <DollarSign className="h-4 w-4 text-muted-foreground" />
                             <span className="font-medium">
@@ -160,8 +160,8 @@ export function TenderResultsWinners({ tenderId }: TenderResultsWinnersProps) {
                       </div>
 
                       <div className="mt-4">
-                        <h5 className="text-sm font-medium mb-2">Detalhes da Proposta</h5>
-                        <div className="text-sm text-muted-foreground">
+                        <h5 className="text-[1rem] font-medium mb-2">Detalhes da Proposta</h5>
+                        <div className="text-[1rem] text-muted-foreground">
                           {winner.notes || "Nenhuma observação adicional."}
                         </div>
                       </div>

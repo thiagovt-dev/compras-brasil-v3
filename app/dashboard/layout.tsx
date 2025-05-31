@@ -31,9 +31,9 @@ export default function DashboardLayout({
       <SidebarProvider>
         <DashboardSidebar userRole={profile?.profile_type || "citizen"} />
         <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 py-8">
             <SidebarTrigger className="-ml-1" />
-            <div className="ml-auto">
+            <div className="ml-auto px-8">
               <UserNav user={userData} notificationCount={0} onLogout={handleLogout} />
             </div>
           </header>

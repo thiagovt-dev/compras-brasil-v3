@@ -59,12 +59,22 @@ export function SessionChat() {
         if (error) throw error;
 
         if (data) {
-          const formattedMessages = data.map((msg: any) => ({
-            msg,
-            user: {
-              email: msg.auth?.users?.email || "Usuário",
-            },
-          }));
+          const formattedMessages = data.map((msg: any) => {
+            const userEmail =
+              msg.user?.email || msg.users?.email || msg.auth?.users?.email || "Usuário";
+
+            return {
+              id: msg.id,
+              user_id: msg.user_id,
+              content: msg.content,
+              created_at: msg.created_at,
+              type: msg.type,
+              user: {
+                email: userEmail,
+              },
+            };
+          }) as Message[];
+
           setMessages(formattedMessages);
           scrollToBottom();
         }
@@ -190,14 +200,14 @@ export function SessionChat() {
               </Avatar>
               <div className="flex-1 space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm">
+                  <span className="font-medium text-[1rem]">
                     {message.type === "system" ? "Sistema" : message.user?.email || "Usuário"}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-[1rem] text-muted-foreground">
                     {formatDate(message.created_at)}
                   </span>
                 </div>
-                <p className="text-sm">{message.content}</p>
+                <p className="text-[1rem]">{message.content}</p>
               </div>
             </div>
           ))

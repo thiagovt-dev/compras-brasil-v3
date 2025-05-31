@@ -1,7 +1,7 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Clock, CheckCircle, Users, Activity, BarChart } from "lucide-react"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Clock, CheckCircle, Users, Activity, BarChart } from "lucide-react";
 
 export default function AdminDashboard() {
   return (
@@ -70,19 +70,19 @@ export default function AdminDashboard() {
             <div className="grid gap-4 grid-cols-2">
               <div className="flex flex-col items-center justify-center space-y-2 rounded-lg border p-4">
                 <div className="text-3xl font-bold text-green-700">1,245</div>
-                <p className="text-sm text-muted-foreground text-center">Usuários Ativos</p>
+                <p className="text-[1rem] text-muted-foreground text-center">Usuários Ativos</p>
               </div>
               <div className="flex flex-col items-center justify-center space-y-2 rounded-lg border p-4">
                 <div className="text-3xl font-bold text-green-700">328</div>
-                <p className="text-sm text-muted-foreground text-center">Licitações Ativas</p>
+                <p className="text-[1rem] text-muted-foreground text-center">Licitações Ativas</p>
               </div>
               <div className="flex flex-col items-center justify-center space-y-2 rounded-lg border p-4">
                 <div className="text-3xl font-bold text-green-700">87%</div>
-                <p className="text-sm text-muted-foreground text-center">Taxa de Sucesso</p>
+                <p className="text-[1rem] text-muted-foreground text-center">Taxa de Sucesso</p>
               </div>
               <div className="flex flex-col items-center justify-center space-y-2 rounded-lg border p-4">
                 <div className="text-3xl font-bold text-green-700">R$ 15M</div>
-                <p className="text-sm text-muted-foreground text-center">Valor Economizado</p>
+                <p className="text-[1rem] text-muted-foreground text-center">Valor Economizado</p>
               </div>
             </div>
             <div className="mt-6 flex justify-end">
@@ -110,8 +110,8 @@ export default function AdminDashboard() {
                   </div>
                   <div>
                     <h3 className="font-medium">{activity.title}</h3>
-                    <p className="text-sm text-muted-foreground">{activity.description}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
+                    <p className="text-[1rem] text-muted-foreground">{activity.description}</p>
+                    <p className="text-[1rem] text-muted-foreground mt-1">{activity.time}</p>
                   </div>
                 </div>
               ))}
@@ -140,7 +140,7 @@ export default function AdminDashboard() {
                   <div>
                     <h3 className="font-medium">{request.title}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[1rem] text-muted-foreground">
                         {request.user} • {request.time}
                       </p>
                     </div>
@@ -175,7 +175,7 @@ export default function AdminDashboard() {
                   <div>
                     <h3 className="font-medium">{request.title}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[1rem] text-muted-foreground">
                         {request.type} • {request.time}
                       </p>
                     </div>
@@ -199,7 +199,7 @@ export default function AdminDashboard() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
 
 // Mock data for recent activities
@@ -222,7 +222,7 @@ const recentActivities = [
     description: "Pregão Eletrônico nº 045/2024 foi homologado com sucesso",
     time: "Há 5 horas",
   },
-]
+];
 
 // Mock data for support requests
 const supportRequests = [
@@ -244,7 +244,7 @@ const supportRequests = [
     user: "Empresa ABC Comércio",
     time: "Há 5 horas",
   },
-]
+];
 
 // Mock data for registration requests
 const registrationRequests = [
@@ -266,4 +266,4 @@ const registrationRequests = [
     type: "Fornecedor",
     time: "Há 1 dia",
   },
-]
+];

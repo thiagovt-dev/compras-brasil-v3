@@ -423,7 +423,7 @@ export default function ImpugnationPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-2">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          <p className="text-sm text-muted-foreground">Carregando...</p>
+          <p className="text-[1rem] text-muted-foreground">Carregando...</p>
         </div>
       </div>
     );
@@ -528,7 +528,7 @@ export default function ImpugnationPage() {
                   <div className="space-y-2">
                     <Label htmlFor="attachment">Anexo (opcional)</Label>
                     <Input id="attachment" type="file" onChange={handleFileChange} />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[1rem] text-muted-foreground">
                       Formatos aceitos: PDF, DOC, DOCX, JPG, PNG (máx. 10MB)
                     </p>
                   </div>
@@ -605,7 +605,7 @@ export default function ImpugnationPage() {
                             <div className="bg-muted p-3 rounded-md whitespace-pre-wrap">
                               {impugnation.response}
                             </div>
-                            <p className="text-sm text-muted-foreground mt-2">
+                            <p className="text-[1rem] text-muted-foreground mt-2">
                               Respondido em{" "}
                               {format(
                                 new Date(impugnation.response_date),
@@ -672,7 +672,7 @@ export default function ImpugnationPage() {
                   <div className="space-y-2">
                     <Label htmlFor="attachment-clarification">Anexo (opcional)</Label>
                     <Input id="attachment-clarification" type="file" onChange={handleFileChange} />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[1rem] text-muted-foreground">
                       Formatos aceitos: PDF, DOC, DOCX, JPG, PNG (máx. 10MB)
                     </p>
                   </div>
@@ -749,7 +749,7 @@ export default function ImpugnationPage() {
                             <div className="bg-muted p-3 rounded-md whitespace-pre-wrap">
                               {clarification.response}
                             </div>
-                            <p className="text-sm text-muted-foreground mt-2">
+                            <p className="text-[1rem] text-muted-foreground mt-2">
                               Respondido em{" "}
                               {format(
                                 new Date(clarification.response_date),

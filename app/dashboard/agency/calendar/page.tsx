@@ -1,14 +1,20 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Calendar } from "@/components/ui/calendar"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -17,11 +23,20 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { useToast } from "@/hooks/use-toast"
-import { cn } from "@/lib/utils"
-import { ChevronLeft, ChevronRight, Plus, Clock, MapPin, Users, CalendarIcon, FileText } from "lucide-react"
-import Link from "next/link"
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Clock,
+  MapPin,
+  Users,
+  CalendarIcon,
+  FileText,
+} from "lucide-react";
+import Link from "next/link";
 
 // Sample data for events
 const events = [
@@ -67,15 +82,15 @@ const events = [
     description: "Divulgação do resultado da licitação",
     tenderNumber: "12348",
   },
-]
+];
 
 export default function AgencyCalendarPage() {
-  const { toast } = useToast()
-  const [date, setDate] = useState<Date | undefined>(new Date())
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date())
-  const [isAddEventOpen, setIsAddEventOpen] = useState(false)
-  const [isEventDetailsOpen, setIsEventDetailsOpen] = useState(false)
-  const [selectedEvent, setSelectedEvent] = useState<any>(null)
+  const { toast } = useToast();
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  const [isEventDetailsOpen, setIsEventDetailsOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
   // New event form state
   const [newEvent, setNewEvent] = useState({
@@ -87,7 +102,7 @@ export default function AgencyCalendarPage() {
     location: "",
     description: "",
     tenderNumber: "",
-  })
+  });
 
   // Filter events for the selected date
   const selectedDateEvents = events.filter(
@@ -95,8 +110,8 @@ export default function AgencyCalendarPage() {
       selectedDate &&
       event.date.getDate() === selectedDate.getDate() &&
       event.date.getMonth() === selectedDate.getMonth() &&
-      event.date.getFullYear() === selectedDate.getFullYear(),
-  )
+      event.date.getFullYear() === selectedDate.getFullYear()
+  );
 
   // Format time from date
   const formatTime = (date: Date) => {
@@ -104,30 +119,30 @@ export default function AgencyCalendarPage() {
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
-    })
-  }
+    });
+  };
 
   // Format date range
   const formatDateRange = (start: Date, end?: Date) => {
-    if (!end) return formatTime(start)
-    return `${formatTime(start)} - ${formatTime(end)}`
-  }
+    if (!end) return formatTime(start);
+    return `${formatTime(start)} - ${formatTime(end)}`;
+  };
 
   // Get event badge color based on type
   const getEventBadgeColor = (type: string) => {
     switch (type) {
       case "opening":
-        return "bg-blue-500 hover:bg-blue-600"
+        return "bg-blue-500 hover:bg-blue-600";
       case "deadline":
-        return "bg-red-500 hover:bg-red-600"
+        return "bg-red-500 hover:bg-red-600";
       case "session":
-        return "bg-green-500 hover:bg-green-600"
+        return "bg-green-500 hover:bg-green-600";
       case "result":
-        return "bg-purple-500 hover:bg-purple-600"
+        return "bg-purple-500 hover:bg-purple-600";
       default:
-        return "bg-gray-500 hover:bg-gray-600"
+        return "bg-gray-500 hover:bg-gray-600";
     }
-  }
+  };
 
   // Check if a date has events
   const hasEvents = (day: Date) => {
@@ -135,23 +150,23 @@ export default function AgencyCalendarPage() {
       (event) =>
         event.date.getDate() === day.getDate() &&
         event.date.getMonth() === day.getMonth() &&
-        event.date.getFullYear() === day.getFullYear(),
-    )
-  }
+        event.date.getFullYear() === day.getFullYear()
+    );
+  };
 
   const handleAddEvent = () => {
     // In a real app, we would save the event to the database
     toast({
       title: "Evento adicionado",
       description: "O evento foi adicionado com sucesso ao calendário.",
-    })
-    setIsAddEventOpen(false)
-  }
+    });
+    setIsAddEventOpen(false);
+  };
 
   const handleEventClick = (event: any) => {
-    setSelectedEvent(event)
-    setIsEventDetailsOpen(true)
-  }
+    setSelectedEvent(event);
+    setIsEventDetailsOpen(true);
+  };
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -168,7 +183,9 @@ export default function AgencyCalendarPage() {
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>Adicionar Evento</DialogTitle>
-                <DialogDescription>Crie um novo evento no calendário de licitações</DialogDescription>
+                <DialogDescription>
+                  Crie um novo evento no calendário de licitações
+                </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
@@ -192,7 +209,9 @@ export default function AgencyCalendarPage() {
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="type">Tipo</Label>
-                    <Select value={newEvent.type} onValueChange={(value) => setNewEvent({ ...newEvent, type: value })}>
+                    <Select
+                      value={newEvent.type}
+                      onValueChange={(value) => setNewEvent({ ...newEvent, type: value })}>
                       <SelectTrigger id="type">
                         <SelectValue placeholder="Selecione o tipo" />
                       </SelectTrigger>
@@ -309,12 +328,11 @@ export default function AgencyCalendarPage() {
                 size="icon"
                 onClick={() => {
                   if (selectedDate) {
-                    const newDate = new Date(selectedDate)
-                    newDate.setDate(newDate.getDate() - 1)
-                    setSelectedDate(newDate)
+                    const newDate = new Date(selectedDate);
+                    newDate.setDate(newDate.getDate() - 1);
+                    setSelectedDate(newDate);
                   }
-                }}
-              >
+                }}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button
@@ -322,12 +340,11 @@ export default function AgencyCalendarPage() {
                 size="icon"
                 onClick={() => {
                   if (selectedDate) {
-                    const newDate = new Date(selectedDate)
-                    newDate.setDate(newDate.getDate() + 1)
-                    setSelectedDate(newDate)
+                    const newDate = new Date(selectedDate);
+                    newDate.setDate(newDate.getDate() + 1);
+                    setSelectedDate(newDate);
                   }
-                }}
-              >
+                }}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -346,18 +363,18 @@ export default function AgencyCalendarPage() {
                         {event.type === "result" && "Resultado"}
                       </Badge>
                     </div>
-                    <div className="flex items-center text-sm text-muted-foreground">
+                    <div className="flex items-center text-[1rem] text-muted-foreground">
                       <Clock className="mr-1 h-4 w-4" />
                       {formatDateRange(event.date, event.endDate)}
                     </div>
                     {event.location && (
-                      <div className="flex items-center text-sm text-muted-foreground">
+                      <div className="flex items-center text-[1rem] text-muted-foreground">
                         <MapPin className="mr-1 h-4 w-4" />
                         {event.location}
                       </div>
                     )}
                     {event.participants > 0 && (
-                      <div className="flex items-center text-sm text-muted-foreground">
+                      <div className="flex items-center text-[1rem] text-muted-foreground">
                         <Users className="mr-1 h-4 w-4" />
                         {event.participants} participante(s)
                       </div>
@@ -387,7 +404,7 @@ export default function AgencyCalendarPage() {
             ) : (
               <div className="flex h-[300px] flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
                 <h3 className="mt-4 text-lg font-medium">Nenhum evento para esta data</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
+                <p className="mt-2 text-[1rem] text-muted-foreground">
                   Selecione outra data no calendário ou crie um novo evento.
                 </p>
                 <Button className="mt-4" onClick={() => setIsAddEventOpen(true)}>
@@ -413,7 +430,11 @@ export default function AgencyCalendarPage() {
               .slice(0, 5)
               .map((event) => (
                 <div key={event.id} className="flex items-center gap-4 rounded-md border p-4">
-                  <div className={cn("rounded-full p-2", getEventBadgeColor(event.type).replace("hover:", ""))}>
+                  <div
+                    className={cn(
+                      "rounded-full p-2",
+                      getEventBadgeColor(event.type).replace("hover:", "")
+                    )}>
                     <CalendarIcon className="h-5 w-5 text-white" />
                   </div>
                   <div className="flex-1">
@@ -428,7 +449,7 @@ export default function AgencyCalendarPage() {
                         </Badge>
                       </div>
                     </div>
-                    <div className="mt-1 flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center">
+                    <div className="mt-1 flex flex-col gap-1 text-[1rem] text-muted-foreground sm:flex-row sm:items-center">
                       <div className="flex items-center gap-1">
                         <Clock className="h-3.5 w-3.5" />
                         <span>
@@ -473,7 +494,9 @@ export default function AgencyCalendarPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>Data</Label>
-                  <div className="rounded-md bg-muted p-2">{selectedEvent.date.toLocaleDateString("pt-BR")}</div>
+                  <div className="rounded-md bg-muted p-2">
+                    {selectedEvent.date.toLocaleDateString("pt-BR")}
+                  </div>
                 </div>
                 <div className="grid gap-2">
                   <Label>Horário</Label>
@@ -529,5 +552,5 @@ export default function AgencyCalendarPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

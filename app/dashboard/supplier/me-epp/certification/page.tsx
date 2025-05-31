@@ -266,7 +266,7 @@ export default function MeEppCertificationPage() {
                   </div>
                 )}
               </span>
-              <span className="text-sm">
+              <span className="text-[1rem]">
                 Enviado em {new Date(certificate.created_at).toLocaleDateString("pt-BR")}
               </span>
             </AlertDescription>
@@ -384,7 +384,7 @@ export default function MeEppCertificationPage() {
                 />
 
                 {certificate?.document_url && !uploadedFile && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-[1rem] text-muted-foreground">
                     <CheckCircle className="h-4 w-4 text-green-500" />
                     <span>Documento já enviado. Envie um novo apenas se desejar substituir.</span>
                   </div>
@@ -424,7 +424,7 @@ export default function MeEppCertificationPage() {
             </Form>
           </CardContent>
           <CardFooter className="flex justify-between border-t pt-6">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-[1rem] text-muted-foreground">
               Conforme Lei Complementar 123/2006, a condição de ME/EPP deve ser comprovada para
               obtenção dos benefícios.
             </p>

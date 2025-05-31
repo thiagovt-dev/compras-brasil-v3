@@ -1,36 +1,42 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface TeamInfoProps {
-  formData: any
-  setFormData: (data: any) => void
-  onNext: () => void
-  onPrev: () => void
+  formData: any;
+  setFormData: (data: any) => void;
+  onNext: () => void;
+  onPrev: () => void;
 }
 
 export default function TeamInfo({ formData, setFormData, onNext, onPrev }: TeamInfoProps) {
-  const { toast } = useToast()
+  const { toast } = useToast();
 
   const handleTeamChange = (field: string, value: any) => {
     setFormData({
       ...formData,
       team: { ...formData.team, [field]: value },
-    })
-  }
+    });
+  };
 
   const handleSupportTeamChange = (index: number, value: string) => {
-    const newSupportTeam = [...formData.team.supportTeam]
-    newSupportTeam[index] = value
+    const newSupportTeam = [...formData.team.supportTeam];
+    newSupportTeam[index] = value;
     setFormData({
       ...formData,
       team: { ...formData.team, supportTeam: newSupportTeam },
-    })
-  }
+    });
+  };
 
   const addSupportTeamMember = () => {
     setFormData({
@@ -39,27 +45,29 @@ export default function TeamInfo({ formData, setFormData, onNext, onPrev }: Team
         ...formData.team,
         supportTeam: [...formData.team.supportTeam, ""],
       },
-    })
-  }
+    });
+  };
 
   const removeSupportTeamMember = (index: number) => {
-    const newSupportTeam = [...formData.team.supportTeam]
-    newSupportTeam.splice(index, 1)
+    const newSupportTeam = [...formData.team.supportTeam];
+    newSupportTeam.splice(index, 1);
     setFormData({
       ...formData,
       team: { ...formData.team, supportTeam: newSupportTeam },
-    })
-  }
+    });
+  };
 
   const validateForm = () => {
     // Check if auctioneer and authority are selected
     if (!formData.team.auctioneer || !formData.team.authority) {
       toast({
         title: "Campos obrigatórios",
-        description: `Por favor, selecione ${formData.modality === "pregao-eletronico" ? "o Pregoeiro" : "o Agente de Contratação"} e a Autoridade Superior.`,
+        description: `Por favor, selecione ${
+          formData.modality === "pregao-eletronico" ? "o Pregoeiro" : "o Agente de Contratação"
+        } e a Autoridade Superior.`,
         variant: "destructive",
-      })
-      return false
+      });
+      return false;
     }
 
     // Check if at least one support team member is selected
@@ -68,18 +76,18 @@ export default function TeamInfo({ formData, setFormData, onNext, onPrev }: Team
         title: "Equipe de Apoio",
         description: "Por favor, selecione pelo menos um membro para a Equipe de Apoio.",
         variant: "destructive",
-      })
-      return false
+      });
+      return false;
     }
 
-    return true
-  }
+    return true;
+  };
 
   const handleNext = () => {
     if (validateForm()) {
-      onNext()
+      onNext();
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -88,7 +96,9 @@ export default function TeamInfo({ formData, setFormData, onNext, onPrev }: Team
           {formData.modality === "pregao-eletronico" ? "Pregoeiro" : "Agente de Contratação"}{" "}
           <span className="text-red-500">*</span>
         </Label>
-        <Select value={formData.team.auctioneer} onValueChange={(value) => handleTeamChange("auctioneer", value)}>
+        <Select
+          value={formData.team.auctioneer}
+          onValueChange={(value) => handleTeamChange("auctioneer", value)}>
           <SelectTrigger id="auctioneer">
             <SelectValue placeholder="Selecione" />
           </SelectTrigger>
@@ -104,7 +114,9 @@ export default function TeamInfo({ formData, setFormData, onNext, onPrev }: Team
         <Label htmlFor="authority">
           Autoridade Superior <span className="text-red-500">*</span>
         </Label>
-        <Select value={formData.team.authority} onValueChange={(value) => handleTeamChange("authority", value)}>
+        <Select
+          value={formData.team.authority}
+          onValueChange={(value) => handleTeamChange("authority", value)}>
           <SelectTrigger id="authority">
             <SelectValue placeholder="Selecione" />
           </SelectTrigger>
@@ -142,7 +154,11 @@ export default function TeamInfo({ formData, setFormData, onNext, onPrev }: Team
             </Select>
 
             {formData.team.supportTeam.length > 1 && (
-              <Button type="button" variant="ghost" size="icon" onClick={() => removeSupportTeamMember(index)}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => removeSupportTeamMember(index)}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             )}
@@ -150,13 +166,15 @@ export default function TeamInfo({ formData, setFormData, onNext, onPrev }: Team
         ))}
       </div>
 
-      {(formData.modality === "concorrencia-eletronica" && formData.category === "aquisicao-bens-especiais") ||
+      {(formData.modality === "concorrencia-eletronica" &&
+        formData.category === "aquisicao-bens-especiais") ||
       formData.category === "servicos-especiais" ||
       formData.category === "servicos-especiais-engenharia" ? (
-        <div className="rounded-md bg-blue-50 p-4 text-sm text-blue-800">
+        <div className="rounded-md bg-blue-50 p-4 text-[1rem] text-blue-800">
           <p>
-            Para a categoria selecionada, é necessário escolher uma comissão de contratação com no mínimo 3 membros. A
-            comissão de contratação substitui o pregoeiro/agente de contratação e a equipe de apoio.
+            Para a categoria selecionada, é necessário escolher uma comissão de contratação com no
+            mínimo 3 membros. A comissão de contratação substitui o pregoeiro/agente de contratação
+            e a equipe de apoio.
           </p>
         </div>
       ) : null}
@@ -172,5 +190,5 @@ export default function TeamInfo({ formData, setFormData, onNext, onPrev }: Team
         </Button>
       </div>
     </div>
-  )
+  );
 }

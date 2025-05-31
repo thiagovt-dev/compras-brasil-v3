@@ -384,15 +384,15 @@ export default function CertificatesPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-[1rem]">
                   <span className="text-muted-foreground">Status:</span>
                   {renderCertificateStatus(certificate)}
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-[1rem]">
                   <span className="text-muted-foreground">Válido até:</span>
                   <span>{new Date(certificate.valid_to).toLocaleDateString("pt-BR")}</span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-[1rem]">
                   <span className="text-muted-foreground">Adicionado:</span>
                   <span>
                     {formatDistanceToNow(new Date(certificate.created_at), {
@@ -401,7 +401,7 @@ export default function CertificatesPage() {
                     })}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-[1rem]">
                   <span className="text-muted-foreground">Serial:</span>
                   <span className="truncate max-w-[150px]" title={certificate.serial_number}>
                     {certificate.serial_number}

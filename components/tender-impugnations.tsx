@@ -252,7 +252,7 @@ export function TenderImpugnations({ tenderId }: TenderImpugnationsProps) {
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[1rem] text-muted-foreground">
                   {deadlinePassed
                     ? "O prazo para impugnações já expirou."
                     : "O prazo para impugnações termina em:"}
@@ -353,7 +353,7 @@ export function TenderImpugnations({ tenderId }: TenderImpugnationsProps) {
                             <span className="font-medium">
                               {impugnation.user?.name || "Usuário"}
                             </span>
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-[1rem] text-muted-foreground">
                               {formatDate(impugnation.created_at)}
                             </span>
                           </div>
@@ -362,7 +362,7 @@ export function TenderImpugnations({ tenderId }: TenderImpugnationsProps) {
                             {impugnation.status === "pending" ? "Pendente" : "Respondida"}
                           </Badge>
                         </div>
-                        <p className="text-sm whitespace-pre-line">{impugnation.content}</p>
+                        <p className="text-[1rem] whitespace-pre-line">{impugnation.content}</p>
 
                         {impugnation.attachment_url && (
                           <div className="mt-2">
@@ -370,7 +370,7 @@ export function TenderImpugnations({ tenderId }: TenderImpugnationsProps) {
                               href={impugnation.attachment_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm text-primary hover:underline flex items-center">
+                              className="text-[1rem] text-primary hover:underline flex items-center">
                               Ver anexo
                             </a>
                           </div>
@@ -388,13 +388,15 @@ export function TenderImpugnations({ tenderId }: TenderImpugnationsProps) {
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <span className="font-medium">Resposta</span>
-                              <span className="text-sm text-muted-foreground">
+                              <span className="text-[1rem] text-muted-foreground">
                                 {impugnation.response_date
                                   ? formatDate(impugnation.response_date)
                                   : ""}
                               </span>
                             </div>
-                            <p className="text-sm whitespace-pre-line">{impugnation.response}</p>
+                            <p className="text-[1rem] whitespace-pre-line">
+                              {impugnation.response}
+                            </p>
                           </div>
                         </div>
                       </div>

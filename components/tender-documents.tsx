@@ -1,9 +1,9 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Download, FileText } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Download, FileText } from "lucide-react";
 
 interface TenderDocumentsProps {
-  tender: any
+  tender: any;
 }
 
 export function TenderDocuments({ tender }: TenderDocumentsProps) {
@@ -21,7 +21,7 @@ export function TenderDocuments({ tender }: TenderDocumentsProps) {
                   <FileText className="h-5 w-5 text-primary" />
                   <div>
                     <p className="font-medium">{doc.name}</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[1rem] text-muted-foreground">
                       {new Date(doc.created_at).toLocaleDateString("pt-BR")}
                     </p>
                   </div>
@@ -30,8 +30,7 @@ export function TenderDocuments({ tender }: TenderDocumentsProps) {
                   <a
                     href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/documents/${doc.file_path}`}
                     target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                    rel="noopener noreferrer">
                     <Download className="mr-2 h-4 w-4" />
                     Baixar
                   </a>
@@ -46,5 +45,5 @@ export function TenderDocuments({ tender }: TenderDocumentsProps) {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

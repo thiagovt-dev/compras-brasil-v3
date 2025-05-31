@@ -1,31 +1,31 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Eye, EyeOff } from "lucide-react"
-import { useAuth } from "@/lib/supabase/auth-context"
-import { useToast } from "@/hooks/use-toast"
-import { getSupabaseClient } from "@/lib/supabase/client-singleton"
-import { detectDocumentType } from "@/lib/utils/document-utils"
-import { signInWithEmailOrDocument } from "@/lib/supabase/auth-utils"
+import type React from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/lib/supabase/auth-context";
+import { useToast } from "@/hooks/use-toast";
+import { getSupabaseClient } from "@/lib/supabase/client-singleton";
+import { detectDocumentType } from "@/lib/utils/document-utils";
+import { signInWithEmailOrDocument } from "@/lib/supabase/auth-utils";
 
 export default function LoginPage() {
-  const router = useRouter()
-  const { signIn, session, profile, isLoading } = useAuth()
-  const { toast } = useToast()
+  const router = useRouter();
+  const { signIn, session, profile, isLoading } = useAuth();
+  const { toast } = useToast();
   const supabase = getSupabaseClient();
-const [inputError, setInputError] = useState("")
+  const [inputError, setInputError] = useState("");
 
-  const [emailOrDocument, setEmailOrDocument] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [emailOrDocument, setEmailOrDocument] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Função para redirecionar baseado no perfil
   const redirectToDashboard = (profileType: string) => {
@@ -36,18 +36,19 @@ const [inputError, setInputError] = useState("")
       admin: "/dashboard/admin",
       support: "/dashboard/support",
       registration: "/dashboard/registration",
-    }
+    };
 
-    const route = dashboardRoutes[profileType as keyof typeof dashboardRoutes] || "/dashboard/citizen"
-    router.replace(route)
-  }
+    const route =
+      dashboardRoutes[profileType as keyof typeof dashboardRoutes] || "/dashboard/citizen";
+    router.replace(route);
+  };
 
   // Redirecionar se já estiver logado
   useEffect(() => {
     if (!isLoading && session && profile) {
-      redirectToDashboard(profile.profile_type)
+      redirectToDashboard(profile.profile_type);
     }
-  }, [session, profile, isLoading])
+  }, [session, profile, isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,7 +111,7 @@ const [inputError, setInputError] = useState("")
       <div className="flex min-h-screen items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
-    )
+    );
   }
 
   // Se já estiver logado, mostrar loading de redirecionamento
@@ -122,13 +123,13 @@ const [inputError, setInputError] = useState("")
           <p className="mt-2">Redirecionando para seu dashboard...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md">
-      <div className="mb-6 flex justify-center">
+        <div className="mb-6 flex justify-center">
           <Link href="/" className="flex items-center gap-2">
             <img src="/logo-canal-compras.png" alt="Canal de Compras Brasil" className="h-12" />
           </Link>
@@ -167,8 +168,7 @@ const [inputError, setInputError] = useState("")
                     type="button"
                     className="absolute right-3 top-1/2 -translate-y-1/2"
                     onClick={() => setShowPassword(!showPassword)}
-                    disabled={isSubmitting}
-                  >
+                    disabled={isSubmitting}>
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
@@ -177,7 +177,7 @@ const [inputError, setInputError] = useState("")
                 {isSubmitting ? "Entrando..." : "Entrar"}
               </Button>
             </form>
-            <div className="mt-4 text-center text-sm">
+            <div className="mt-4 text-center text-[1rem]">
               Não tem uma conta?{" "}
               <Link href="/register" className="text-blue-600 hover:underline">
                 Cadastre-se
@@ -187,5 +187,5 @@ const [inputError, setInputError] = useState("")
         </Card>
       </div>
     </div>
-  )
+  );
 }

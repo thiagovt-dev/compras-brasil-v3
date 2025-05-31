@@ -1,28 +1,35 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { useToast } from "@/hooks/use-toast"
-import { Bot, Send, User, Trash2, Sparkles } from "lucide-react"
-import { TypingEffect } from "@/components/typing-effect"
+import { useState, useRef, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
+import { Bot, Send, User, Trash2, Sparkles } from "lucide-react";
+import { TypingEffect } from "@/components/typing-effect";
 
 type Message = {
-  id: string
-  role: "user" | "assistant"
-  content: string
-  timestamp: Date
-  isFallback?: boolean
-  isTyping?: boolean
-}
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+  isFallback?: boolean;
+  isTyping?: boolean;
+};
 
 export default function AssistantPage() {
-  const { toast } = useToast()
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const { toast } = useToast();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -31,21 +38,21 @@ export default function AssistantPage() {
         "Olá! Sou o assistente do Central de Compras Brasil. Como posso ajudar com suas dúvidas sobre licitações?",
       timestamp: new Date(),
     },
-  ])
-  const [input, setInput] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  ]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const sendMessage = async () => {
-    console.log("=== ENVIANDO MENSAGEM ===")
-    console.log("Input:", input)
+    console.log("=== ENVIANDO MENSAGEM ===");
+    console.log("Input:", input);
 
     if (!input.trim() || isLoading) {
-      console.log("Input vazio ou carregando, saindo...")
-      return
+      console.log("Input vazio ou carregando, saindo...");
+      return;
     }
 
     const userMessage: Message = {
@@ -53,15 +60,15 @@ export default function AssistantPage() {
       role: "user",
       content: input.trim(),
       timestamp: new Date(),
-    }
+    };
 
-    setMessages((prev) => [...prev, userMessage])
-    const currentInput = input.trim()
-    setInput("")
-    setIsLoading(true)
+    setMessages((prev) => [...prev, userMessage]);
+    const currentInput = input.trim();
+    setInput("");
+    setIsLoading(true);
 
     try {
-      console.log("1. Fazendo fetch para API...")
+      console.log("1. Fazendo fetch para API...");
 
       const response = await fetch("/api/assistant", {
         method: "POST",
@@ -69,19 +76,19 @@ export default function AssistantPage() {
         body: JSON.stringify({
           messages: [{ role: "user", content: currentInput }],
         }),
-      })
+      });
 
-      console.log("2. Fetch concluído, status:", response.status)
+      console.log("2. Fetch concluído, status:", response.status);
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
+        throw new Error(`HTTP ${response.status}`);
       }
 
-      const data = await response.json()
-      console.log("3. Data recebida:", data)
+      const data = await response.json();
+      console.log("3. Data recebida:", data);
 
       if (!data.success) {
-        throw new Error(data.error || "Erro na resposta")
+        throw new Error(data.error || "Erro na resposta");
       }
 
       // Adicionar mensagem com efeito de typing
@@ -92,45 +99,47 @@ export default function AssistantPage() {
         timestamp: new Date(),
         isFallback: data.fallback || false,
         isTyping: true, // Ativar efeito de typing
-      }
+      };
 
-      setMessages((prev) => [...prev, assistantMessage])
+      setMessages((prev) => [...prev, assistantMessage]);
 
       if (data.fallback) {
         toast({
           title: "Modo Fallback",
           description: "Usando respostas básicas devido a problemas técnicos.",
           variant: "default",
-        })
+        });
       }
 
-      console.log("4. Mensagem adicionada com sucesso")
+      console.log("4. Mensagem adicionada com sucesso");
     } catch (error) {
-      console.error("=== ERRO NO FRONTEND ===", error)
+      console.error("=== ERRO NO FRONTEND ===", error);
 
       const errorMessage: Message = {
         id: (Date.now() + 2).toString(),
         role: "assistant",
         content: "Desculpe, ocorreu um erro. Tente novamente em alguns instantes.",
         timestamp: new Date(),
-      }
+      };
 
-      setMessages((prev) => [...prev, errorMessage])
+      setMessages((prev) => [...prev, errorMessage]);
 
       toast({
         title: "Erro",
         description: "Não foi possível enviar a mensagem",
         variant: "destructive",
-      })
+      });
     } finally {
-      console.log("5. Finalizando...")
-      setIsLoading(false)
+      console.log("5. Finalizando...");
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleTypingComplete = (messageId: string) => {
-    setMessages((prev) => prev.map((msg) => (msg.id === messageId ? { ...msg, isTyping: false } : msg)))
-  }
+    setMessages((prev) =>
+      prev.map((msg) => (msg.id === messageId ? { ...msg, isTyping: false } : msg))
+    );
+  };
 
   const clearChat = () => {
     setMessages([
@@ -141,27 +150,27 @@ export default function AssistantPage() {
           "Olá! Sou o assistente do Central de Compras Brasil. Como posso ajudar com suas dúvidas sobre licitações?",
         timestamp: new Date(),
       },
-    ])
+    ]);
 
     toast({
       title: "Chat limpo",
       description: "Histórico removido",
-    })
-  }
+    });
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      sendMessage()
+      e.preventDefault();
+      sendMessage();
     }
-  }
+  };
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString("pt-BR", {
       hour: "2-digit",
       minute: "2-digit",
-    })
-  }
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -170,7 +179,9 @@ export default function AssistantPage() {
           <Sparkles className="h-8 w-8 text-primary" />
           Assistente IA
         </h1>
-        <p className="text-muted-foreground">Assistente especializado em licitações públicas brasileiras</p>
+        <p className="text-muted-foreground">
+          Assistente especializado em licitações públicas brasileiras
+        </p>
       </div>
 
       <Card className="flex h-[600px] flex-col">
@@ -197,29 +208,31 @@ export default function AssistantPage() {
         <CardContent className="flex-1 overflow-y-auto pb-4">
           <div className="space-y-4">
             {messages.map((message) => (
-              <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div
+                key={message.id}
+                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
                   className={`flex max-w-[85%] items-start gap-3 rounded-lg p-4 ${
                     message.role === "user"
                       ? "bg-primary text-primary-foreground"
                       : message.isFallback
-                        ? "bg-yellow-50 border border-yellow-200"
-                        : "bg-muted border"
-                  }`}
-                >
+                      ? "bg-yellow-50 border border-yellow-200"
+                      : "bg-muted border"
+                  }`}>
                   {message.role === "assistant" && (
                     <Avatar className="mt-0.5 h-6 w-6">
                       <AvatarFallback
                         className={
-                          message.isFallback ? "bg-yellow-500 text-white" : "bg-primary text-primary-foreground"
-                        }
-                      >
+                          message.isFallback
+                            ? "bg-yellow-500 text-white"
+                            : "bg-primary text-primary-foreground"
+                        }>
                         <Bot className="h-3 w-3" />
                       </AvatarFallback>
                     </Avatar>
                   )}
                   <div className="flex-1">
-                    <div className="text-sm leading-relaxed">
+                    <div className="text-[1rem] leading-relaxed">
                       {message.role === "assistant" && message.isTyping ? (
                         <TypingEffect
                           text={message.content}
@@ -230,8 +243,12 @@ export default function AssistantPage() {
                         message.content
                       )}
                     </div>
-                    <div className="mt-2 text-xs opacity-70">{formatTime(message.timestamp)}</div>
-                    {message.isFallback && <div className="mt-1 text-xs text-yellow-700">Modo básico ativo</div>}
+                    <div className="mt-2 text-[1rem] opacity-70">
+                      {formatTime(message.timestamp)}
+                    </div>
+                    {message.isFallback && (
+                      <div className="mt-1 text-[1rem] text-yellow-700">Modo básico ativo</div>
+                    )}
                   </div>
                   {message.role === "user" && (
                     <Avatar className="mt-0.5 h-6 w-6">
@@ -256,13 +273,11 @@ export default function AssistantPage() {
                     <div className="h-2 w-2 animate-bounce rounded-full bg-primary"></div>
                     <div
                       className="h-2 w-2 animate-bounce rounded-full bg-primary"
-                      style={{ animationDelay: "0.2s" }}
-                    ></div>
+                      style={{ animationDelay: "0.2s" }}></div>
                     <div
                       className="h-2 w-2 animate-bounce rounded-full bg-primary"
-                      style={{ animationDelay: "0.4s" }}
-                    ></div>
-                    <span className="text-sm text-muted-foreground ml-2">Pensando...</span>
+                      style={{ animationDelay: "0.4s" }}></div>
+                    <span className="text-[1rem] text-muted-foreground ml-2">Pensando...</span>
                   </div>
                 </div>
               </div>
@@ -282,7 +297,10 @@ export default function AssistantPage() {
               className="min-h-[60px] flex-1 resize-none"
               disabled={isLoading}
             />
-            <Button onClick={sendMessage} className="h-auto px-6" disabled={isLoading || !input.trim()}>
+            <Button
+              onClick={sendMessage}
+              className="h-auto px-6"
+              disabled={isLoading || !input.trim()}>
               {isLoading ? (
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
               ) : (
@@ -290,7 +308,9 @@ export default function AssistantPage() {
               )}
             </Button>
           </div>
-          <div className="mt-2 text-xs text-muted-foreground w-full pl-4">Pressione Enter para enviar</div>
+          <div className="mt-2 text-[1rem] text-muted-foreground w-full pl-4">
+            Pressione Enter para enviar
+          </div>
         </CardFooter>
       </Card>
 
@@ -310,13 +330,12 @@ export default function AssistantPage() {
               variant="outline"
               className="text-left justify-start h-auto p-3 whitespace-normal"
               onClick={() => setInput(suggestion)}
-              disabled={isLoading}
-            >
-              <div className="text-sm">{suggestion}</div>
+              disabled={isLoading}>
+              <div className="text-[1rem]">{suggestion}</div>
             </Button>
           ))}
         </div>
       </Card>
     </div>
-  )
+  );
 }

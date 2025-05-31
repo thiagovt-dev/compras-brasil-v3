@@ -422,8 +422,8 @@ export default function SubscribePage() {
                           />
                         </svg>
                       </div>
-                      <p className="text-sm font-medium">Escaneie o QR Code para pagar</p>
-                      <p className="mt-2 text-xs text-muted-foreground">
+                      <p className="text-[1rem] font-medium">Escaneie o QR Code para pagar</p>
+                      <p className="mt-2 text-[1rem] text-muted-foreground">
                         O pagamento será confirmado automaticamente
                       </p>
                       <div className="mt-4">
@@ -440,17 +440,17 @@ export default function SubscribePage() {
                         <FileText className="h-5 w-5 text-primary" />
                         <div>
                           <p className="font-medium">Boleto Bancário</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-[1rem] text-muted-foreground">
                             O boleto será gerado após a confirmação
                           </p>
                         </div>
                       </div>
                       <div className="mt-4">
-                        <p className="text-sm">
+                        <p className="text-[1rem]">
                           <span className="font-medium">Valor:</span>{" "}
                           {formatCurrency(plan?.price || 0)}
                         </p>
-                        <p className="text-sm">
+                        <p className="text-[1rem]">
                           <span className="font-medium">Vencimento:</span> 5 dias úteis
                         </p>
                       </div>
@@ -489,18 +489,18 @@ export default function SubscribePage() {
               <div className="space-y-4">
                 <div>
                   <h3 className="font-medium">{plan?.name}</h3>
-                  <p className="text-sm text-muted-foreground">{plan?.description}</p>
+                  <p className="text-[1rem] text-muted-foreground">{plan?.description}</p>
                 </div>
 
                 <Separator />
 
                 <div className="space-y-1">
                   <div className="flex justify-between">
-                    <span className="text-sm">Valor do plano</span>
+                    <span className="text-[1rem]">Valor do plano</span>
                     <span className="font-medium">{formatCurrency(plan?.price || 0)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm">Ciclo de cobrança</span>
+                    <span className="text-[1rem]">Ciclo de cobrança</span>
                     <span className="font-medium">{plan?.billing_cycle}</span>
                   </div>
                 </div>

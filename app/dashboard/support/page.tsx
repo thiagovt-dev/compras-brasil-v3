@@ -1,8 +1,8 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { CheckCircle, Clock, MessageSquare } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckCircle, Clock, MessageSquare } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export default function SupportDashboard() {
   return (
@@ -82,7 +82,7 @@ export default function SupportDashboard() {
                 <div>
                   <h3 className="font-medium">{request.title}</h3>
                   <div className="flex items-center gap-2 mt-1">
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[1rem] text-muted-foreground">
                       {request.user} • {request.time}
                     </p>
                     <Badge variant={getStatusBadgeVariant(request.status)}>{request.status}</Badge>
@@ -100,7 +100,7 @@ export default function SupportDashboard() {
                 <div>
                   <h3 className="font-medium">{request.title}</h3>
                   <div className="flex items-center gap-2 mt-1">
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[1rem] text-muted-foreground">
                       {request.user} • {request.time}
                     </p>
                     <Badge variant={getStatusBadgeVariant(request.status)}>{request.status}</Badge>
@@ -133,34 +133,36 @@ export default function SupportDashboard() {
           <div className="grid gap-6 md:grid-cols-3">
             <div className="flex flex-col items-center justify-center space-y-2 rounded-lg border p-4">
               <div className="text-3xl font-bold text-green-700">92%</div>
-              <p className="text-sm text-muted-foreground text-center">Taxa de Resolução</p>
+              <p className="text-[1rem] text-muted-foreground text-center">Taxa de Resolução</p>
             </div>
             <div className="flex flex-col items-center justify-center space-y-2 rounded-lg border p-4">
               <div className="text-3xl font-bold text-green-700">3.2h</div>
-              <p className="text-sm text-muted-foreground text-center">Tempo Médio de Resposta</p>
+              <p className="text-[1rem] text-muted-foreground text-center">
+                Tempo Médio de Resposta
+              </p>
             </div>
             <div className="flex flex-col items-center justify-center space-y-2 rounded-lg border p-4">
               <div className="text-3xl font-bold text-green-700">4.8/5</div>
-              <p className="text-sm text-muted-foreground text-center">Satisfação do Usuário</p>
+              <p className="text-[1rem] text-muted-foreground text-center">Satisfação do Usuário</p>
             </div>
           </div>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
 
 // Helper function for badges
 function getStatusBadgeVariant(status: string) {
   switch (status) {
     case "Pendente":
-      return "warning"
+      return "warning";
     case "Em atendimento":
-      return "default"
+      return "default";
     case "Resolvido":
-      return "success"
+      return "success";
     default:
-      return "outline"
+      return "outline";
   }
 }
 
@@ -187,7 +189,7 @@ const pendingRequests = [
     time: "Há 5 horas",
     status: "Pendente",
   },
-]
+];
 
 const inProgressRequests = [
   {
@@ -204,7 +206,7 @@ const inProgressRequests = [
     time: "Há 4 horas",
     status: "Em atendimento",
   },
-]
+];
 
 const resolvedRequests = [
   {
@@ -228,4 +230,4 @@ const resolvedRequests = [
     time: "Há 3 dias",
     status: "Resolvido",
   },
-]
+];

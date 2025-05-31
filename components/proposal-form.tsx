@@ -337,7 +337,7 @@ export function ProposalForm({ tenderId, initialData }: ProposalFormProps) {
                                 <h4 className="font-medium">
                                   Item {item.number}: {item.description}
                                 </h4>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-[1rem] text-muted-foreground">
                                   Quantidade: {item.quantity} {item.unit}
                                 </p>
                               </div>

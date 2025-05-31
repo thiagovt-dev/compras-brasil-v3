@@ -1,20 +1,20 @@
-import { redirect } from "next/navigation"
-import { TenderHeader } from "@/components/tender-header"
-import { SystemMessageForm } from "@/components/system-message-form"
-import { TenderSessionControls } from "@/components/tender-session-controls"
-import { TenderSessionParticipants } from "@/components/tender-session-participants"
-import { SessionChat } from "@/components/session-chat"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { getSession } from "@/lib/supabase/auth-utils"
-import { createServerClient } from "@/lib/supabase/server"
+import { redirect } from "next/navigation";
+import { TenderHeader } from "@/components/tender-header";
+import { SystemMessageForm } from "@/components/system-message-form";
+import { TenderSessionControls } from "@/components/tender-session-controls";
+import { TenderSessionParticipants } from "@/components/tender-session-participants";
+import { SessionChat } from "@/components/session-chat";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { getSession } from "@/lib/supabase/auth-utils";
+import { createServerClient } from "@/lib/supabase/server";
 
 export default async function TenderSessionManagePage({ params }: { params: { id: string } }) {
-  const session = await getSession()
+  const session = await getSession();
 
   if (!session) {
-    redirect("/login?callbackUrl=" + encodeURIComponent(`/tenders/${params.id}/session/manage`))
+    redirect("/login?callbackUrl=" + encodeURIComponent(`/tenders/${params.id}/session/manage`));
   }
 
   const supabase = await createServerClient();
@@ -25,16 +25,17 @@ export default async function TenderSessionManagePage({ params }: { params: { id
     .select("id, role")
     .eq("tender_id", params.id)
     .eq("user_id", session.user.id)
-    .single()
+    .single();
 
   if (!teamMember || teamMember.role !== "pregoeiro") {
-    redirect(`/tenders/${params.id}/session`)
+    redirect(`/tenders/${params.id}/session`);
   }
 
   // Buscar informações da licitação
   const { data: tender } = await supabase
     .from("tenders")
-    .select(`
+    .select(
+      `
       id,
       title,
       number,
@@ -42,9 +43,10 @@ export default async function TenderSessionManagePage({ params }: { params: { id
       agencies!inner (
         name
       )
-    `)
+    `
+    )
     .eq("id", params.id)
-    .single()
+    .single();
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -89,13 +91,19 @@ export default async function TenderSessionManagePage({ params }: { params: { id
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-2">
-                <a href={`/tenders/${params.id}`} className="text-sm text-blue-600 hover:underline">
+                <a
+                  href={`/tenders/${params.id}`}
+                  className="text-[1rem] text-blue-600 hover:underline">
                   Detalhes da Licitação
                 </a>
-                <a href={`/tenders/${params.id}/documents`} className="text-sm text-blue-600 hover:underline">
+                <a
+                  href={`/tenders/${params.id}/documents`}
+                  className="text-[1rem] text-blue-600 hover:underline">
                   Documentos
                 </a>
-                <a href={`/tenders/${params.id}/clarifications`} className="text-sm text-blue-600 hover:underline">
+                <a
+                  href={`/tenders/${params.id}/clarifications`}
+                  className="text-[1rem] text-blue-600 hover:underline">
                   Esclarecimentos
                 </a>
               </div>
@@ -103,12 +111,16 @@ export default async function TenderSessionManagePage({ params }: { params: { id
               <Separator />
 
               <div className="space-y-2">
-                <h3 className="text-sm font-medium">Ações do Pregoeiro</h3>
+                <h3 className="text-[1rem] font-medium">Ações do Pregoeiro</h3>
                 <div className="grid gap-2">
-                  <a href={`/tenders/${params.id}/proposals`} className="text-sm text-blue-600 hover:underline">
+                  <a
+                    href={`/tenders/${params.id}/proposals`}
+                    className="text-[1rem] text-blue-600 hover:underline">
                     Gerenciar Propostas
                   </a>
-                  <a href={`/tenders/${params.id}/bids`} className="text-sm text-blue-600 hover:underline">
+                  <a
+                    href={`/tenders/${params.id}/bids`}
+                    className="text-[1rem] text-blue-600 hover:underline">
                     Gerenciar Lances
                   </a>
                 </div>
@@ -118,5 +130,5 @@ export default async function TenderSessionManagePage({ params }: { params: { id
         </div>
       </div>
     </div>
-  )
+  );
 }

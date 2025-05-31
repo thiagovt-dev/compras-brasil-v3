@@ -1,8 +1,8 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar, Clock, PlusCircle, BarChart } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar, Clock, PlusCircle, BarChart } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export default function AgencyDashboard() {
   return (
@@ -10,7 +10,8 @@ export default function AgencyDashboard() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Painel do Órgão Público</h1>
         <p className="text-muted-foreground">
-          Bem-vindo ao sistema Licitações Brasil. Gerencie suas licitações e acompanhe processos em andamento.
+          Bem-vindo ao sistema Licitações Brasil. Gerencie suas licitações e acompanhe processos em
+          andamento.
         </p>
       </div>
 
@@ -80,7 +81,7 @@ export default function AgencyDashboard() {
                   <div>
                     <h3 className="font-medium">{tender.title}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <p className="text-sm text-muted-foreground">{tender.number}</p>
+                      <p className="text-[1rem] text-muted-foreground">{tender.number}</p>
                       <Badge variant={getBadgeVariant(tender.status)}>{tender.status}</Badge>
                     </div>
                   </div>
@@ -113,8 +114,10 @@ export default function AgencyDashboard() {
                   <div>
                     <h3 className="font-medium">{tender.title}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <p className="text-sm text-muted-foreground">{tender.number}</p>
-                      <Badge variant={getCompletedBadgeVariant(tender.result)}>{tender.result}</Badge>
+                      <p className="text-[1rem] text-muted-foreground">{tender.number}</p>
+                      <Badge variant={getCompletedBadgeVariant(tender.result)}>
+                        {tender.result}
+                      </Badge>
                     </div>
                   </div>
                   <Link href={`/dashboard/agency/completed-tenders/${tender.id}`}>
@@ -138,15 +141,17 @@ export default function AgencyDashboard() {
           <div className="grid gap-6 md:grid-cols-3">
             <div className="flex flex-col items-center justify-center space-y-2 rounded-lg border p-4">
               <div className="text-4xl font-bold text-green-700">12</div>
-              <p className="text-sm text-muted-foreground text-center">Licitações em Andamento</p>
+              <p className="text-[1rem] text-muted-foreground text-center">
+                Licitações em Andamento
+              </p>
             </div>
             <div className="flex flex-col items-center justify-center space-y-2 rounded-lg border p-4">
               <div className="text-4xl font-bold text-green-700">45</div>
-              <p className="text-sm text-muted-foreground text-center">Licitações Concluídas</p>
+              <p className="text-[1rem] text-muted-foreground text-center">Licitações Concluídas</p>
             </div>
             <div className="flex flex-col items-center justify-center space-y-2 rounded-lg border p-4">
               <div className="text-4xl font-bold text-green-700">R$ 1.2M</div>
-              <p className="text-sm text-muted-foreground text-center">Valor Economizado</p>
+              <p className="text-[1rem] text-muted-foreground text-center">Valor Economizado</p>
             </div>
           </div>
           <div className="mt-6 flex justify-end">
@@ -160,39 +165,39 @@ export default function AgencyDashboard() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
 
 // Helper functions for badges
 function getBadgeVariant(status: string) {
   switch (status) {
     case "Publicada":
-      return "secondary"
+      return "secondary";
     case "Aguardando abertura":
-      return "default"
+      return "default";
     case "Em disputa":
-      return "warning"
+      return "warning";
     case "Em andamento":
-      return "default"
+      return "default";
     default:
-      return "outline"
+      return "outline";
   }
 }
 
 function getCompletedBadgeVariant(result: string) {
   switch (result) {
     case "Homologada":
-      return "success"
+      return "success";
     case "Revogada":
-      return "destructive"
+      return "destructive";
     case "Anulada":
-      return "destructive"
+      return "destructive";
     case "Fracassada":
-      return "warning"
+      return "warning";
     case "Deserta":
-      return "secondary"
+      return "secondary";
     default:
-      return "outline"
+      return "outline";
   }
 }
 
@@ -216,7 +221,7 @@ const activeTenders = [
     number: "Pregão Eletrônico nº 003/2025",
     status: "Publicada",
   },
-]
+];
 
 // Mock data for recent tenders
 const recentTenders = [
@@ -238,4 +243,4 @@ const recentTenders = [
     number: "Pregão Eletrônico nº 005/2024",
     result: "Fracassada",
   },
-]
+];

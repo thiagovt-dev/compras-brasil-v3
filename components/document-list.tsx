@@ -1,23 +1,23 @@
-import { FileText } from "lucide-react"
+import { FileText } from "lucide-react";
 
 interface Document {
-  name: string
-  file?: File | null
-  document_id?: string
-  file_path?: string
+  name: string;
+  file?: File | null;
+  document_id?: string;
+  file_path?: string;
 }
 
 interface DocumentListProps {
-  documents: Document[]
+  documents: Document[];
 }
 
 export function DocumentList({ documents }: DocumentListProps) {
   if (documents.length === 0) {
     return (
       <div className="text-center p-4 border rounded-md border-dashed">
-        <p className="text-sm text-muted-foreground">Nenhum documento adicionado</p>
+        <p className="text-[1rem] text-muted-foreground">Nenhum documento adicionado</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -25,10 +25,10 @@ export function DocumentList({ documents }: DocumentListProps) {
       {documents.map((doc, index) => (
         <div key={index} className="flex items-center gap-2 p-2 border rounded-md">
           <FileText className="h-4 w-4 text-primary" />
-          <span className="text-sm">{doc.name}</span>
-          {doc.file_path && <span className="text-xs text-green-600 ml-auto">Enviado</span>}
+          <span className="text-[1rem]">{doc.name}</span>
+          {doc.file_path && <span className="text-[1rem] text-green-600 ml-auto">Enviado</span>}
         </div>
       ))}
     </div>
-  )
+  );
 }

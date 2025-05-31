@@ -1179,7 +1179,7 @@ export default function CreateTenderPage() {
                   {formData.documents.length === 0 && (
                     <div className="text-center p-8 border rounded-md border-dashed">
                       <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
-                      <p className="mt-2 text-sm text-muted-foreground">
+                      <p className="mt-2 text-[1rem] text-muted-foreground">
                         Adicione o Edital, Anexos, Estudo Técnico Preliminar, Termo de Referência
                       </p>
                     </div>
@@ -1225,7 +1225,7 @@ export default function CreateTenderPage() {
                       <TabsTrigger value="schedule">Agendar Publicação</TabsTrigger>
                     </TabsList>
                     <TabsContent value="now" className="p-4 border rounded-md mt-2">
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[1rem] text-muted-foreground">
                         A licitação será publicada imediatamente após salvar.
                       </p>
                     </TabsContent>

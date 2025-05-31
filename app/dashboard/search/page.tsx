@@ -1,19 +1,28 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
-import { Search, Filter, CalendarIcon, Building2, Landmark, FileText, Clock, Download } from "lucide-react"
-import Link from "next/link"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import {
+  Search,
+  Filter,
+  CalendarIcon,
+  Building2,
+  Landmark,
+  FileText,
+  Clock,
+  Download,
+} from "lucide-react";
+import Link from "next/link";
 
 // Mock data for tenders
 const tenders = [
@@ -115,12 +124,12 @@ const tenders = [
     value: "R$ 120.000,00",
     location: "Fortaleza/CE",
   },
-]
+];
 
 export default function TenderSearchPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [activeTab, setActiveTab] = useState("all")
-  const [showFilters, setShowFilters] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
+  const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     modality: [],
     category: [],
@@ -130,7 +139,7 @@ export default function TenderSearchPage() {
     publication_date_end: undefined as Date | undefined,
     opening_date_start: undefined as Date | undefined,
     opening_date_end: undefined as Date | undefined,
-  })
+  });
 
   // Filter tenders based on search term and filters
   const filteredTenders = tenders.filter((tender) => {
@@ -139,32 +148,40 @@ export default function TenderSearchPage() {
       searchTerm === "" ||
       tender.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       tender.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tender.agency.toLowerCase().includes(searchTerm.toLowerCase())
+      tender.agency.toLowerCase().includes(searchTerm.toLowerCase());
 
     // Tab filter
     const matchesTab =
       activeTab === "all" ||
       (activeTab === "active" &&
-        ["Publicada", "Aguardando abertura", "Em disputa", "Em andamento"].includes(tender.status)) ||
+        ["Publicada", "Aguardando abertura", "Em disputa", "Em andamento"].includes(
+          tender.status
+        )) ||
       (activeTab === "completed" &&
-        ["Homologada", "Fracassada", "Deserta", "Revogada", "Anulada"].includes(tender.status))
+        ["Homologada", "Fracassada", "Deserta", "Revogada", "Anulada"].includes(tender.status));
 
     // Advanced filters
-    const matchesModality = filters.modality.length === 0 || filters.modality.includes(tender.modality)
+    const matchesModality =
+      filters.modality.length === 0 || filters.modality.includes(tender.modality);
 
-    const matchesCategory = filters.category.length === 0 || filters.category.includes(tender.category)
+    const matchesCategory =
+      filters.category.length === 0 || filters.category.includes(tender.category);
 
-    const matchesAgencyType = filters.agency_type.length === 0 || filters.agency_type.includes(tender.agency_type)
+    const matchesAgencyType =
+      filters.agency_type.length === 0 || filters.agency_type.includes(tender.agency_type);
 
-    const matchesStatus = filters.status.length === 0 || filters.status.includes(tender.status)
+    const matchesStatus = filters.status.length === 0 || filters.status.includes(tender.status);
 
     const matchesPublicationDate =
-      (!filters.publication_date_start || new Date(tender.publication_date) >= filters.publication_date_start) &&
-      (!filters.publication_date_end || new Date(tender.publication_date) <= filters.publication_date_end)
+      (!filters.publication_date_start ||
+        new Date(tender.publication_date) >= filters.publication_date_start) &&
+      (!filters.publication_date_end ||
+        new Date(tender.publication_date) <= filters.publication_date_end);
 
     const matchesOpeningDate =
-      (!filters.opening_date_start || new Date(tender.opening_date) >= filters.opening_date_start) &&
-      (!filters.opening_date_end || new Date(tender.opening_date) <= filters.opening_date_end)
+      (!filters.opening_date_start ||
+        new Date(tender.opening_date) >= filters.opening_date_start) &&
+      (!filters.opening_date_end || new Date(tender.opening_date) <= filters.opening_date_end);
 
     return (
       matchesSearch &&
@@ -175,26 +192,26 @@ export default function TenderSearchPage() {
       matchesStatus &&
       matchesPublicationDate &&
       matchesOpeningDate
-    )
-  })
+    );
+  });
 
   const toggleFilter = (filterType: string, value: string) => {
     setFilters((prev) => {
-      const currentFilters = [...prev[filterType as keyof typeof prev]] as string[]
+      const currentFilters = [...prev[filterType as keyof typeof prev]] as string[];
 
       if (currentFilters.includes(value)) {
         return {
           ...prev,
           [filterType]: currentFilters.filter((item) => item !== value),
-        }
+        };
       } else {
         return {
           ...prev,
           [filterType]: [...currentFilters, value],
-        }
+        };
       }
-    })
-  }
+    });
+  };
 
   const clearFilters = () => {
     setFilters({
@@ -206,40 +223,42 @@ export default function TenderSearchPage() {
       publication_date_end: undefined,
       opening_date_start: undefined,
       opening_date_end: undefined,
-    })
-    setSearchTerm("")
-  }
+    });
+    setSearchTerm("");
+  };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case "Publicada":
-        return "secondary"
+        return "secondary";
       case "Aguardando abertura":
-        return "default"
+        return "default";
       case "Em disputa":
-        return "warning"
+        return "warning";
       case "Em andamento":
-        return "default"
+        return "default";
       case "Homologada":
-        return "success"
+        return "success";
       case "Fracassada":
-        return "destructive"
+        return "destructive";
       case "Deserta":
-        return "destructive"
+        return "destructive";
       case "Revogada":
-        return "destructive"
+        return "destructive";
       case "Anulada":
-        return "destructive"
+        return "destructive";
       default:
-        return "outline"
+        return "outline";
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Pesquisar Licitações</h1>
-        <p className="text-muted-foreground">Encontre licitações públicas em andamento ou concluídas</p>
+        <p className="text-muted-foreground">
+          Encontre licitações públicas em andamento ou concluídas
+        </p>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -268,7 +287,7 @@ export default function TenderSearchPage() {
             <CardContent>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Modalidade</h3>
+                  <h3 className="text-[1rem] font-medium">Modalidade</h3>
                   <div className="space-y-1">
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -298,7 +317,7 @@ export default function TenderSearchPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Categoria</h3>
+                  <h3 className="text-[1rem] font-medium">Categoria</h3>
                   <div className="space-y-1">
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -328,7 +347,7 @@ export default function TenderSearchPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Esfera</h3>
+                  <h3 className="text-[1rem] font-medium">Esfera</h3>
                   <div className="space-y-1">
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -358,7 +377,7 @@ export default function TenderSearchPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Status</h3>
+                  <h3 className="text-[1rem] font-medium">Status</h3>
                   <div className="space-y-1">
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -404,15 +423,17 @@ export default function TenderSearchPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Data de Publicação</h3>
+                  <h3 className="text-[1rem] font-medium">Data de Publicação</h3>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label htmlFor="publication-start" className="text-xs">
+                      <Label htmlFor="publication-start" className="text-[1rem]">
                         De
                       </Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start text-left font-normal">
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-left font-normal">
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {filters.publication_date_start ? (
                               format(filters.publication_date_start, "dd/MM/yyyy", { locale: ptBR })
@@ -425,7 +446,9 @@ export default function TenderSearchPage() {
                           <Calendar
                             mode="single"
                             selected={filters.publication_date_start}
-                            onSelect={(date) => setFilters((prev) => ({ ...prev, publication_date_start: date }))}
+                            onSelect={(date) =>
+                              setFilters((prev) => ({ ...prev, publication_date_start: date }))
+                            }
                             initialFocus
                             locale={ptBR}
                           />
@@ -433,12 +456,14 @@ export default function TenderSearchPage() {
                       </Popover>
                     </div>
                     <div>
-                      <Label htmlFor="publication-end" className="text-xs">
+                      <Label htmlFor="publication-end" className="text-[1rem]">
                         Até
                       </Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start text-left font-normal">
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-left font-normal">
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {filters.publication_date_end ? (
                               format(filters.publication_date_end, "dd/MM/yyyy", { locale: ptBR })
@@ -451,7 +476,9 @@ export default function TenderSearchPage() {
                           <Calendar
                             mode="single"
                             selected={filters.publication_date_end}
-                            onSelect={(date) => setFilters((prev) => ({ ...prev, publication_date_end: date }))}
+                            onSelect={(date) =>
+                              setFilters((prev) => ({ ...prev, publication_date_end: date }))
+                            }
                             initialFocus
                             locale={ptBR}
                           />
@@ -462,15 +489,17 @@ export default function TenderSearchPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Data de Abertura</h3>
+                  <h3 className="text-[1rem] font-medium">Data de Abertura</h3>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label htmlFor="opening-start" className="text-xs">
+                      <Label htmlFor="opening-start" className="text-[1rem]">
                         De
                       </Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start text-left font-normal">
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-left font-normal">
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {filters.opening_date_start ? (
                               format(filters.opening_date_start, "dd/MM/yyyy", { locale: ptBR })
@@ -483,7 +512,9 @@ export default function TenderSearchPage() {
                           <Calendar
                             mode="single"
                             selected={filters.opening_date_start}
-                            onSelect={(date) => setFilters((prev) => ({ ...prev, opening_date_start: date }))}
+                            onSelect={(date) =>
+                              setFilters((prev) => ({ ...prev, opening_date_start: date }))
+                            }
                             initialFocus
                             locale={ptBR}
                           />
@@ -491,12 +522,14 @@ export default function TenderSearchPage() {
                       </Popover>
                     </div>
                     <div>
-                      <Label htmlFor="opening-end" className="text-xs">
+                      <Label htmlFor="opening-end" className="text-[1rem]">
                         Até
                       </Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start text-left font-normal">
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-left font-normal">
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {filters.opening_date_end ? (
                               format(filters.opening_date_end, "dd/MM/yyyy", { locale: ptBR })
@@ -509,7 +542,9 @@ export default function TenderSearchPage() {
                           <Calendar
                             mode="single"
                             selected={filters.opening_date_end}
-                            onSelect={(date) => setFilters((prev) => ({ ...prev, opening_date_end: date }))}
+                            onSelect={(date) =>
+                              setFilters((prev) => ({ ...prev, opening_date_end: date }))
+                            }
                             initialFocus
                             locale={ptBR}
                           />
@@ -542,7 +577,9 @@ export default function TenderSearchPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle>Licitações</CardTitle>
-              <CardDescription>{filteredTenders.length} licitação(ões) encontrada(s)</CardDescription>
+              <CardDescription>
+                {filteredTenders.length} licitação(ões) encontrada(s)
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {filteredTenders.length > 0 ? (
@@ -550,17 +587,18 @@ export default function TenderSearchPage() {
                   {filteredTenders.map((tender) => (
                     <div
                       key={tender.id}
-                      className="flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center"
-                    >
+                      className="flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center">
                       <div className="flex-1 space-y-1">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                           <h3 className="font-medium">{tender.title}</h3>
-                          <Badge variant={getStatusBadgeVariant(tender.status)} className="mt-1 sm:mt-0">
+                          <Badge
+                            variant={getStatusBadgeVariant(tender.status)}
+                            className="mt-1 sm:mt-0">
                             {tender.status}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">{tender.number}</p>
-                        <div className="flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center">
+                        <p className="text-[1rem] text-muted-foreground">{tender.number}</p>
+                        <div className="flex flex-col gap-1 text-[1rem] text-muted-foreground sm:flex-row sm:items-center">
                           <div className="flex items-center gap-1">
                             {tender.agency_type === "federal" ? (
                               <Landmark className="h-3.5 w-3.5" />
@@ -572,15 +610,20 @@ export default function TenderSearchPage() {
                           <div className="hidden sm:block">•</div>
                           <div className="flex items-center gap-1">
                             <CalendarIcon className="h-3.5 w-3.5" />
-                            <span>Publicação: {new Date(tender.publication_date).toLocaleDateString("pt-BR")}</span>
+                            <span>
+                              Publicação:{" "}
+                              {new Date(tender.publication_date).toLocaleDateString("pt-BR")}
+                            </span>
                           </div>
                           <div className="hidden sm:block">•</div>
                           <div className="flex items-center gap-1">
                             <Clock className="h-3.5 w-3.5" />
-                            <span>Abertura: {new Date(tender.opening_date).toLocaleDateString("pt-BR")}</span>
+                            <span>
+                              Abertura: {new Date(tender.opening_date).toLocaleDateString("pt-BR")}
+                            </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 text-sm">
+                        <div className="flex items-center gap-1 text-[1rem]">
                           <span className="font-medium">Valor Estimado:</span>
                           <span>{tender.value}</span>
                         </div>
@@ -603,7 +646,7 @@ export default function TenderSearchPage() {
                 <div className="flex h-[300px] flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
                   <FileText className="h-10 w-10 text-muted-foreground" />
                   <h3 className="mt-4 text-lg font-medium">Nenhuma licitação encontrada</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
+                  <p className="mt-2 text-[1rem] text-muted-foreground">
                     Tente ajustar os filtros ou realizar uma nova pesquisa.
                   </p>
                   <Button className="mt-4" variant="outline" onClick={clearFilters}>
@@ -616,5 +659,5 @@ export default function TenderSearchPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

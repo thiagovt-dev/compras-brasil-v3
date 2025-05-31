@@ -1,15 +1,29 @@
-"use client"
+"use client";
 
-import { useState } from "react"
+import { useState } from "react";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell
-} from "recharts"
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 
 // Mock data for charts
 const tendersByMonth = [
@@ -25,7 +39,7 @@ const tendersByMonth = [
   { name: "Out", count: 110 },
   { name: "Nov", count: 95 },
   { name: "Dez", count: 85 },
-]
+];
 
 const userRegistrationData = [
   { name: "Jan", citizen: 40, supplier: 24, agency: 10 },
@@ -40,20 +54,20 @@ const userRegistrationData = [
   { name: "Out", citizen: 75, supplier: 70, agency: 25 },
   { name: "Nov", citizen: 85, supplier: 75, agency: 30 },
   { name: "Dez", citizen: 95, supplier: 80, agency: 35 },
-]
+];
 
 const tenderStatusData = [
   { name: "Em andamento", value: 45, color: "#0ea5e9" },
   { name: "Concluídas", value: 30, color: "#22c55e" },
   { name: "Canceladas", value: 15, color: "#ef4444" },
   { name: "Em preparação", value: 10, color: "#f59e0b" },
-]
+];
 
 const tenderCategoryData = [
   { name: "Obras", value: 35 },
   { name: "Serviços", value: 40 },
   { name: "Materiais", value: 25 },
-]
+];
 
 const tenderValueData = [
   { name: "Jan", value: 1200000 },
@@ -68,19 +82,19 @@ const tenderValueData = [
   { name: "Out", value: 2800000 },
   { name: "Nov", value: 3000000 },
   { name: "Dez", value: 3200000 },
-]
+];
 
 export default function AnalyticsPage() {
-  const [timeRange, setTimeRange] = useState('year')
+  const [timeRange, setTimeRange] = useState("year");
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(value)
-  }
+    }).format(value);
+  };
 
   return (
     <div className="container mx-auto py-10">
@@ -88,9 +102,7 @@ export default function AnalyticsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Análises</h1>
-            <p className="text-muted-foreground">
-              Visualize estatísticas e tendências do sistema
-            </p>
+            <p className="text-muted-foreground">Visualize estatísticas e tendências do sistema</p>
           </div>
           <Select value={timeRange} onValueChange={setTimeRange}>
             <SelectTrigger className="w-[180px]">
@@ -110,56 +122,48 @@ export default function AnalyticsPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total de Licitações
-              </CardTitle>
+              <CardTitle className="text-[1rem] font-medium">Total de Licitações</CardTitle>
               <CardDescription>Todas as licitações no sistema</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">831</div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[1rem] text-muted-foreground">
                 +16.2% em relação ao período anterior
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
-                Usuários Registrados
-              </CardTitle>
+              <CardTitle className="text-[1rem] font-medium">Usuários Registrados</CardTitle>
               <CardDescription>Total de usuários no sistema</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">2,543</div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[1rem] text-muted-foreground">
                 +12.5% em relação ao período anterior
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
-                Valor Total
-              </CardTitle>
+              <CardTitle className="text-[1rem] font-medium">Valor Total</CardTitle>
               <CardDescription>Valor total das licitações</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">R$ 21.8M</div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[1rem] text-muted-foreground">
                 +22.5% em relação ao período anterior
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
-                Taxa de Conclusão
-              </CardTitle>
+              <CardTitle className="text-[1rem] font-medium">Taxa de Conclusão</CardTitle>
               <CardDescription>Licitações concluídas com sucesso</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">78.2%</div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[1rem] text-muted-foreground">
                 +4.1% em relação ao período anterior
               </p>
             </CardContent>
@@ -180,9 +184,7 @@ export default function AnalyticsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Licitações por Mês</CardTitle>
-                  <CardDescription>
-                    Número de licitações criadas por mês
-                  </CardDescription>
+                  <CardDescription>Número de licitações criadas por mês</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px]">
@@ -191,7 +193,7 @@ export default function AnalyticsPage() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
                         <YAxis />
-                        <Tooltip formatter={(value) => [`${value} licitações`, 'Quantidade']} />
+                        <Tooltip formatter={(value) => [`${value} licitações`, "Quantidade"]} />
                         <Bar dataKey="count" fill="#0ea5e9" />
                       </BarChart>
                     </ResponsiveContainer>
@@ -202,9 +204,7 @@ export default function AnalyticsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Status das Licitações</CardTitle>
-                  <CardDescription>
-                    Distribuição por status atual
-                  </CardDescription>
+                  <CardDescription>Distribuição por status atual</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px]">
@@ -218,13 +218,12 @@ export default function AnalyticsPage() {
                           label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                           outerRadius={80}
                           fill="#8884d8"
-                          dataKey="value"
-                        >
+                          dataKey="value">
                           {tenderStatusData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value) => [`${value} licitações`, 'Quantidade']} />
+                        <Tooltip formatter={(value) => [`${value} licitações`, "Quantidade"]} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
@@ -238,9 +237,7 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Novos Usuários por Mês</CardTitle>
-                <CardDescription>
-                  Crescimento de usuários por tipo
-                </CardDescription>
+                <CardDescription>Crescimento de usuários por tipo</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
@@ -266,9 +263,7 @@ export default function AnalyticsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Licitações por Categoria</CardTitle>
-                  <CardDescription>
-                    Distribuição das licitações por categoria
-                  </CardDescription>
+                  <CardDescription>Distribuição das licitações por categoria</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px]">
@@ -282,10 +277,12 @@ export default function AnalyticsPage() {
                           label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                           outerRadius={80}
                           fill="#8884d8"
-                          dataKey="value"
-                        >
+                          dataKey="value">
                           {tenderCategoryData.map((entry, index) => (
-                            <Cell key={`cell-cat-${index}`} fill={["#0ea5e9", "#22c55e", "#f59e0b"][index % 3]} />
+                            <Cell
+                              key={`cell-cat-${index}`}
+                              fill={["#0ea5e9", "#22c55e", "#f59e0b"][index % 3]}
+                            />
                           ))}
                         </Pie>
                         <Tooltip formatter={(value) => [`${value} licitações`, "Quantidade"]} />
@@ -297,9 +294,7 @@ export default function AnalyticsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Valor das Licitações por Mês</CardTitle>
-                  <CardDescription>
-                    Evolução do valor total das licitações
-                  </CardDescription>
+                  <CardDescription>Evolução do valor total das licitações</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px]">
@@ -323,9 +318,7 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Valor Total das Licitações</CardTitle>
-                <CardDescription>
-                  Soma dos valores das licitações por mês
-                </CardDescription>
+                <CardDescription>Soma dos valores das licitações por mês</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
@@ -345,5 +338,5 @@ export default function AnalyticsPage() {
         </Tabs>
       </div>
     </div>
-  )
+  );
 }

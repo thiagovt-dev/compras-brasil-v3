@@ -5,7 +5,7 @@ let supabaseInstance: SupabaseClient | null = null;
 
 export function getSupabaseClient() {
   if (!supabaseInstance) {
-    supabaseInstance = createClientComponentClient();
+    supabaseInstance = createClientSupabaseClient();
   }
   return supabaseInstance;
 }

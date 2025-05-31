@@ -1,56 +1,56 @@
-import type React from "react"
-import { Badge } from "@/components/ui/badge"
+import type React from "react";
+import { Badge } from "@/components/ui/badge";
 
 interface Tender {
-  id: string
-  title: string
-  number: string
-  agency: string
-  modality: string
-  openingDate: string
-  impugnationDeadline: string
-  clarificationDeadline: string
-  estimatedValue: number
-  status: string
+  id: string;
+  title: string;
+  number: string;
+  agency: string;
+  modality: string;
+  openingDate: string;
+  impugnationDeadline: string;
+  clarificationDeadline: string;
+  estimatedValue: number;
+  status: string;
   groups?: {
-    id: string
+    id: string;
     items: {
-      id: string
-      number: string
-      description: string
-      quantity: number
-      unit: string
-    }[]
-  }[]
+      id: string;
+      number: string;
+      description: string;
+      quantity: number;
+      unit: string;
+    }[];
+  }[];
   items?: {
-    id: string
-    number: string
-    description: string
-    quantity: number
-    unit: string
-  }[]
+    id: string;
+    number: string;
+    description: string;
+    quantity: number;
+    unit: string;
+  }[];
 }
 
 interface Props {
   params: {
-    id: string
-  }
+    id: string;
+  };
 }
 
 const getStatusVariant = (status: string) => {
   switch (status.toLowerCase()) {
     case "aberto":
-      return "secondary"
+      return "secondary";
     case "em andamento":
-      return "secondary"
+      return "secondary";
     case "concluído":
-      return "success"
+      return "success";
     case "cancelado":
-      return "destructive"
+      return "destructive";
     default:
-      return "default"
+      return "default";
   }
-}
+};
 
 const TenderDetailsPage: React.FC<Props> = async ({ params }) => {
   // Mock data for demonstration purposes
@@ -95,7 +95,7 @@ const TenderDetailsPage: React.FC<Props> = async ({ params }) => {
         unit: "lote",
       },
     ],
-  }
+  };
 
   return (
     <div className="container mx-auto py-10">
@@ -106,7 +106,7 @@ const TenderDetailsPage: React.FC<Props> = async ({ params }) => {
           <div className="p-6 space-y-4">
             <div className="flex flex-col space-y-1.5">
               <h3 className="text-2xl font-semibold leading-none tracking-tight">{tender.title}</h3>
-              <p className="text-sm text-muted-foreground">Número: {tender.number}</p>
+              <p className="text-[1rem] text-muted-foreground">Número: {tender.number}</p>
             </div>
 
             {/* Órgão em evidência (movido para o topo) */}
@@ -164,7 +164,9 @@ const TenderDetailsPage: React.FC<Props> = async ({ params }) => {
               <div className="grid gap-2">
                 <div className="font-semibold">Valor Estimado</div>
                 <div>
-                  {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(tender.estimatedValue)}
+                  {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+                    tender.estimatedValue
+                  )}
                 </div>
               </div>
               <div className="grid gap-2">
@@ -190,7 +192,9 @@ const TenderDetailsPage: React.FC<Props> = async ({ params }) => {
                   <h4 className="text-lg font-medium mb-2">Grupo {index + 1}</h4>
                   <div className="space-y-4">
                     {group.items.map((item) => (
-                      <div key={item.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 border-t pt-4">
+                      <div
+                        key={item.id}
+                        className="grid grid-cols-1 md:grid-cols-4 gap-4 border-t pt-4">
                         <div className="grid gap-2">
                           <div className="font-semibold">Item</div>
                           <div>{item.number}</div>
@@ -237,7 +241,7 @@ const TenderDetailsPage: React.FC<Props> = async ({ params }) => {
         {/* Resto do código permanece o mesmo */}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default TenderDetailsPage
+export default TenderDetailsPage;

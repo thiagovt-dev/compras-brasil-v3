@@ -288,7 +288,7 @@ export default function ExportSessionPage() {
                                 : "Aguardando início"}
                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-[1rem] text-muted-foreground">
                             Data de abertura: {formatDate(sessionData.tender.opening_date)}
                           </p>
                         </div>
@@ -298,24 +298,24 @@ export default function ExportSessionPage() {
                         <h3 className="text-lg font-semibold">Resumo da Sessão</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <h4 className="text-sm font-medium">Pregoeiro</h4>
-                            <p className="text-sm">
+                            <h4 className="text-[1rem] font-medium">Pregoeiro</h4>
+                            <p className="text-[1rem]">
                               {sessionData.tender.tender_team?.find(
                                 (member: any) => member.role === "pregoeiro"
                               )?.auth?.users?.email || "Não definido"}
                             </p>
                           </div>
                           <div>
-                            <h4 className="text-sm font-medium">Total de Participantes</h4>
-                            <p className="text-sm">{sessionData.participants?.length || 0}</p>
+                            <h4 className="text-[1rem] font-medium">Total de Participantes</h4>
+                            <p className="text-[1rem]">{sessionData.participants?.length || 0}</p>
                           </div>
                           <div>
-                            <h4 className="text-sm font-medium">Total de Mensagens</h4>
-                            <p className="text-sm">{sessionData.messages?.length || 0}</p>
+                            <h4 className="text-[1rem] font-medium">Total de Mensagens</h4>
+                            <p className="text-[1rem]">{sessionData.messages?.length || 0}</p>
                           </div>
                           <div>
-                            <h4 className="text-sm font-medium">Total de Propostas</h4>
-                            <p className="text-sm">{sessionData.proposals?.length || 0}</p>
+                            <h4 className="text-[1rem] font-medium">Total de Propostas</h4>
+                            <p className="text-[1rem]">{sessionData.proposals?.length || 0}</p>
                           </div>
                         </div>
                       </div>
@@ -327,7 +327,7 @@ export default function ExportSessionPage() {
                             {sessionData.messages
                               .slice(0, 10)
                               .map((message: any, index: number) => (
-                                <div key={index} className="text-sm">
+                                <div key={index} className="text-[1rem]">
                                   <span className="font-medium">
                                     {formatDate(message.created_at)}
                                   </span>{" "}
@@ -339,7 +339,7 @@ export default function ExportSessionPage() {
                                 </div>
                               ))}
                             {sessionData.messages.length > 10 && (
-                              <div className="text-sm text-muted-foreground text-center pt-2">
+                              <div className="text-[1rem] text-muted-foreground text-center pt-2">
                                 ... mais {sessionData.messages.length - 10} mensagens
                               </div>
                             )}
@@ -351,7 +351,7 @@ export default function ExportSessionPage() {
                         <div className="space-y-4">
                           <h3 className="text-lg font-semibold">Propostas Recebidas</h3>
                           <div className="border rounded-md overflow-hidden">
-                            <table className="w-full text-sm">
+                            <table className="w-full text-[1rem]">
                               <thead>
                                 <tr className="bg-muted">
                                   <th className="px-4 py-2 text-left">Fornecedor</th>
@@ -393,7 +393,7 @@ export default function ExportSessionPage() {
                               </tbody>
                             </table>
                             {sessionData.proposals.length > 5 && (
-                              <div className="text-sm text-muted-foreground text-center p-2 bg-muted/50">
+                              <div className="text-[1rem] text-muted-foreground text-center p-2 bg-muted/50">
                                 ... mais {sessionData.proposals.length - 5} propostas
                               </div>
                             )}
@@ -406,7 +406,7 @@ export default function ExportSessionPage() {
                           <div className="space-y-4">
                             <h3 className="text-lg font-semibold">Participantes da Sessão</h3>
                             <div className="border rounded-md overflow-hidden">
-                              <table className="w-full text-sm">
+                              <table className="w-full text-[1rem]">
                                 <thead>
                                   <tr className="bg-muted">
                                     <th className="px-4 py-2 text-left">Nome</th>
@@ -447,7 +447,7 @@ export default function ExportSessionPage() {
                                 </tbody>
                               </table>
                               {sessionData.participants.length > 5 && (
-                                <div className="text-sm text-muted-foreground text-center p-2 bg-muted/50">
+                                <div className="text-[1rem] text-muted-foreground text-center p-2 bg-muted/50">
                                   ... mais {sessionData.participants.length - 5} participantes
                                 </div>
                               )}
@@ -457,14 +457,14 @@ export default function ExportSessionPage() {
 
                       {exportOptions.includeFooter && (
                         <div className="space-y-2 pt-4 border-t mt-6">
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-[1rem] text-muted-foreground">
                             Documento gerado em {new Date().toLocaleString("pt-BR")}
                           </p>
                           {exportOptions.includeSignature && (
                             <div className="pt-8 border-t mt-8">
                               <div className="w-64 mx-auto text-center">
                                 <div className="border-b border-dashed border-gray-400 pb-1"></div>
-                                <p className="text-sm pt-1">
+                                <p className="text-[1rem] pt-1">
                                   {sessionData.tender.tender_team?.find(
                                     (member: any) => member.role === "pregoeiro"
                                   )?.auth?.users?.email || "Pregoeiro"}
@@ -484,7 +484,7 @@ export default function ExportSessionPage() {
                       <h3 className="text-lg font-semibold">Todas as Mensagens da Sessão</h3>
                       <div className="space-y-2 max-h-[500px] overflow-y-auto border rounded-md p-4">
                         {sessionData.messages.map((message: any, index: number) => (
-                          <div key={index} className="text-sm">
+                          <div key={index} className="text-[1rem]">
                             <span className="font-medium">{formatDate(message.created_at)}</span> -{" "}
                             <span className="font-semibold">
                               {message.sender_name || "Sistema"}:
@@ -498,7 +498,7 @@ export default function ExportSessionPage() {
                     <div className="text-center py-8">
                       <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                       <h3 className="text-lg font-medium">Nenhuma mensagem encontrada</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-[1rem] text-muted-foreground mt-1">
                         Não há mensagens registradas para esta sessão.
                       </p>
                     </div>
@@ -510,7 +510,7 @@ export default function ExportSessionPage() {
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold">Todas as Propostas Recebidas</h3>
                       <div className="border rounded-md overflow-hidden">
-                        <table className="w-full text-sm">
+                        <table className="w-full text-[1rem]">
                           <thead>
                             <tr className="bg-muted">
                               <th className="px-4 py-2 text-left">Fornecedor</th>
@@ -553,7 +553,7 @@ export default function ExportSessionPage() {
                     <div className="text-center py-8">
                       <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                       <h3 className="text-lg font-medium">Nenhuma proposta encontrada</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-[1rem] text-muted-foreground mt-1">
                         Não há propostas registradas para esta sessão.
                       </p>
                     </div>
@@ -565,7 +565,7 @@ export default function ExportSessionPage() {
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold">Todos os Participantes da Sessão</h3>
                       <div className="border rounded-md overflow-hidden">
-                        <table className="w-full text-sm">
+                        <table className="w-full text-[1rem]">
                           <thead>
                             <tr className="bg-muted">
                               <th className="px-4 py-2 text-left">Nome</th>
@@ -607,7 +607,7 @@ export default function ExportSessionPage() {
                     <div className="text-center py-8">
                       <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                       <h3 className="text-lg font-medium">Nenhum participante encontrado</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-[1rem] text-muted-foreground mt-1">
                         Não há participantes registrados para esta sessão.
                       </p>
                     </div>
@@ -641,7 +641,7 @@ export default function ExportSessionPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
-                <h3 className="text-sm font-medium">Formato</h3>
+                <h3 className="text-[1rem] font-medium">Formato</h3>
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     variant={exportFormat === "pdf" ? "default" : "outline"}
@@ -677,7 +677,7 @@ export default function ExportSessionPage() {
               <Separator />
 
               <div className="space-y-4">
-                <h3 className="text-sm font-medium">Conteúdo</h3>
+                <h3 className="text-[1rem] font-medium">Conteúdo</h3>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Checkbox
@@ -745,7 +745,7 @@ export default function ExportSessionPage() {
               <Separator />
 
               <div className="space-y-4">
-                <h3 className="text-sm font-medium">Formatação</h3>
+                <h3 className="text-[1rem] font-medium">Formatação</h3>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Checkbox

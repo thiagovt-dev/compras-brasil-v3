@@ -1,14 +1,21 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, Filter, MessageSquare, Clock, ArrowUpDown } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Search, Filter, MessageSquare, Clock, ArrowUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Sample data for support tickets
 const tickets = [
@@ -31,7 +38,8 @@ const tickets = [
   {
     id: "TICKET-1235",
     title: "Dúvida sobre documentação necessária",
-    description: "Gostaria de saber quais documentos são necessários para participar da licitação #12346.",
+    description:
+      "Gostaria de saber quais documentos são necessários para participar da licitação #12346.",
     status: "in_progress",
     priority: "medium",
     createdAt: "2023-05-09T10:15:00",
@@ -92,11 +100,11 @@ const tickets = [
     },
     messages: 4,
   },
-]
+];
 
 export default function SupportManagePage() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState("all")
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
 
   // Filter tickets based on search query and active tab
   const filteredTickets = tickets.filter((ticket) => {
@@ -105,69 +113,69 @@ export default function SupportManagePage() {
       ticket.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ticket.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ticket.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.user.email.toLowerCase().includes(searchQuery.toLowerCase())
+      ticket.user.email.toLowerCase().includes(searchQuery.toLowerCase());
 
-    if (activeTab === "all") return matchesSearch
-    if (activeTab === "open") return matchesSearch && ticket.status === "open"
-    if (activeTab === "in_progress") return matchesSearch && ticket.status === "in_progress"
-    if (activeTab === "resolved") return matchesSearch && ticket.status === "resolved"
+    if (activeTab === "all") return matchesSearch;
+    if (activeTab === "open") return matchesSearch && ticket.status === "open";
+    if (activeTab === "in_progress") return matchesSearch && ticket.status === "in_progress";
+    if (activeTab === "resolved") return matchesSearch && ticket.status === "resolved";
 
-    return matchesSearch
-  })
+    return matchesSearch;
+  });
 
   // Get status badge color
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case "open":
-        return "bg-yellow-500 hover:bg-yellow-600"
+        return "bg-yellow-500 hover:bg-yellow-600";
       case "in_progress":
-        return "bg-blue-500 hover:bg-blue-600"
+        return "bg-blue-500 hover:bg-blue-600";
       case "resolved":
-        return "bg-green-500 hover:bg-green-600"
+        return "bg-green-500 hover:bg-green-600";
       default:
-        return "bg-gray-500 hover:bg-gray-600"
+        return "bg-gray-500 hover:bg-gray-600";
     }
-  }
+  };
 
   // Get priority badge color
   const getPriorityBadgeColor = (priority: string) => {
     switch (priority) {
       case "high":
-        return "bg-red-500 hover:bg-red-600"
+        return "bg-red-500 hover:bg-red-600";
       case "medium":
-        return "bg-orange-500 hover:bg-orange-600"
+        return "bg-orange-500 hover:bg-orange-600";
       case "low":
-        return "bg-green-500 hover:bg-green-600"
+        return "bg-green-500 hover:bg-green-600";
       default:
-        return "bg-gray-500 hover:bg-gray-600"
+        return "bg-gray-500 hover:bg-gray-600";
     }
-  }
+  };
 
   // Format date
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = new Date(dateString);
     return date.toLocaleDateString("pt-BR", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    })
-  }
+    });
+  };
 
   // Get role label
   const getRoleLabel = (role: string) => {
     switch (role) {
       case "citizen":
-        return "Cidadão"
+        return "Cidadão";
       case "supplier":
-        return "Fornecedor"
+        return "Fornecedor";
       case "agency":
-        return "Órgão Público"
+        return "Órgão Público";
       default:
-        return role
+        return role;
     }
-  }
+  };
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -236,21 +244,26 @@ export default function SupportManagePage() {
                         </div>
                       </div>
 
-                      <p className="text-sm text-muted-foreground">{ticket.description}</p>
+                      <p className="text-[1rem] text-muted-foreground">{ticket.description}</p>
 
                       <div className="flex items-center justify-between pt-2">
                         <div className="flex items-center gap-2">
                           <Avatar className="h-6 w-6">
-                            <AvatarImage src={ticket.user.avatar || "/placeholder.svg"} alt={ticket.user.name} />
+                            <AvatarImage
+                              src={ticket.user.avatar || "/placeholder.svg"}
+                              alt={ticket.user.name}
+                            />
                             <AvatarFallback>{ticket.user.name.charAt(0)}</AvatarFallback>
                           </Avatar>
-                          <div className="text-sm">
+                          <div className="text-[1rem]">
                             <span className="font-medium">{ticket.user.name}</span>
-                            <span className="ml-2 text-muted-foreground">({getRoleLabel(ticket.user.role)})</span>
+                            <span className="ml-2 text-muted-foreground">
+                              ({getRoleLabel(ticket.user.role)})
+                            </span>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-4 text-[1rem] text-muted-foreground">
                           <div className="flex items-center">
                             <MessageSquare className="mr-1 h-4 w-4" />
                             {ticket.messages}
@@ -273,14 +286,16 @@ export default function SupportManagePage() {
                 ) : (
                   <div className="flex h-[200px] flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
                     <h3 className="mt-4 text-lg font-medium">Nenhum ticket encontrado</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">Tente ajustar os filtros ou a busca.</p>
+                    <p className="mt-2 text-[1rem] text-muted-foreground">
+                      Tente ajustar os filtros ou a busca.
+                    </p>
                   </div>
                 )}
               </div>
             </CardContent>
             <CardFooter className="border-t px-6 py-4">
               <div className="flex items-center justify-between w-full">
-                <div className="text-sm text-muted-foreground">
+                <div className="text-[1rem] text-muted-foreground">
                   Mostrando {filteredTickets.length} de {tickets.length} tickets
                 </div>
                 <div className="flex gap-2">
@@ -309,5 +324,5 @@ export default function SupportManagePage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

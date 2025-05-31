@@ -204,7 +204,7 @@ export function TenderList({
       ) : (
         <div className="text-center py-12 border rounded-lg">
           <p className="text-muted-foreground">Nenhuma licitação encontrada.</p>
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className="text-[1rem] text-muted-foreground mt-2">
             Tente ajustar os filtros ou criar uma nova licitação.
           </p>
         </div>

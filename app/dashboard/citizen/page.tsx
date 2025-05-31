@@ -1,7 +1,7 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Building2, Landmark, Search } from "lucide-react"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Building2, Landmark, Search } from "lucide-react";
 
 export default function CitizenDashboard() {
   return (
@@ -9,8 +9,8 @@ export default function CitizenDashboard() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Painel do Cidadão</h1>
         <p className="text-muted-foreground">
-          Bem-vindo ao sistema Licitações Brasil. Aqui você pode pesquisar licitações e cadastrar fornecedores ou órgãos
-          públicos.
+          Bem-vindo ao sistema Licitações Brasil. Aqui você pode pesquisar licitações e cadastrar
+          fornecedores ou órgãos públicos.
         </p>
       </div>
 
@@ -18,7 +18,9 @@ export default function CitizenDashboard() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">Pesquisar Licitações</CardTitle>
-            <CardDescription>Encontre licitações públicas em andamento ou concluídas</CardDescription>
+            <CardDescription>
+              Encontre licitações públicas em andamento ou concluídas
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/dashboard/citizen/search">
@@ -30,9 +32,9 @@ export default function CitizenDashboard() {
           </CardContent>
         </Card>
 
-        {/* <Card>
+        <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Cadastrar Fornecedor</CardTitle>
+            <CardTitle className="text-lg">Cadastrar-se como Fornecedor</CardTitle>
             <CardDescription>Registre uma empresa para participar de licitações</CardDescription>
           </CardHeader>
           <CardContent>
@@ -47,7 +49,7 @@ export default function CitizenDashboard() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Cadastrar Órgão Público</CardTitle>
+            <CardTitle className="text-lg">Cadastre-se como Órgão Público</CardTitle>
             <CardDescription>Registre um órgão público para gerenciar licitações</CardDescription>
           </CardHeader>
           <CardContent>
@@ -58,7 +60,7 @@ export default function CitizenDashboard() {
               </Button>
             </Link>
           </CardContent>
-        </Card> */}
+        </Card>
       </div>
 
       <div className="rounded-lg border p-6">
@@ -68,7 +70,7 @@ export default function CitizenDashboard() {
             <div key={tender.id} className="flex items-center justify-between border-b pb-4">
               <div>
                 <h3 className="font-medium">{tender.title}</h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[1rem] text-muted-foreground">
                   {tender.agency} • {tender.date}
                 </p>
               </div>
@@ -89,7 +91,7 @@ export default function CitizenDashboard() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 // Mock data for recent tenders
@@ -118,4 +120,4 @@ const recentTenders = [
     agency: "Secretaria de Saúde",
     date: "Publicado em 02/06/2025",
   },
-]
+];

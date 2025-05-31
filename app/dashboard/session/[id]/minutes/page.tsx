@@ -165,7 +165,7 @@ export default function SessionMinutesPage() {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FileText className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium">Nenhuma ata exportada</h3>
-            <p className="text-sm text-muted-foreground mt-1 mb-4">
+            <p className="text-[1rem] text-muted-foreground mt-1 mb-4">
               Você ainda não exportou nenhuma ata para esta sessão.
             </p>
             <Button onClick={() => router.push(`/dashboard/session/${params.id}/export`)}>
@@ -184,7 +184,7 @@ export default function SessionMinutesPage() {
                     <h3 className="text-lg font-medium">{minute.title}</h3>
                     <div className="flex items-center space-x-2 mt-1">
                       <Badge variant="outline">{getFormatLabel(minute.format)}</Badge>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-[1rem] text-muted-foreground">
                         {format(new Date(minute.created_at), "PPpp", { locale: ptBR })}
                       </span>
                     </div>

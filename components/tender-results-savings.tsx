@@ -122,7 +122,7 @@ export function TenderResultsSavings({ tenderId, results }: TenderResultsSavings
                 <div className="rounded-full bg-blue-100 p-2">
                   <BarChart3 className="h-4 w-4 text-blue-600" />
                 </div>
-                <span className="text-sm font-medium">Valor Estimado</span>
+                <span className="text-[1rem] font-medium">Valor Estimado</span>
               </div>
               <span className="text-lg font-bold">
                 {formatCurrency(savingsData.estimated_value || 0)}
@@ -138,7 +138,7 @@ export function TenderResultsSavings({ tenderId, results }: TenderResultsSavings
                 <div className="rounded-full bg-green-100 p-2">
                   <DollarSign className="h-4 w-4 text-green-600" />
                 </div>
-                <span className="text-sm font-medium">Valor Final</span>
+                <span className="text-[1rem] font-medium">Valor Final</span>
               </div>
               <span className="text-lg font-bold">
                 {formatCurrency(savingsData.total_value || 0)}
@@ -155,7 +155,7 @@ export function TenderResultsSavings({ tenderId, results }: TenderResultsSavings
               <div className="rounded-full bg-purple-100 p-2">
                 <TrendingDown className="h-4 w-4 text-purple-600" />
               </div>
-              <span className="text-sm font-medium">Economia Gerada</span>
+              <span className="text-[1rem] font-medium">Economia Gerada</span>
             </div>
             <span className="text-lg font-bold">
               {formatCurrency(savingsData.saved_value || 0)}
@@ -163,7 +163,7 @@ export function TenderResultsSavings({ tenderId, results }: TenderResultsSavings
           </div>
           <Progress value={savingsData.saved_percentage || 0} className="h-2" />
           <div className="flex justify-end mt-1">
-            <span className="text-xs text-muted-foreground">
+            <span className="text-[1rem] text-muted-foreground">
               {formatPercentage(savingsData.saved_percentage || 0)} do valor estimado
             </span>
           </div>
@@ -177,7 +177,7 @@ export function TenderResultsSavings({ tenderId, results }: TenderResultsSavings
               <div className="rounded-full bg-yellow-100 p-2">
                 <Percent className="h-4 w-4 text-yellow-600" />
               </div>
-              <span className="text-sm font-medium">Percentual de Economia</span>
+              <span className="text-[1rem] font-medium">Percentual de Economia</span>
             </div>
             <span className="text-lg font-bold">
               {formatPercentage(savingsData.saved_percentage || 0)}

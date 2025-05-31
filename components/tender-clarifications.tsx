@@ -252,7 +252,7 @@ export function TenderClarifications({ tenderId }: TenderClarificationsProps) {
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[1rem] text-muted-foreground">
                   {deadlinePassed
                     ? "O prazo para esclarecimentos já expirou."
                     : "O prazo para esclarecimentos termina em:"}
@@ -353,7 +353,7 @@ export function TenderClarifications({ tenderId }: TenderClarificationsProps) {
                             <span className="font-medium">
                               {clarification.user?.name || "Usuário"}
                             </span>
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-[1rem] text-muted-foreground">
                               {formatDate(clarification.created_at)}
                             </span>
                           </div>
@@ -362,7 +362,7 @@ export function TenderClarifications({ tenderId }: TenderClarificationsProps) {
                             {clarification.status === "pending" ? "Pendente" : "Respondido"}
                           </Badge>
                         </div>
-                        <p className="text-sm whitespace-pre-line">{clarification.content}</p>
+                        <p className="text-[1rem] whitespace-pre-line">{clarification.content}</p>
 
                         {clarification.attachment_url && (
                           <div className="mt-2">
@@ -370,7 +370,7 @@ export function TenderClarifications({ tenderId }: TenderClarificationsProps) {
                               href={clarification.attachment_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm text-primary hover:underline flex items-center">
+                              className="text-[1rem] text-primary hover:underline flex items-center">
                               Ver anexo
                             </a>
                           </div>
@@ -388,13 +388,15 @@ export function TenderClarifications({ tenderId }: TenderClarificationsProps) {
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <span className="font-medium">Resposta</span>
-                              <span className="text-sm text-muted-foreground">
+                              <span className="text-[1rem] text-muted-foreground">
                                 {clarification.response_date
                                   ? formatDate(clarification.response_date)
                                   : ""}
                               </span>
                             </div>
-                            <p className="text-sm whitespace-pre-line">{clarification.response}</p>
+                            <p className="text-[1rem] whitespace-pre-line">
+                              {clarification.response}
+                            </p>
                           </div>
                         </div>
                       </div>

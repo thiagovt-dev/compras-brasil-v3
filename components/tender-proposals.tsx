@@ -309,7 +309,7 @@ export function TenderProposals({ tenderId, lots, isAgencyUser }: TenderProposal
             <div className="space-y-6 py-4">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Valor Total</h3>
+                  <h3 className="text-[1rem] font-medium text-muted-foreground">Valor Total</h3>
                   <p className="text-lg font-semibold">
                     {formatCurrency(selectedProposal.total_value || 0)}
                   </p>
@@ -319,11 +319,13 @@ export function TenderProposals({ tenderId, lots, isAgencyUser }: TenderProposal
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Data de Envio</h3>
+                  <h3 className="text-[1rem] font-medium text-muted-foreground">Data de Envio</h3>
                   <p>{formatDate(selectedProposal.created_at || "")}</p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Última Atualização</h3>
+                  <h3 className="text-[1rem] font-medium text-muted-foreground">
+                    Última Atualização
+                  </h3>
                   <p>
                     {formatDate(selectedProposal.updated_at || selectedProposal.created_at || "")}
                   </p>
@@ -332,7 +334,9 @@ export function TenderProposals({ tenderId, lots, isAgencyUser }: TenderProposal
 
               {selectedProposal.notes && (
                 <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Observações</h3>
+                  <h3 className="text-[1rem] font-medium text-muted-foreground mb-1">
+                    Observações
+                  </h3>
                   <p className="whitespace-pre-line">{selectedProposal.notes}</p>
                 </div>
               )}
@@ -348,14 +352,14 @@ export function TenderProposals({ tenderId, lots, isAgencyUser }: TenderProposal
                             <h4 className="font-medium">
                               Item {item.tender_item?.number}: {item.tender_item?.description}
                             </h4>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-[1rem] text-muted-foreground">
                               Quantidade: {item.tender_item?.quantity} {item.tender_item?.unit}
                             </p>
                           </div>
 
                           <div className="space-y-2">
                             <div>
-                              <h5 className="text-sm font-medium text-muted-foreground">
+                              <h5 className="text-[1rem] font-medium text-muted-foreground">
                                 Preço Unitário
                               </h5>
                               <p className="font-semibold">
@@ -364,7 +368,7 @@ export function TenderProposals({ tenderId, lots, isAgencyUser }: TenderProposal
                             </div>
 
                             <div>
-                              <h5 className="text-sm font-medium text-muted-foreground">
+                              <h5 className="text-[1rem] font-medium text-muted-foreground">
                                 Valor Total
                               </h5>
                               <p className="font-semibold">
@@ -378,14 +382,16 @@ export function TenderProposals({ tenderId, lots, isAgencyUser }: TenderProposal
                           <div className="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-2 gap-4">
                             {item.brand && (
                               <div>
-                                <h5 className="text-sm font-medium text-muted-foreground">Marca</h5>
+                                <h5 className="text-[1rem] font-medium text-muted-foreground">
+                                  Marca
+                                </h5>
                                 <p>{item.brand}</p>
                               </div>
                             )}
 
                             {item.model && (
                               <div>
-                                <h5 className="text-sm font-medium text-muted-foreground">
+                                <h5 className="text-[1rem] font-medium text-muted-foreground">
                                   Modelo
                                 </h5>
                                 <p>{item.model}</p>
@@ -394,7 +400,7 @@ export function TenderProposals({ tenderId, lots, isAgencyUser }: TenderProposal
 
                             {item.description && (
                               <div className="md:col-span-2">
-                                <h5 className="text-sm font-medium text-muted-foreground">
+                                <h5 className="text-[1rem] font-medium text-muted-foreground">
                                   Descrição Detalhada
                                 </h5>
                                 <p className="whitespace-pre-line">{item.description}</p>

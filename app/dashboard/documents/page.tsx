@@ -324,13 +324,15 @@ export default function DocumentsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center text-sm text-muted-foreground mb-2">
+                <div className="flex items-center text-[1rem] text-muted-foreground mb-2">
                   <FileText className="mr-2 h-4 w-4" />
                   <span>{doc.file_type?.toUpperCase()}</span>
                   {doc.file_size && <span className="ml-2">({formatFileSize(doc.file_size)})</span>}
                 </div>
                 {doc.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">{doc.description}</p>
+                  <p className="text-[1rem] text-muted-foreground line-clamp-2">
+                    {doc.description}
+                  </p>
                 )}
               </CardContent>
               <CardFooter className="flex justify-between">

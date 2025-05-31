@@ -168,8 +168,8 @@ export function MeEppTiebreaker({
 
           <div className="rounded-md bg-muted p-3">
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Tempo Restante para Desempate</span>
-              <span className="text-sm font-bold">{formatTime(timeLeft)}</span>
+              <span className="text-[1rem] font-medium">Tempo Restante para Desempate</span>
+              <span className="text-[1rem] font-bold">{formatTime(timeLeft)}</span>
             </div>
             <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
               <div className="h-full bg-primary" style={{ width: `${(timeLeft / 300) * 100}%` }} />
@@ -187,7 +187,7 @@ export function MeEppTiebreaker({
                 onChange={(e) => setNewPrice(e.target.value)}
                 required
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[1rem] text-muted-foreground">
                 Digite um valor menor que{" "}
                 {bestPrice.toLocaleString("pt-BR", {
                   style: "currency",
@@ -211,7 +211,7 @@ export function MeEppTiebreaker({
           </form>
         </div>
       </CardContent>
-      <CardFooter className="text-xs text-muted-foreground">
+      <CardFooter className="text-[1rem] text-muted-foreground">
         Conforme Lei Complementar 123/2006, Art. 44 e 45
       </CardFooter>
     </Card>

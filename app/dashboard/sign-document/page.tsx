@@ -427,18 +427,18 @@ export default function SignDocumentPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <div className="flex items-center text-sm text-muted-foreground">
+                    <div className="flex items-center text-[1rem] text-muted-foreground">
                       <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
                       <span>Assinado digitalmente</span>
                     </div>
                     {doc.reason && (
-                      <div className="text-sm">
+                      <div className="text-[1rem]">
                         <span className="text-muted-foreground">Motivo: </span>
                         <span>{doc.reason}</span>
                       </div>
                     )}
                     {doc.location && (
-                      <div className="text-sm">
+                      <div className="text-[1rem]">
                         <span className="text-muted-foreground">Local: </span>
                         <span>{doc.location}</span>
                       </div>

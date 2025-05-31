@@ -1,292 +1,302 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { createClientSupabaseClient } from "@/lib/supabase/client"
-import { useAuth } from "@/lib/supabase/auth-context"
-import { format, formatDistanceToNow } from "date-fns"
-import { ptBR } from "date-fns/locale"
-import { Bell, CheckIcon as CheckAll, Search, Trash2, X } from "lucide-react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { toast } from "@/components/ui/use-toast"
-import type { Notification } from "@/components/notification-system"
-import { Skeleton } from "@/components/ui/skeleton"
+import { useEffect, useState } from "react";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/supabase/auth-context";
+import { format, formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Bell, CheckIcon as CheckAll, Search, Trash2, X } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "@/components/ui/use-toast";
+import type { Notification } from "@/components/notification-system";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function NotificationsPage() {
-  const supabase = createClientSupabaseClient()
-  const { user } = useAuth()
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [filteredNotifications, setFilteredNotifications] = useState<Notification[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [typeFilter, setTypeFilter] = useState("all")
-  const [priorityFilter, setPriorityFilter] = useState("all")
-  const [dateFilter, setDateFilter] = useState("all")
+  const supabase = createClientSupabaseClient();
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [filteredNotifications, setFilteredNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
 
   // Fetch notifications
   const fetchNotifications = async () => {
-    if (!user) return
+    if (!user) return;
 
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false });
 
-      if (error) throw error
+      if (error) throw error;
 
-      setNotifications(data || [])
-      setFilteredNotifications(data || [])
+      setNotifications(data || []);
+      setFilteredNotifications(data || []);
     } catch (error) {
-      console.error("Error fetching notifications:", error)
+      console.error("Error fetching notifications:", error);
       toast({
         title: "Erro ao carregar notificações",
         description: "Não foi possível carregar suas notificações. Tente novamente mais tarde.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   // Mark all notifications as read
   const markAllAsRead = async () => {
-    if (!user || notifications.length === 0) return
+    if (!user || notifications.length === 0) return;
 
     try {
-      const unreadNotifications = notifications.filter((n) => !n.is_read)
-      if (unreadNotifications.length === 0) return
+      const unreadNotifications = notifications.filter((n) => !n.is_read);
+      if (unreadNotifications.length === 0) return;
 
       const { error } = await supabase
         .from("notifications")
         .update({ is_read: true })
         .eq("user_id", user.id)
-        .eq("is_read", false)
+        .eq("is_read", false);
 
-      if (error) throw error
+      if (error) throw error;
 
       // Update local state
-      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
-      setFilteredNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      setFilteredNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
 
       toast({
         title: "Notificações marcadas como lidas",
         description: `${unreadNotifications.length} notificações foram marcadas como lidas.`,
-      })
+      });
     } catch (error) {
-      console.error("Error marking all notifications as read:", error)
+      console.error("Error marking all notifications as read:", error);
       toast({
         title: "Erro ao marcar notificações como lidas",
-        description: "Não foi possível atualizar o status das notificações. Tente novamente mais tarde.",
+        description:
+          "Não foi possível atualizar o status das notificações. Tente novamente mais tarde.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   // Mark notification as read
   const markAsRead = async (id: string) => {
     try {
-      const { error } = await supabase.from("notifications").update({ is_read: true }).eq("id", id)
+      const { error } = await supabase.from("notifications").update({ is_read: true }).eq("id", id);
 
-      if (error) throw error
+      if (error) throw error;
 
       // Update local state
-      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)))
-      setFilteredNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)))
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
+      setFilteredNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+      );
     } catch (error) {
-      console.error("Error marking notification as read:", error)
+      console.error("Error marking notification as read:", error);
       toast({
         title: "Erro ao marcar notificação como lida",
-        description: "Não foi possível atualizar o status da notificação. Tente novamente mais tarde.",
+        description:
+          "Não foi possível atualizar o status da notificação. Tente novamente mais tarde.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   // Delete notification
   const deleteNotification = async (id: string) => {
     try {
-      const { error } = await supabase.from("notifications").delete().eq("id", id)
+      const { error } = await supabase.from("notifications").delete().eq("id", id);
 
-      if (error) throw error
+      if (error) throw error;
 
       // Update local state
-      setNotifications((prev) => prev.filter((n) => n.id !== id))
-      setFilteredNotifications((prev) => prev.filter((n) => n.id !== id))
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      setFilteredNotifications((prev) => prev.filter((n) => n.id !== id));
 
       toast({
         title: "Notificação removida",
         description: "A notificação foi removida com sucesso.",
-      })
+      });
     } catch (error) {
-      console.error("Error deleting notification:", error)
+      console.error("Error deleting notification:", error);
       toast({
         title: "Erro ao remover notificação",
         description: "Não foi possível remover a notificação. Tente novamente mais tarde.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   // Delete all notifications
   const deleteAllNotifications = async () => {
-    if (!user || notifications.length === 0) return
+    if (!user || notifications.length === 0) return;
 
     try {
-      const { error } = await supabase.from("notifications").delete().eq("user_id", user.id)
+      const { error } = await supabase.from("notifications").delete().eq("user_id", user.id);
 
-      if (error) throw error
+      if (error) throw error;
 
       // Update local state
-      setNotifications([])
-      setFilteredNotifications([])
+      setNotifications([]);
+      setFilteredNotifications([]);
 
       toast({
         title: "Notificações removidas",
         description: "Todas as notificações foram removidas com sucesso.",
-      })
+      });
     } catch (error) {
-      console.error("Error deleting all notifications:", error)
+      console.error("Error deleting all notifications:", error);
       toast({
         title: "Erro ao remover notificações",
         description: "Não foi possível remover as notificações. Tente novamente mais tarde.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   // Format notification date
   const formatDate = (dateString: string) => {
-    if (!dateString) return ""
+    if (!dateString) return "";
     try {
-      return format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: ptBR })
+      return format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: ptBR });
     } catch (error) {
-      return ""
+      return "";
     }
-  }
+  };
 
   // Format relative time
   const formatRelativeTime = (dateString: string) => {
-    if (!dateString) return ""
+    if (!dateString) return "";
     try {
-      return formatDistanceToNow(new Date(dateString), { locale: ptBR, addSuffix: true })
+      return formatDistanceToNow(new Date(dateString), { locale: ptBR, addSuffix: true });
     } catch (error) {
-      return ""
+      return "";
     }
-  }
+  };
 
   // Get notification link based on type and entity
   const getNotificationLink = (notification: Notification) => {
-    const { type, entity_id, entity_type } = notification
+    const { type, entity_id, entity_type } = notification;
 
     switch (entity_type) {
       case "tender":
-        return `/dashboard/tenders/${entity_id}`
+        return `/dashboard/tenders/${entity_id}`;
       case "proposal":
-        return `/dashboard/supplier/proposals/${entity_id}`
+        return `/dashboard/supplier/proposals/${entity_id}`;
       case "impugnation":
-        return `/dashboard/tenders/${entity_id}?tab=impugnations`
+        return `/dashboard/tenders/${entity_id}?tab=impugnations`;
       case "clarification":
-        return `/dashboard/tenders/${entity_id}?tab=clarifications`
+        return `/dashboard/tenders/${entity_id}?tab=clarifications`;
       case "appeal":
-        return `/dashboard/tenders/${entity_id}?tab=appeals`
+        return `/dashboard/tenders/${entity_id}?tab=appeals`;
       case "session":
-        return `/tenders/${entity_id}/session`
+        return `/tenders/${entity_id}/session`;
       case "document":
-        return `/dashboard/documents/${entity_id}`
+        return `/dashboard/documents/${entity_id}`;
       default:
-        return "/dashboard/notifications"
+        return "/dashboard/notifications";
     }
-  }
+  };
 
   // Get notification icon based on type
   const getNotificationIcon = (type: string, priority: string) => {
-    let color = "bg-blue-100 text-blue-600"
+    let color = "bg-blue-100 text-blue-600";
 
     if (priority === "high") {
-      color = "bg-red-100 text-red-600"
+      color = "bg-red-100 text-red-600";
     } else if (priority === "medium") {
-      color = "bg-yellow-100 text-yellow-600"
+      color = "bg-yellow-100 text-yellow-600";
     }
 
     return (
       <div className={`flex items-center justify-center w-10 h-10 rounded-full ${color}`}>
         <Bell className="w-5 h-5" />
       </div>
-    )
-  }
+    );
+  };
 
   // Filter notifications
   useEffect(() => {
-    if (!notifications.length) return
+    if (!notifications.length) return;
 
-    let filtered = [...notifications]
+    let filtered = [...notifications];
 
     // Apply search filter
     if (searchQuery) {
-      const query = searchQuery.toLowerCase()
+      const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
-        (n) => n.title.toLowerCase().includes(query) || n.message.toLowerCase().includes(query),
-      )
+        (n) => n.title.toLowerCase().includes(query) || n.message.toLowerCase().includes(query)
+      );
     }
 
     // Apply type filter
     if (typeFilter !== "all") {
       if (typeFilter === "unread") {
-        filtered = filtered.filter((n) => !n.is_read)
+        filtered = filtered.filter((n) => !n.is_read);
       } else {
-        filtered = filtered.filter((n) => n.type === typeFilter)
+        filtered = filtered.filter((n) => n.type === typeFilter);
       }
     }
 
     // Apply priority filter
     if (priorityFilter !== "all") {
-      filtered = filtered.filter((n) => n.priority === priorityFilter)
+      filtered = filtered.filter((n) => n.priority === priorityFilter);
     }
 
     // Apply date filter
     if (dateFilter !== "all") {
-      const now = new Date()
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      const yesterday = new Date(today)
-      yesterday.setDate(yesterday.getDate() - 1)
-      const lastWeek = new Date(today)
-      lastWeek.setDate(lastWeek.getDate() - 7)
-      const lastMonth = new Date(today)
-      lastMonth.setMonth(lastMonth.getMonth() - 1)
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const lastWeek = new Date(today);
+      lastWeek.setDate(lastWeek.getDate() - 7);
+      const lastMonth = new Date(today);
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
 
       filtered = filtered.filter((n) => {
-        const date = new Date(n.created_at)
+        const date = new Date(n.created_at);
 
         if (dateFilter === "today") {
-          return date >= today
+          return date >= today;
         } else if (dateFilter === "yesterday") {
-          return date >= yesterday && date < today
+          return date >= yesterday && date < today;
         } else if (dateFilter === "last-week") {
-          return date >= lastWeek
+          return date >= lastWeek;
         } else if (dateFilter === "last-month") {
-          return date >= lastMonth
+          return date >= lastMonth;
         }
 
-        return true
-      })
+        return true;
+      });
     }
 
-    setFilteredNotifications(filtered)
-  }, [notifications, searchQuery, typeFilter, priorityFilter, dateFilter])
+    setFilteredNotifications(filtered);
+  }, [notifications, searchQuery, typeFilter, priorityFilter, dateFilter]);
 
   // Subscribe to new notifications
   useEffect(() => {
-    if (!user) return
+    if (!user) return;
 
-    fetchNotifications()
+    fetchNotifications();
 
     // Subscribe to new notifications
     const channel = supabase
@@ -302,31 +312,33 @@ export default function NotificationsPage() {
         (payload) => {
           if (payload.eventType === "INSERT") {
             // Add new notification to the list
-            const newNotification = payload.new as Notification
-            setNotifications((prev) => [newNotification, ...prev])
+            const newNotification = payload.new as Notification;
+            setNotifications((prev) => [newNotification, ...prev]);
           } else if (payload.eventType === "UPDATE") {
             // Update notification in the list
-            const updatedNotification = payload.new as Notification
-            setNotifications((prev) => prev.map((n) => (n.id === updatedNotification.id ? updatedNotification : n)))
+            const updatedNotification = payload.new as Notification;
+            setNotifications((prev) =>
+              prev.map((n) => (n.id === updatedNotification.id ? updatedNotification : n))
+            );
           } else if (payload.eventType === "DELETE") {
             // Remove notification from the list
-            const deletedNotification = payload.old as Notification
-            setNotifications((prev) => prev.filter((n) => n.id !== deletedNotification.id))
+            const deletedNotification = payload.old as Notification;
+            setNotifications((prev) => prev.filter((n) => n.id !== deletedNotification.id));
           }
-        },
+        }
       )
-      .subscribe()
+      .subscribe();
 
     return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [user, supabase])
+      supabase.removeChannel(channel);
+    };
+  }, [user, supabase]);
 
   // Get notification counts
-  const unreadCount = notifications.filter((n) => !n.is_read).length
-  const highPriorityCount = notifications.filter((n) => n.priority === "high").length
-  const mediumPriorityCount = notifications.filter((n) => n.priority === "medium").length
-  const lowPriorityCount = notifications.filter((n) => n.priority === "low").length
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+  const highPriorityCount = notifications.filter((n) => n.priority === "high").length;
+  const mediumPriorityCount = notifications.filter((n) => n.priority === "medium").length;
+  const lowPriorityCount = notifications.filter((n) => n.priority === "low").length;
 
   return (
     <div className="container py-6 space-y-6">
@@ -504,22 +516,25 @@ export default function NotificationsPage() {
               {filteredNotifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 border rounded-lg ${!notification.is_read ? "bg-muted/30" : ""} relative group`}
-                >
+                  className={`p-4 border rounded-lg ${
+                    !notification.is_read ? "bg-muted/30" : ""
+                  } relative group`}>
                   <Link
                     href={getNotificationLink(notification)}
                     onClick={() => {
                       if (!notification.is_read) {
-                        markAsRead(notification.id)
+                        markAsRead(notification.id);
                       }
                     }}
-                    className="block"
-                  >
+                    className="block">
                     <div className="flex gap-3">
                       {getNotificationIcon(notification.type, notification.priority)}
                       <div className="space-y-1 flex-1">
                         <div className="flex justify-between">
-                          <p className={`text-sm font-medium ${!notification.is_read ? "font-semibold" : ""}`}>
+                          <p
+                            className={`text-[1rem] font-medium ${
+                              !notification.is_read ? "font-semibold" : ""
+                            }`}>
                             {notification.title}
                             {!notification.is_read && (
                               <Badge variant="secondary" className="ml-2">
@@ -532,12 +547,14 @@ export default function NotificationsPage() {
                               </Badge>
                             )}
                           </p>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-[1rem] text-muted-foreground">
                             {formatRelativeTime(notification.created_at)}
                           </span>
                         </div>
-                        <p className="text-sm text-muted-foreground">{notification.message}</p>
-                        <p className="text-xs text-muted-foreground">{formatDate(notification.created_at)}</p>
+                        <p className="text-[1rem] text-muted-foreground">{notification.message}</p>
+                        <p className="text-[1rem] text-muted-foreground">
+                          {formatDate(notification.created_at)}
+                        </p>
                       </div>
                     </div>
                   </Link>
@@ -547,8 +564,7 @@ export default function NotificationsPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => markAsRead(notification.id)}
-                      >
+                        onClick={() => markAsRead(notification.id)}>
                         <CheckAll className="h-4 w-4 text-muted-foreground hover:text-primary" />
                       </Button>
                     )}
@@ -556,8 +572,7 @@ export default function NotificationsPage() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() => deleteNotification(notification.id)}
-                    >
+                      onClick={() => deleteNotification(notification.id)}>
                       <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                     </Button>
                   </div>
@@ -592,17 +607,18 @@ export default function NotificationsPage() {
               {notifications
                 .filter((n) => !n.is_read)
                 .map((notification) => (
-                  <div key={notification.id} className="p-4 border rounded-lg bg-muted/30 relative group">
+                  <div
+                    key={notification.id}
+                    className="p-4 border rounded-lg bg-muted/30 relative group">
                     <Link
                       href={getNotificationLink(notification)}
                       onClick={() => markAsRead(notification.id)}
-                      className="block"
-                    >
+                      className="block">
                       <div className="flex gap-3">
                         {getNotificationIcon(notification.type, notification.priority)}
                         <div className="space-y-1 flex-1">
                           <div className="flex justify-between">
-                            <p className="text-sm font-semibold">
+                            <p className="text-[1rem] font-semibold">
                               {notification.title}
                               <Badge variant="secondary" className="ml-2">
                                 Nova
@@ -613,12 +629,16 @@ export default function NotificationsPage() {
                                 </Badge>
                               )}
                             </p>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-[1rem] text-muted-foreground">
                               {formatRelativeTime(notification.created_at)}
                             </span>
                           </div>
-                          <p className="text-sm text-muted-foreground">{notification.message}</p>
-                          <p className="text-xs text-muted-foreground">{formatDate(notification.created_at)}</p>
+                          <p className="text-[1rem] text-muted-foreground">
+                            {notification.message}
+                          </p>
+                          <p className="text-[1rem] text-muted-foreground">
+                            {formatDate(notification.created_at)}
+                          </p>
                         </div>
                       </div>
                     </Link>
@@ -627,16 +647,14 @@ export default function NotificationsPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => markAsRead(notification.id)}
-                      >
+                        onClick={() => markAsRead(notification.id)}>
                         <CheckAll className="h-4 w-4 text-muted-foreground hover:text-primary" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => deleteNotification(notification.id)}
-                      >
+                        onClick={() => deleteNotification(notification.id)}>
                         <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                       </Button>
                     </div>
@@ -673,22 +691,25 @@ export default function NotificationsPage() {
                 .map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 border rounded-lg ${!notification.is_read ? "bg-muted/30" : ""} relative group`}
-                  >
+                    className={`p-4 border rounded-lg ${
+                      !notification.is_read ? "bg-muted/30" : ""
+                    } relative group`}>
                     <Link
                       href={getNotificationLink(notification)}
                       onClick={() => {
                         if (!notification.is_read) {
-                          markAsRead(notification.id)
+                          markAsRead(notification.id);
                         }
                       }}
-                      className="block"
-                    >
+                      className="block">
                       <div className="flex gap-3">
                         {getNotificationIcon(notification.type, notification.priority)}
                         <div className="space-y-1 flex-1">
                           <div className="flex justify-between">
-                            <p className={`text-sm font-medium ${!notification.is_read ? "font-semibold" : ""}`}>
+                            <p
+                              className={`text-[1rem] font-medium ${
+                                !notification.is_read ? "font-semibold" : ""
+                              }`}>
                               {notification.title}
                               {!notification.is_read && (
                                 <Badge variant="secondary" className="ml-2">
@@ -699,12 +720,16 @@ export default function NotificationsPage() {
                                 Importante
                               </Badge>
                             </p>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-[1rem] text-muted-foreground">
                               {formatRelativeTime(notification.created_at)}
                             </span>
                           </div>
-                          <p className="text-sm text-muted-foreground">{notification.message}</p>
-                          <p className="text-xs text-muted-foreground">{formatDate(notification.created_at)}</p>
+                          <p className="text-[1rem] text-muted-foreground">
+                            {notification.message}
+                          </p>
+                          <p className="text-[1rem] text-muted-foreground">
+                            {formatDate(notification.created_at)}
+                          </p>
                         </div>
                       </div>
                     </Link>
@@ -714,8 +739,7 @@ export default function NotificationsPage() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => markAsRead(notification.id)}
-                        >
+                          onClick={() => markAsRead(notification.id)}>
                           <CheckAll className="h-4 w-4 text-muted-foreground hover:text-primary" />
                         </Button>
                       )}
@@ -723,8 +747,7 @@ export default function NotificationsPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => deleteNotification(notification.id)}
-                      >
+                        onClick={() => deleteNotification(notification.id)}>
                         <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                       </Button>
                     </div>
@@ -761,22 +784,25 @@ export default function NotificationsPage() {
                 .map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 border rounded-lg ${!notification.is_read ? "bg-muted/30" : ""} relative group`}
-                  >
+                    className={`p-4 border rounded-lg ${
+                      !notification.is_read ? "bg-muted/30" : ""
+                    } relative group`}>
                     <Link
                       href={getNotificationLink(notification)}
                       onClick={() => {
                         if (!notification.is_read) {
-                          markAsRead(notification.id)
+                          markAsRead(notification.id);
                         }
                       }}
-                      className="block"
-                    >
+                      className="block">
                       <div className="flex gap-3">
                         {getNotificationIcon(notification.type, notification.priority)}
                         <div className="space-y-1 flex-1">
                           <div className="flex justify-between">
-                            <p className={`text-sm font-medium ${!notification.is_read ? "font-semibold" : ""}`}>
+                            <p
+                              className={`text-[1rem] font-medium ${
+                                !notification.is_read ? "font-semibold" : ""
+                              }`}>
                               {notification.title}
                               {!notification.is_read && (
                                 <Badge variant="secondary" className="ml-2">
@@ -785,17 +811,20 @@ export default function NotificationsPage() {
                               )}
                               <Badge
                                 variant="outline"
-                                className="ml-2 bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80"
-                              >
+                                className="ml-2 bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80">
                                 Média
                               </Badge>
                             </p>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-[1rem] text-muted-foreground">
                               {formatRelativeTime(notification.created_at)}
                             </span>
                           </div>
-                          <p className="text-sm text-muted-foreground">{notification.message}</p>
-                          <p className="text-xs text-muted-foreground">{formatDate(notification.created_at)}</p>
+                          <p className="text-[1rem] text-muted-foreground">
+                            {notification.message}
+                          </p>
+                          <p className="text-[1rem] text-muted-foreground">
+                            {formatDate(notification.created_at)}
+                          </p>
                         </div>
                       </div>
                     </Link>
@@ -805,8 +834,7 @@ export default function NotificationsPage() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => markAsRead(notification.id)}
-                        >
+                          onClick={() => markAsRead(notification.id)}>
                           <CheckAll className="h-4 w-4 text-muted-foreground hover:text-primary" />
                         </Button>
                       )}
@@ -814,8 +842,7 @@ export default function NotificationsPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => deleteNotification(notification.id)}
-                      >
+                        onClick={() => deleteNotification(notification.id)}>
                         <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                       </Button>
                     </div>
@@ -832,5 +859,5 @@ export default function NotificationsPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

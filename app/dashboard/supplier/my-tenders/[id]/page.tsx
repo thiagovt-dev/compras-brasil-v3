@@ -1,45 +1,55 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
-import { notFound } from "next/navigation"
-import Link from "next/link"
-import { ArrowLeft, Calendar, MapPin, Building2, FileText, Clock, DollarSign, Users } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { TenderDocuments } from "@/components/tender-documents"
-import { TenderLots } from "@/components/tender-lots"
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  Calendar,
+  MapPin,
+  Building2,
+  FileText,
+  Clock,
+  DollarSign,
+  Users,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { TenderDocuments } from "@/components/tender-documents";
+import { TenderLots } from "@/components/tender-lots";
 
-export const dynamic = "force-dynamic"
+export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: {
-    id: string
-  }
+    id: string;
+  };
 }
 
 export default async function MyTenderDetailsPage({ params }: PageProps) {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = createServerComponentClient({ cookies });
 
   // Get current user
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
   if (!user) {
-    notFound()
+    notFound();
   }
 
   // Get user profile
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
 
   if (!profile || profile.profile_type !== "supplier") {
-    notFound()
+    notFound();
   }
 
   // Fetch tender details
   const { data: tender, error } = await supabase
     .from("tenders")
-    .select(`
+    .select(
+      `
       *,
       agency:agencies(name, city, state),
       lots:tender_lots(*),
@@ -48,13 +58,14 @@ export default async function MyTenderDetailsPage({ params }: PageProps) {
         *,
         supplier:profiles!proposals_supplier_id_fkey(name)
       )
-    `)
+    `
+    )
     .eq("id", params.id)
     .eq("proposals.supplier_id", user.id)
-    .single()
+    .single();
 
   if (error || !tender) {
-    notFound()
+    notFound();
   }
 
   // Get my proposal for this tender
@@ -63,14 +74,14 @@ export default async function MyTenderDetailsPage({ params }: PageProps) {
     .select("*")
     .eq("tender_id", params.id)
     .eq("supplier_id", user.id)
-    .single()
+    .single();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
-    }).format(value)
-  }
+    }).format(value);
+  };
 
   const formatDate = (date: string) => {
     return new Intl.DateTimeFormat("pt-BR", {
@@ -79,8 +90,8 @@ export default async function MyTenderDetailsPage({ params }: PageProps) {
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    }).format(new Date(date))
-  }
+    }).format(new Date(date));
+  };
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
@@ -90,11 +101,14 @@ export default async function MyTenderDetailsPage({ params }: PageProps) {
       in_progress: { label: "Em Andamento", variant: "default" as const },
       finished: { label: "Finalizada", variant: "outline" as const },
       cancelled: { label: "Cancelada", variant: "destructive" as const },
-    }
+    };
 
-    const statusInfo = statusMap[status as keyof typeof statusMap] || { label: status, variant: "secondary" as const }
-    return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
-  }
+    const statusInfo = statusMap[status as keyof typeof statusMap] || {
+      label: status,
+      variant: "secondary" as const,
+    };
+    return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
+  };
 
   const getProposalStatusBadge = (status: string) => {
     const statusMap = {
@@ -103,11 +117,14 @@ export default async function MyTenderDetailsPage({ params }: PageProps) {
       accepted: { label: "Aceita", variant: "default" as const },
       rejected: { label: "Rejeitada", variant: "destructive" as const },
       winner: { label: "Vencedora", variant: "default" as const },
-    }
+    };
 
-    const statusInfo = statusMap[status as keyof typeof statusMap] || { label: status, variant: "secondary" as const }
-    return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
-  }
+    const statusInfo = statusMap[status as keyof typeof statusMap] || {
+      label: status,
+      variant: "secondary" as const,
+    };
+    return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
+  };
 
   return (
     <div className="space-y-6">
@@ -138,28 +155,32 @@ export default async function MyTenderDetailsPage({ params }: PageProps) {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{tender.agency?.name}</span>
+                  <span className="text-[1rem]">{tender.agency?.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">
+                  <span className="text-[1rem]">
                     {tender.agency?.city}, {tender.agency?.state}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Abertura: {formatDate(tender.opening_date)}</span>
+                  <span className="text-[1rem]">Abertura: {formatDate(tender.opening_date)}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Encerramento: {formatDate(tender.closing_date)}</span>
+                  <span className="text-[1rem]">
+                    Encerramento: {formatDate(tender.closing_date)}
+                  </span>
                 </div>
               </div>
 
               {tender.estimated_value && (
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Valor Estimado: {formatCurrency(tender.estimated_value)}</span>
+                  <span className="text-[1rem]">
+                    Valor Estimado: {formatCurrency(tender.estimated_value)}
+                  </span>
                 </div>
               )}
 
@@ -167,13 +188,13 @@ export default async function MyTenderDetailsPage({ params }: PageProps) {
 
               <div>
                 <h4 className="font-medium mb-2">Modalidade</h4>
-                <p className="text-sm text-muted-foreground">{tender.modality}</p>
+                <p className="text-[1rem] text-muted-foreground">{tender.modality}</p>
               </div>
 
               {tender.object && (
                 <div>
                   <h4 className="font-medium mb-2">Objeto</h4>
-                  <p className="text-sm text-muted-foreground">{tender.object}</p>
+                  <p className="text-[1rem] text-muted-foreground">{tender.object}</p>
                 </div>
               )}
             </CardContent>
@@ -214,26 +235,28 @@ export default async function MyTenderDetailsPage({ params }: PageProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Status:</span>
+                  <span className="text-[1rem] font-medium">Status:</span>
                   {getProposalStatusBadge(myProposal.status)}
                 </div>
 
                 {myProposal.total_value && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Valor Total:</span>
-                    <span className="text-sm font-mono">{formatCurrency(myProposal.total_value)}</span>
+                    <span className="text-[1rem] font-medium">Valor Total:</span>
+                    <span className="text-[1rem] font-mono">
+                      {formatCurrency(myProposal.total_value)}
+                    </span>
                   </div>
                 )}
 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Enviada em:</span>
-                  <span className="text-sm">{formatDate(myProposal.created_at)}</span>
+                  <span className="text-[1rem] font-medium">Enviada em:</span>
+                  <span className="text-[1rem]">{formatDate(myProposal.created_at)}</span>
                 </div>
 
                 {myProposal.updated_at !== myProposal.created_at && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Atualizada em:</span>
-                    <span className="text-sm">{formatDate(myProposal.updated_at)}</span>
+                    <span className="text-[1rem] font-medium">Atualizada em:</span>
+                    <span className="text-[1rem]">{formatDate(myProposal.updated_at)}</span>
                   </div>
                 )}
 
@@ -249,7 +272,9 @@ export default async function MyTenderDetailsPage({ params }: PageProps) {
 
                   {myProposal.status === "draft" && (
                     <Button variant="outline" asChild className="w-full">
-                      <Link href={`/dashboard/supplier/proposals/edit/${myProposal.id}`}>Editar Proposta</Link>
+                      <Link href={`/dashboard/supplier/proposals/edit/${myProposal.id}`}>
+                        Editar Proposta
+                      </Link>
                     </Button>
                   )}
                 </div>
@@ -264,21 +289,21 @@ export default async function MyTenderDetailsPage({ params }: PageProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Propostas:</span>
+                <span className="text-[1rem] font-medium">Propostas:</span>
                 <div className="flex items-center gap-1">
                   <Users className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{tender.proposals?.length || 0}</span>
+                  <span className="text-[1rem]">{tender.proposals?.length || 0}</span>
                 </div>
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Lotes:</span>
-                <span className="text-sm">{tender.lots?.length || 0}</span>
+                <span className="text-[1rem] font-medium">Lotes:</span>
+                <span className="text-[1rem]">{tender.lots?.length || 0}</span>
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Documentos:</span>
-                <span className="text-sm">{tender.documents?.length || 0}</span>
+                <span className="text-[1rem] font-medium">Documentos:</span>
+                <span className="text-[1rem]">{tender.documents?.length || 0}</span>
               </div>
             </CardContent>
           </Card>
@@ -295,7 +320,9 @@ export default async function MyTenderDetailsPage({ params }: PageProps) {
 
               {!myProposal && tender.status === "active" && (
                 <Button asChild className="w-full">
-                  <Link href={`/dashboard/supplier/proposals/create?tender=${tender.id}`}>Criar Proposta</Link>
+                  <Link href={`/dashboard/supplier/proposals/create?tender=${tender.id}`}>
+                    Criar Proposta
+                  </Link>
                 </Button>
               )}
 
@@ -307,5 +334,5 @@ export default async function MyTenderDetailsPage({ params }: PageProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }

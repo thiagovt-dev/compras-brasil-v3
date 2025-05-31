@@ -1,8 +1,8 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { CheckCircle, Clock, X, Building2, Landmark } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckCircle, Clock, X, Building2, Landmark } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export default function RegistrationDashboard() {
   return (
@@ -88,10 +88,12 @@ export default function RegistrationDashboard() {
                   <div>
                     <h3 className="font-medium">{request.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[1rem] text-muted-foreground">
                         {request.type} • {request.time}
                       </p>
-                      <Badge variant={getStatusBadgeVariant(request.status)}>{request.status}</Badge>
+                      <Badge variant={getStatusBadgeVariant(request.status)}>
+                        {request.status}
+                      </Badge>
                     </div>
                   </div>
                 </div>
@@ -128,10 +130,9 @@ export default function RegistrationDashboard() {
                     <div className="w-40 h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-green-600 rounded-full"
-                        style={{ width: `${segment.percentage}%` }}
-                      ></div>
+                        style={{ width: `${segment.percentage}%` }}></div>
                     </div>
-                    <span className="text-sm font-medium">{segment.percentage}%</span>
+                    <span className="text-[1rem] font-medium">{segment.percentage}%</span>
                   </div>
                 </div>
               ))}
@@ -153,10 +154,9 @@ export default function RegistrationDashboard() {
                     <div className="w-40 h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-green-600 rounded-full"
-                        style={{ width: `${region.percentage}%` }}
-                      ></div>
+                        style={{ width: `${region.percentage}%` }}></div>
                     </div>
-                    <span className="text-sm font-medium">{region.percentage}%</span>
+                    <span className="text-[1rem] font-medium">{region.percentage}%</span>
                   </div>
                 </div>
               ))}
@@ -165,20 +165,20 @@ export default function RegistrationDashboard() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
 
 // Helper function for badges
 function getStatusBadgeVariant(status: string) {
   switch (status) {
     case "Pendente":
-      return "warning"
+      return "warning";
     case "Aprovado":
-      return "success"
+      return "success";
     case "Reprovado":
-      return "destructive"
+      return "destructive";
     default:
-      return "outline"
+      return "outline";
   }
 }
 
@@ -205,7 +205,7 @@ const pendingRequests = [
     time: "Há 1 dia",
     status: "Pendente",
   },
-]
+];
 
 const approvedRequests = [
   {
@@ -222,7 +222,7 @@ const approvedRequests = [
     time: "Há 5 dias",
     status: "Aprovado",
   },
-]
+];
 
 const rejectedRequests = [
   {
@@ -232,7 +232,7 @@ const rejectedRequests = [
     time: "Há 2 dias",
     status: "Reprovado",
   },
-]
+];
 
 // Mock data for supplier segments
 const supplierSegments = [
@@ -241,7 +241,7 @@ const supplierSegments = [
   { name: "Serviços", percentage: 20 },
   { name: "Comércio", percentage: 15 },
   { name: "Outros", percentage: 5 },
-]
+];
 
 // Mock data for agency regions
 const agencyRegions = [
@@ -250,4 +250,4 @@ const agencyRegions = [
   { name: "Sul", percentage: 15 },
   { name: "Centro-Oeste", percentage: 12 },
   { name: "Norte", percentage: 8 },
-]
+];

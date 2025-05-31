@@ -145,10 +145,12 @@ export function MeEppTiebreakerHistory({
                   <h3 className="font-medium">
                     Desempate em {formatDate(tiebreaker.tiebreaker_date)}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[1rem] text-muted-foreground">
                     ID da Licitação: {tiebreaker.tender_id}
                   </p>
-                  <p className="text-sm text-muted-foreground">ID do Lote: {tiebreaker.lot_id}</p>
+                  <p className="text-[1rem] text-muted-foreground">
+                    ID do Lote: {tiebreaker.lot_id}
+                  </p>
                 </div>
                 <div>{getStatusBadge(tiebreaker.status)}</div>
               </div>
@@ -157,11 +159,11 @@ export function MeEppTiebreakerHistory({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm font-medium">Valor Original</p>
+                  <p className="text-[1rem] font-medium">Valor Original</p>
                   <p className="text-lg">{formatCurrency(tiebreaker.original_value)}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Novo Valor</p>
+                  <p className="text-[1rem] font-medium">Novo Valor</p>
                   <div className="flex items-center gap-2">
                     <p className="text-lg">{formatCurrency(tiebreaker.new_value)}</p>
                     <Badge variant="outline" className="bg-green-500/10 text-green-700">
@@ -173,14 +175,14 @@ export function MeEppTiebreakerHistory({
               </div>
 
               {tiebreaker.notes && (
-                <div className="mt-4 text-sm">
+                <div className="mt-4 text-[1rem]">
                   <p className="font-medium">Observações:</p>
                   <p className="text-muted-foreground">{tiebreaker.notes}</p>
                 </div>
               )}
 
               {tiebreaker.response_date && (
-                <div className="mt-4 text-sm">
+                <div className="mt-4 text-[1rem]">
                   <p className="font-medium">Resposta em:</p>
                   <p className="text-muted-foreground">{formatDate(tiebreaker.response_date)}</p>
                 </div>

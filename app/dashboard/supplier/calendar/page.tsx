@@ -1,10 +1,16 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +18,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   ChevronLeft,
   ChevronRight,
@@ -23,16 +29,16 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
-} from "lucide-react"
-import Link from "next/link"
+} from "lucide-react";
+import Link from "next/link";
 
 interface Event {
-  id: string
-  title: string
-  date: string
-  time: string
-  agency: string
-  status: string
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  agency: string;
+  status: string;
 }
 
 const events: Event[] = [
@@ -84,106 +90,106 @@ const events: Event[] = [
     agency: "Autarquia Z",
     status: "Revogada",
   },
-]
+];
 
 export default function CalendarPage() {
-  const [currentMonth, setCurrentMonth] = useState(new Date())
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
-  const [isEventDetailsOpen, setIsEventDetailsOpen] = useState(false)
-  const [view, setView] = useState<"month" | "list">("month")
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [isEventDetailsOpen, setIsEventDetailsOpen] = useState(false);
+  const [view, setView] = useState<"month" | "list">("month");
 
   const prevMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))
-  }
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+  };
 
   const nextMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))
-  }
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+  };
 
   const today = () => {
-    setCurrentMonth(new Date())
-  }
+    setCurrentMonth(new Date());
+  };
 
   const handleEventClick = (event: Event) => {
-    setSelectedEvent(event)
-    setIsEventDetailsOpen(true)
-  }
+    setSelectedEvent(event);
+    setIsEventDetailsOpen(true);
+  };
 
   const getMonthName = (date: Date) => {
-    return date.toLocaleString("pt-BR", { month: "long" })
-  }
+    return date.toLocaleString("pt-BR", { month: "long" });
+  };
 
   const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear()
-    const month = date.getMonth()
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const firstDayOfMonth = new Date(year, month, 1).getDay()
-    const days = []
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    const days = [];
 
     // Add empty cells for days before the first day of the month
     for (let i = 0; i < firstDayOfMonth; i++) {
-      days.push(null)
+      days.push(null);
     }
 
     // Add days of the month
     for (let i = 1; i <= daysInMonth; i++) {
-      days.push(new Date(year, month, i))
+      days.push(new Date(year, month, i));
     }
 
-    return days
-  }
+    return days;
+  };
 
   const getEventsForDay = (date: Date) => {
-    if (!date) return []
+    if (!date) return [];
     return events.filter((event) => {
-      const eventDate = new Date(event.date)
+      const eventDate = new Date(event.date);
       return (
         eventDate.getDate() === date.getDate() &&
         eventDate.getMonth() === date.getMonth() &&
         eventDate.getFullYear() === date.getFullYear()
-      )
-    })
-  }
+      );
+    });
+  };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case "Publicada":
-        return "secondary"
+        return "secondary";
       case "Aguardando abertura":
-        return "default"
+        return "default";
       case "Em disputa":
-        return "warning"
+        return "warning";
       case "Em andamento":
-        return "default"
+        return "default";
       case "Homologada":
-        return "success"
+        return "success";
       case "Revogada":
-        return "destructive"
+        return "destructive";
       case "Anulada":
-        return "destructive"
+        return "destructive";
       default:
-        return "outline"
+        return "outline";
     }
-  }
+  };
 
   const isToday = (date: Date) => {
-    const today = new Date()
+    const today = new Date();
     return (
       date.getDate() === today.getDate() &&
       date.getMonth() === today.getMonth() &&
       date.getFullYear() === today.getFullYear()
-    )
-  }
+    );
+  };
 
   const getUpcomingEvents = () => {
-    const today = new Date()
+    const today = new Date();
     return events
       .filter((event) => {
-        const eventDate = new Date(event.date)
-        return eventDate >= today
+        const eventDate = new Date(event.date);
+        return eventDate >= today;
       })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-  }
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  };
 
   return (
     <div className="space-y-6">
@@ -222,7 +228,7 @@ export default function CalendarPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-7 gap-1 text-center text-sm font-medium">
+            <div className="grid grid-cols-7 gap-1 text-center text-[1rem] font-medium">
               <div className="py-2">Dom</div>
               <div className="py-2">Seg</div>
               <div className="py-2">Ter</div>
@@ -233,29 +239,27 @@ export default function CalendarPage() {
             </div>
             <div className="grid grid-cols-7 gap-1">
               {getDaysInMonth(currentMonth).map((day, index) => {
-                const dayEvents = day ? getEventsForDay(day) : []
+                const dayEvents = day ? getEventsForDay(day) : [];
                 return (
                   <div
                     key={index}
                     className={`min-h-24 rounded-md border p-1 ${
                       day ? (isToday(day) ? "border-primary bg-primary/5" : "") : "bg-gray-50"
-                    }`}
-                  >
+                    }`}>
                     {day && (
                       <>
-                        <div className="text-right text-sm">{day.getDate()}</div>
+                        <div className="text-right text-[1rem]">{day.getDate()}</div>
                         <div className="mt-1 space-y-1">
                           {dayEvents.slice(0, 3).map((event) => (
                             <button
                               key={event.id}
                               onClick={() => handleEventClick(event)}
-                              className="w-full truncate rounded-sm bg-primary/10 px-1 py-0.5 text-left text-xs hover:bg-primary/20"
-                            >
+                              className="w-full truncate rounded-sm bg-primary/10 px-1 py-0.5 text-left text-[1rem] hover:bg-primary/20">
                               {event.title}
                             </button>
                           ))}
                           {dayEvents.length > 3 && (
-                            <div className="text-center text-xs text-muted-foreground">
+                            <div className="text-center text-[1rem] text-muted-foreground">
                               +{dayEvents.length - 3} mais
                             </div>
                           )}
@@ -263,7 +267,7 @@ export default function CalendarPage() {
                       </>
                     )}
                   </div>
-                )
+                );
               })}
             </div>
           </CardContent>
@@ -287,7 +291,7 @@ export default function CalendarPage() {
                         <h3 className="font-medium">{event.title}</h3>
                         <Badge variant={getStatusBadgeVariant(event.status)}>{event.status}</Badge>
                       </div>
-                      <div className="mt-1 flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center">
+                      <div className="mt-1 flex flex-col gap-1 text-[1rem] text-muted-foreground sm:flex-row sm:items-center">
                         <div className="flex items-center gap-1">
                           <CalendarIcon className="h-3.5 w-3.5" />
                           <span>{new Date(event.date).toLocaleDateString("pt-BR")}</span>
@@ -327,7 +331,7 @@ export default function CalendarPage() {
                 <div className="rounded-md border border-dashed p-8 text-center">
                   <CalendarIcon className="mx-auto h-10 w-10 text-muted-foreground" />
                   <h3 className="mt-2 font-medium">Nenhuma licitação agendada</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <p className="mt-1 text-[1rem] text-muted-foreground">
                     Você não tem licitações agendadas para os próximos dias.
                   </p>
                 </div>
@@ -347,24 +351,28 @@ export default function CalendarPage() {
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <FileText className="col-span-1 h-4 w-4 text-muted-foreground" />
-                <p className="col-span-3 text-sm font-medium leading-none">{selectedEvent.title}</p>
+                <p className="col-span-3 text-[1rem] font-medium leading-none">
+                  {selectedEvent.title}
+                </p>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <CalendarIcon className="col-span-1 h-4 w-4 text-muted-foreground" />
-                <p className="col-span-3 text-sm leading-none">
+                <p className="col-span-3 text-[1rem] leading-none">
                   {new Date(selectedEvent.date).toLocaleDateString("pt-BR")}
                 </p>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Clock className="col-span-1 h-4 w-4 text-muted-foreground" />
-                <p className="col-span-3 text-sm leading-none">{selectedEvent.time}</p>
+                <p className="col-span-3 text-[1rem] leading-none">{selectedEvent.time}</p>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Building2 className="col-span-1 h-4 w-4 text-muted-foreground" />
-                <p className="col-span-3 text-sm leading-none">{selectedEvent.agency}</p>
+                <p className="col-span-3 text-[1rem] leading-none">{selectedEvent.agency}</p>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                {selectedEvent.status === "Publicada" && <CheckCircle className="col-span-1 h-4 w-4 text-green-500" />}
+                {selectedEvent.status === "Publicada" && (
+                  <CheckCircle className="col-span-1 h-4 w-4 text-green-500" />
+                )}
                 {selectedEvent.status === "Aguardando abertura" && (
                   <AlertCircle className="col-span-1 h-4 w-4 text-yellow-500" />
                 )}
@@ -374,11 +382,13 @@ export default function CalendarPage() {
                 {selectedEvent.status === "Em andamento" && (
                   <AlertCircle className="col-span-1 h-4 w-4 text-yellow-500" />
                 )}
-                {selectedEvent.status === "Homologada" && <CheckCircle className="col-span-1 h-4 w-4 text-green-500" />}
+                {selectedEvent.status === "Homologada" && (
+                  <CheckCircle className="col-span-1 h-4 w-4 text-green-500" />
+                )}
                 {(selectedEvent.status === "Revogada" || selectedEvent.status === "Anulada") && (
                   <XCircle className="col-span-1 h-4 w-4 text-red-500" />
                 )}
-                <p className="col-span-3 text-sm leading-none">{selectedEvent.status}</p>
+                <p className="col-span-3 text-[1rem] leading-none">{selectedEvent.status}</p>
               </div>
             </div>
           )}
@@ -390,5 +400,5 @@ export default function CalendarPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
