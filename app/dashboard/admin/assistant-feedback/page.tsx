@@ -1,114 +1,120 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ThumbsUp, ThumbsDown, Search, Calendar, Download } from "lucide-react"
-import { useAuth } from "@/lib/supabase/auth-context"
-import { createClient } from "@/lib/supabase/client"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ThumbsUp, ThumbsDown, Search, Calendar, Download } from "lucide-react";
+import { useAuth } from "@/lib/supabase/auth-context";
+import { createClient } from "@/lib/supabase/client";
 
 type FeedbackItem = {
-  id: string
-  user_id: string
-  message_id: string
-  query: string
-  response: string
-  rating: boolean
-  comment: string | null
-  created_at: string
-  user_email?: string
-}
+  id: string;
+  user_id: string;
+  message_id: string;
+  query: string;
+  response: string;
+  rating: boolean;
+  comment: string | null;
+  created_at: string;
+  user_email?: string;
+};
 
 export default function AssistantFeedbackPage() {
-  const { user, profile } = useAuth()
-  const [feedback, setFeedback] = useState<FeedbackItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<"all" | "positive" | "negative">("all")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [dateRange, setDateRange] = useState<"all" | "today" | "week" | "month">("all")
-  const supabase = createClient()
+  const { user, profile } = useAuth();
+  const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "positive" | "negative">("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dateRange, setDateRange] = useState<"all" | "today" | "week" | "month">("all");
+  const supabase = createClient();
 
   useEffect(() => {
     const fetchFeedback = async () => {
-      setLoading(true)
+      setLoading(true);
       try {
         let query = supabase
           .from("assistant_feedback")
           .select("*, profiles(email)")
-          .order("created_at", { ascending: false })
+          .order("created_at", { ascending: false });
 
         // Aplicar filtros
         if (filter === "positive") {
-          query = query.eq("rating", true)
+          query = query.eq("rating", true);
         } else if (filter === "negative") {
-          query = query.eq("rating", false)
+          query = query.eq("rating", false);
         }
 
         // Aplicar filtro de data
         if (dateRange === "today") {
-          const today = new Date()
-          today.setHours(0, 0, 0, 0)
-          query = query.gte("created_at", today.toISOString())
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          query = query.gte("created_at", today.toISOString());
         } else if (dateRange === "week") {
-          const weekAgo = new Date()
-          weekAgo.setDate(weekAgo.getDate() - 7)
-          query = query.gte("created_at", weekAgo.toISOString())
+          const weekAgo = new Date();
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          query = query.gte("created_at", weekAgo.toISOString());
         } else if (dateRange === "month") {
-          const monthAgo = new Date()
-          monthAgo.setMonth(monthAgo.getMonth() - 1)
-          query = query.gte("created_at", monthAgo.toISOString())
+          const monthAgo = new Date();
+          monthAgo.setMonth(monthAgo.getMonth() - 1);
+          query = query.gte("created_at", monthAgo.toISOString());
         }
 
-        const { data, error } = await query
+        const { data, error } = await query;
 
         if (error) {
-          throw error
+          throw error;
         }
 
         // Processar os dados para incluir o email do usuário
         const processedData = data.map((item: any) => ({
           ...item,
           user_email: item.profiles?.email || "Unknown",
-        }))
+        }));
 
-        setFeedback(processedData)
+        setFeedback(processedData);
       } catch (error) {
-        console.error("Error fetching feedback:", error)
+        console.error("Error fetching feedback:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchFeedback()
-  }, [filter, dateRange])
+    fetchFeedback();
+  }, [filter, dateRange]);
 
   const filteredFeedback = feedback.filter(
     (item) =>
       item.query.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.response.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.comment && item.comment.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      item.user_email.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+      item.user_email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const positiveCount = feedback.filter((item) => item.rating).length
-  const negativeCount = feedback.filter((item) => !item.rating).length
-  const totalCount = feedback.length
+  const positiveCount = feedback.filter((item) => item.rating).length;
+  const negativeCount = feedback.filter((item) => !item.rating).length;
+  const totalCount = feedback.length;
 
-  const positivePercentage = totalCount > 0 ? Math.round((positiveCount / totalCount) * 100) : 0
+  const positivePercentage = totalCount > 0 ? Math.round((positiveCount / totalCount) * 100) : 0;
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = new Date(dateString);
     return date.toLocaleString("pt-BR", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    })
-  }
+    });
+  };
 
   const exportToCSV = () => {
     // Preparar os dados para exportação
@@ -120,10 +126,10 @@ export default function AssistantFeedbackPage() {
       rating: item.rating ? "Positivo" : "Negativo",
       comment: item.comment || "",
       created_at: formatDate(item.created_at),
-    }))
+    }));
 
     // Converter para CSV
-    const headers = ["ID", "Usuário", "Pergunta", "Resposta", "Avaliação", "Comentário", "Data"]
+    const headers = ["ID", "Usuário", "Pergunta", "Resposta", "Avaliação", "Comentário", "Data"];
     const csvContent =
       "data:text/csv;charset=utf-8," +
       headers.join(",") +
@@ -132,26 +138,31 @@ export default function AssistantFeedbackPage() {
         .map((row) =>
           Object.values(row)
             .map((value) => `"${String(value).replace(/"/g, '""')}"`)
-            .join(","),
+            .join(",")
         )
-        .join("\n")
+        .join("\n");
 
     // Criar link de download
-    const encodedUri = encodeURI(csvContent)
-    const link = document.createElement("a")
-    link.setAttribute("href", encodedUri)
-    link.setAttribute("download", `feedback-assistente-${new Date().toISOString().split("T")[0]}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute(
+      "download",
+      `feedback-assistente-${new Date().toISOString().split("T")[0]}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Feedback do Assistente IA</h1>
-          <p className="text-muted-foreground">Analise o feedback dos usuários para melhorar o assistente virtual</p>
+          <p className="text-muted-foreground">
+            Analise o feedback dos usuários para melhorar o assistente virtual
+          </p>
         </div>
         <div className="mt-4 flex items-center gap-2 md:mt-0">
           <Button variant="outline" onClick={exportToCSV}>
@@ -164,16 +175,16 @@ export default function AssistantFeedbackPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total de Feedback</CardTitle>
+            <CardTitle className="text-[1rem] font-medium">Total de Feedback</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalCount}</div>
-            <p className="text-xs text-muted-foreground">Avaliações recebidas</p>
+            <p className="text-[1rem] text-muted-foreground">Avaliações recebidas</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Avaliações Positivas</CardTitle>
+            <CardTitle className="text-[1rem] font-medium">Avaliações Positivas</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center">
@@ -182,7 +193,7 @@ export default function AssistantFeedbackPage() {
                 {positivePercentage}%
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[1rem] text-muted-foreground">
               <ThumbsUp className="mr-1 inline h-3 w-3" />
               Usuários satisfeitos
             </p>
@@ -190,7 +201,7 @@ export default function AssistantFeedbackPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Avaliações Negativas</CardTitle>
+            <CardTitle className="text-[1rem] font-medium">Avaliações Negativas</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center">
@@ -199,7 +210,7 @@ export default function AssistantFeedbackPage() {
                 {totalCount > 0 ? 100 - positivePercentage : 0}%
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[1rem] text-muted-foreground">
               <ThumbsDown className="mr-1 inline h-3 w-3" />
               Oportunidades de melhoria
             </p>
@@ -210,7 +221,9 @@ export default function AssistantFeedbackPage() {
       <Card>
         <CardHeader>
           <CardTitle>Histórico de Feedback</CardTitle>
-          <CardDescription>Visualize e analise o feedback dos usuários sobre o assistente virtual</CardDescription>
+          <CardDescription>
+            Visualize e analise o feedback dos usuários sobre o assistente virtual
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="mb-4 flex flex-col gap-4 md:flex-row">
@@ -224,7 +237,9 @@ export default function AssistantFeedbackPage() {
               />
             </div>
             <div className="flex gap-2">
-              <Select value={filter} onValueChange={(value: "all" | "positive" | "negative") => setFilter(value)}>
+              <Select
+                value={filter}
+                onValueChange={(value: "all" | "positive" | "negative") => setFilter(value)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Filtrar por avaliação" />
                 </SelectTrigger>
@@ -237,8 +252,7 @@ export default function AssistantFeedbackPage() {
 
               <Select
                 value={dateRange}
-                onValueChange={(value: "all" | "today" | "week" | "month") => setDateRange(value)}
-              >
+                onValueChange={(value: "all" | "today" | "week" | "month") => setDateRange(value)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Filtrar por data" />
                 </SelectTrigger>
@@ -256,7 +270,7 @@ export default function AssistantFeedbackPage() {
             <div className="flex h-40 items-center justify-center">
               <div className="text-center">
                 <div className="mb-2 h-6 w-6 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
-                <p className="text-sm text-muted-foreground">Carregando feedback...</p>
+                <p className="text-[1rem] text-muted-foreground">Carregando feedback...</p>
               </div>
             </div>
           ) : filteredFeedback.length > 0 ? (
@@ -270,12 +284,15 @@ export default function AssistantFeedbackPage() {
                           variant="outline"
                           className={`flex items-center gap-1 ${
                             item.rating ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {item.rating ? <ThumbsUp className="h-3 w-3" /> : <ThumbsDown className="h-3 w-3" />}
+                          }`}>
+                          {item.rating ? (
+                            <ThumbsUp className="h-3 w-3" />
+                          ) : (
+                            <ThumbsDown className="h-3 w-3" />
+                          )}
                           {item.rating ? "Positivo" : "Negativo"}
                         </Badge>
-                        <span className="text-sm font-medium">{item.user_email}</span>
+                        <span className="text-[1rem] font-medium">{item.user_email}</span>
                       </div>
                       <Badge variant="outline" className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
@@ -286,17 +303,17 @@ export default function AssistantFeedbackPage() {
                   <CardContent className="pt-4">
                     <div className="space-y-4">
                       <div>
-                        <h4 className="mb-1 text-sm font-medium">Pergunta:</h4>
-                        <p className="text-sm">{item.query}</p>
+                        <h4 className="mb-1 text-[1rem] font-medium">Pergunta:</h4>
+                        <p className="text-[1rem]">{item.query}</p>
                       </div>
                       <div>
-                        <h4 className="mb-1 text-sm font-medium">Resposta:</h4>
-                        <p className="whitespace-pre-line text-sm">{item.response}</p>
+                        <h4 className="mb-1 text-[1rem] font-medium">Resposta:</h4>
+                        <p className="whitespace-pre-line text-[1rem]">{item.response}</p>
                       </div>
                       {item.comment && (
                         <div>
-                          <h4 className="mb-1 text-sm font-medium">Comentário:</h4>
-                          <p className="whitespace-pre-line text-sm">{item.comment}</p>
+                          <h4 className="mb-1 text-[1rem] font-medium">Comentário:</h4>
+                          <p className="whitespace-pre-line text-[1rem]">{item.comment}</p>
                         </div>
                       )}
                     </div>
@@ -308,7 +325,7 @@ export default function AssistantFeedbackPage() {
             <div className="flex h-40 flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
               <ThumbsUp className="h-10 w-10 text-muted-foreground" />
               <h3 className="mt-4 text-lg font-medium">Nenhum feedback encontrado</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <p className="mt-2 text-[1rem] text-muted-foreground">
                 {searchTerm
                   ? "Nenhum feedback corresponde à sua pesquisa."
                   : "Ainda não há feedback para o assistente virtual."}
@@ -323,5 +340,5 @@ export default function AssistantFeedbackPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

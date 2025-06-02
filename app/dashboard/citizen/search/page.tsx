@@ -1,59 +1,67 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Badge } from "@/components/ui/badge"
-import { CalendarIcon, Search, Filter, FileText, Star, StarOff } from "lucide-react"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { CalendarIcon, Search, Filter, FileText, Star, StarOff } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function TenderSearchPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
-  const [showFilters, setShowFilters] = useState(false)
-  const [favorites, setFavorites] = useState<string[]>([])
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [showFilters, setShowFilters] = useState(false);
+  const [favorites, setFavorites] = useState<string[]>([]);
 
   // Filter states
-  const [selectedStatus, setSelectedStatus] = useState<string>("")
-  const [selectedModality, setSelectedModality] = useState<string>("")
-  const [selectedCategory, setSelectedCategory] = useState<string>("")
-  const [selectedAgency, setSelectedAgency] = useState<string>("")
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [selectedModality, setSelectedModality] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedAgency, setSelectedAgency] = useState<string>("");
 
   const toggleFavorite = (id: string) => {
     if (favorites.includes(id)) {
-      setFavorites(favorites.filter((favId) => favId !== id))
+      setFavorites(favorites.filter((favId) => favId !== id));
     } else {
-      setFavorites([...favorites, id])
+      setFavorites([...favorites, id]);
     }
-  }
+  };
 
   const filteredTenders = tenders.filter((tender) => {
     const matchesSearch =
       tender.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       tender.agency.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tender.number.toLowerCase().includes(searchTerm.toLowerCase())
+      tender.number.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = selectedStatus ? tender.status === selectedStatus : true
-    const matchesModality = selectedModality ? tender.modality === selectedModality : true
-    const matchesCategory = selectedCategory ? tender.category === selectedCategory : true
-    const matchesAgency = selectedAgency ? tender.agency === selectedAgency : true
+    const matchesStatus = selectedStatus ? tender.status === selectedStatus : true;
+    const matchesModality = selectedModality ? tender.modality === selectedModality : true;
+    const matchesCategory = selectedCategory ? tender.category === selectedCategory : true;
+    const matchesAgency = selectedAgency ? tender.agency === selectedAgency : true;
 
-    return matchesSearch && matchesStatus && matchesModality && matchesCategory && matchesAgency
-  })
+    return matchesSearch && matchesStatus && matchesModality && matchesCategory && matchesAgency;
+  });
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Pesquisar Licitações</h1>
-        <p className="text-muted-foreground">Encontre licitações públicas em andamento ou concluídas</p>
+        <p className="text-muted-foreground">
+          Encontre licitações públicas em andamento ou concluídas
+        </p>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -72,14 +80,27 @@ export default function TenderSearchPage() {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? format(selectedDate, "PPP", { locale: ptBR }) : <span>Selecionar data</span>}
+                  {selectedDate ? (
+                    format(selectedDate, "PPP", { locale: ptBR })
+                  ) : (
+                    <span>Selecionar data</span>
+                  )}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
-                <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} initialFocus locale={ptBR} />
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  initialFocus
+                  locale={ptBR}
+                />
               </PopoverContent>
             </Popover>
-            <Button variant="outline" onClick={() => setShowFilters(!showFilters)} className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="gap-2">
               <Filter className="h-4 w-4" />
               Filtros
             </Button>
@@ -117,7 +138,9 @@ export default function TenderSearchPage() {
                     <SelectContent>
                       <SelectItem value="todas">Todas as modalidades</SelectItem>
                       <SelectItem value="Pregão Eletrônico">Pregão Eletrônico</SelectItem>
-                      <SelectItem value="Concorrência Eletrônica">Concorrência Eletrônica</SelectItem>
+                      <SelectItem value="Concorrência Eletrônica">
+                        Concorrência Eletrônica
+                      </SelectItem>
                       <SelectItem value="Dispensa Eletrônica">Dispensa Eletrônica</SelectItem>
                     </SelectContent>
                   </Select>
@@ -132,7 +155,9 @@ export default function TenderSearchPage() {
                       <SelectItem value="todas">Todas as categorias</SelectItem>
                       <SelectItem value="Aquisição de bens">Aquisição de bens</SelectItem>
                       <SelectItem value="Serviços comuns">Serviços comuns</SelectItem>
-                      <SelectItem value="Serviços comuns de engenharia">Serviços comuns de engenharia</SelectItem>
+                      <SelectItem value="Serviços comuns de engenharia">
+                        Serviços comuns de engenharia
+                      </SelectItem>
                       <SelectItem value="Obras">Obras</SelectItem>
                     </SelectContent>
                   </Select>
@@ -149,7 +174,9 @@ export default function TenderSearchPage() {
                       <SelectItem value="Prefeitura Municipal de São Paulo">
                         Prefeitura Municipal de São Paulo
                       </SelectItem>
-                      <SelectItem value="Tribunal Regional Federal">Tribunal Regional Federal</SelectItem>
+                      <SelectItem value="Tribunal Regional Federal">
+                        Tribunal Regional Federal
+                      </SelectItem>
                       <SelectItem value="Secretaria de Saúde">Secretaria de Saúde</SelectItem>
                     </SelectContent>
                   </Select>
@@ -175,7 +202,7 @@ export default function TenderSearchPage() {
                     <h3 className="font-medium">{tender.title}</h3>
                     <Badge variant={getStatusBadgeVariant(tender.status)}>{tender.status}</Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-[1rem] text-muted-foreground mt-1">
                     {tender.number} • {tender.agency}
                   </p>
                   <div className="flex flex-wrap gap-2 mt-2">
@@ -187,7 +214,7 @@ export default function TenderSearchPage() {
                       </Badge>
                     )}
                   </div>
-                  <div className="mt-2 text-sm">
+                  <div className="mt-2 text-[1rem]">
                     <span className="font-medium">Abertura:</span> {tender.openingDate}
                   </div>
                 </div>
@@ -196,8 +223,7 @@ export default function TenderSearchPage() {
                     variant="ghost"
                     size="icon"
                     onClick={() => toggleFavorite(tender.id)}
-                    className="text-yellow-500"
-                  >
+                    className="text-yellow-500">
                     {favorites.includes(tender.id) ? (
                       <Star className="h-5 w-5 fill-yellow-500" />
                     ) : (
@@ -222,28 +248,28 @@ export default function TenderSearchPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 // Helper function for badges
 function getStatusBadgeVariant(status: string) {
   switch (status) {
     case "Publicada":
-      return "secondary"
+      return "secondary";
     case "Aguardando abertura":
-      return "default"
+      return "default";
     case "Em disputa":
-      return "warning"
+      return "warning";
     case "Em andamento":
-      return "default"
+      return "default";
     case "Homologada":
-      return "success"
+      return "success";
     case "Revogada":
-      return "destructive"
+      return "destructive";
     case "Anulada":
-      return "destructive"
+      return "destructive";
     default:
-      return "outline"
+      return "outline";
   }
 }
 
@@ -315,4 +341,4 @@ const tenders = [
     openingDate: "10/05/2025 às 14:00",
     exclusiveMeEpp: true,
   },
-]
+];

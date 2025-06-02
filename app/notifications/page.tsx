@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Bell, CheckCircle, AlertTriangle, Info, CheckCheck } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Bell, CheckCircle, AlertTriangle, Info, CheckCheck } from "lucide-react";
 
 export default function NotificationsPage() {
-  const [activeTab, setActiveTab] = useState("all")
+  const [activeTab, setActiveTab] = useState("all");
   const [notifications, setNotifications] = useState([
     {
       id: "1",
@@ -65,44 +65,46 @@ export default function NotificationsPage() {
       type: "error" as const,
       link: "/dashboard/supplier/my-tenders/5",
     },
-  ])
+  ]);
 
   // Filter notifications based on active tab
   const filteredNotifications = notifications.filter((notification) => {
-    if (activeTab === "all") return true
-    if (activeTab === "unread") return !notification.read
-    return notification.type === activeTab
-  })
+    if (activeTab === "all") return true;
+    if (activeTab === "unread") return !notification.read;
+    return notification.type === activeTab;
+  });
 
   const handleMarkAsRead = (id: string) => {
     setNotifications(
-      notifications.map((notification) => (notification.id === id ? { ...notification, read: true } : notification)),
-    )
-  }
+      notifications.map((notification) =>
+        notification.id === id ? { ...notification, read: true } : notification
+      )
+    );
+  };
 
   const handleMarkAllAsRead = () => {
     setNotifications(
       notifications.map((notification) => ({
         ...notification,
         read: true,
-      })),
-    )
-  }
+      }))
+    );
+  };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "info":
-        return <Info className="h-5 w-5 text-blue-500" />
+        return <Info className="h-5 w-5 text-blue-500" />;
       case "success":
-        return <CheckCircle className="h-5 w-5 text-green-500" />
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
       case "warning":
-        return <AlertTriangle className="h-5 w-5 text-yellow-500" />
+        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
       case "error":
-        return <Bell className="h-5 w-5 text-red-500" />
+        return <Bell className="h-5 w-5 text-red-500" />;
       default:
-        return <Bell className="h-5 w-5" />
+        return <Bell className="h-5 w-5" />;
     }
-  }
+  };
 
   return (
     <div className="container mx-auto max-w-4xl py-8">
@@ -140,7 +142,8 @@ export default function NotificationsPage() {
         <CardHeader className="pb-3">
           <CardTitle>Notificações</CardTitle>
           <CardDescription>
-            {filteredNotifications.length} notificação{filteredNotifications.length !== 1 ? "es" : ""}
+            {filteredNotifications.length} notificação
+            {filteredNotifications.length !== 1 ? "es" : ""}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -149,22 +152,25 @@ export default function NotificationsPage() {
               {filteredNotifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`flex cursor-pointer gap-4 py-4 ${!notification.read ? "bg-blue-50/50" : ""}`}
-                  onClick={() => handleMarkAsRead(notification.id)}
-                >
+                  className={`flex cursor-pointer gap-4 py-4 ${
+                    !notification.read ? "bg-blue-50/50" : ""
+                  }`}
+                  onClick={() => handleMarkAsRead(notification.id)}>
                   <div className="mt-1">{getNotificationIcon(notification.type)}</div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <h3 className="font-medium">{notification.title}</h3>
-                      {!notification.read && <div className="h-2 w-2 rounded-full bg-blue-500"></div>}
+                      {!notification.read && (
+                        <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                      )}
                     </div>
-                    <p className="mt-1 text-sm text-gray-600">{notification.message}</p>
+                    <p className="mt-1 text-[1rem] text-gray-600">{notification.message}</p>
                     <div className="mt-2 flex items-center justify-between">
-                      <p className="text-xs text-gray-500">
+                      <p className="text-[1rem] text-gray-500">
                         {notification.date} às {notification.time}
                       </p>
                       <Link href={notification.link}>
-                        <Button variant="link" size="sm" className="h-auto p-0 text-xs">
+                        <Button variant="link" size="sm" className="h-auto p-0 text-[1rem]">
                           Ver detalhes
                         </Button>
                       </Link>
@@ -182,5 +188,5 @@ export default function NotificationsPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

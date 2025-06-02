@@ -1,117 +1,124 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Separator } from "@/components/ui/separator"
-import { useToast } from "@/hooks/use-toast"
-import { CreditCard, FileText, Check, ArrowLeft, Loader2 } from "lucide-react"
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+import { CreditCard, FileText, Check, ArrowLeft, Loader2 } from "lucide-react";
 
 export default function CheckoutPage() {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const { toast } = useToast()
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { toast } = useToast();
 
-  const [planType, setPlanType] = useState("")
-  const [planPrice, setPlanPrice] = useState(0)
-  const [planDuration, setPlanDuration] = useState("")
-  const [paymentMethod, setPaymentMethod] = useState("credit_card")
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
+  const [planType, setPlanType] = useState("");
+  const [planPrice, setPlanPrice] = useState(0);
+  const [planDuration, setPlanDuration] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("credit_card");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   // Formulário de cartão
-  const [cardNumber, setCardNumber] = useState("")
-  const [cardName, setCardName] = useState("")
-  const [cardExpiry, setCardExpiry] = useState("")
-  const [cardCvv, setCardCvv] = useState("")
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardName, setCardName] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvv, setCardCvv] = useState("");
 
   // Dados do cliente
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [document, setDocument] = useState("")
-  const [phone, setPhone] = useState("")
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [document, setDocument] = useState("");
+  const [phone, setPhone] = useState("");
 
   useEffect(() => {
-    const plan = searchParams.get("plan")
+    const plan = searchParams.get("plan");
 
     if (plan === "trimestral") {
-      setPlanType("Trimestral")
-      setPlanPrice(600)
-      setPlanDuration("90 dias")
+      setPlanType("Trimestral");
+      setPlanPrice(600);
+      setPlanDuration("90 dias");
     } else if (plan === "semestral") {
-      setPlanType("Semestral")
-      setPlanPrice(720)
-      setPlanDuration("180 dias")
+      setPlanType("Semestral");
+      setPlanPrice(720);
+      setPlanDuration("180 dias");
     } else if (plan === "anual") {
-      setPlanType("Anual")
-      setPlanPrice(880)
-      setPlanDuration("365 dias")
+      setPlanType("Anual");
+      setPlanPrice(880);
+      setPlanDuration("365 dias");
     } else {
       // Plano padrão se nenhum for especificado
-      setPlanType("Trimestral")
-      setPlanPrice(600)
-      setPlanDuration("90 dias")
+      setPlanType("Trimestral");
+      setPlanPrice(600);
+      setPlanDuration("90 dias");
     }
-  }, [searchParams])
+  }, [searchParams]);
 
   const formatCardNumber = (value: string) => {
     return value
       .replace(/\D/g, "")
       .replace(/(\d{4})(?=\d)/g, "$1 ")
       .trim()
-      .substring(0, 19)
-  }
+      .substring(0, 19);
+  };
 
   const formatCardExpiry = (value: string) => {
     return value
       .replace(/\D/g, "")
       .replace(/(\d{2})(?=\d)/, "$1/")
-      .substring(0, 5)
-  }
+      .substring(0, 5);
+  };
 
   const formatDocument = (value: string) => {
     return value
       .replace(/\D/g, "")
       .replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")
-      .substring(0, 14)
-  }
+      .substring(0, 14);
+  };
 
   const formatPhone = (value: string) => {
     return value
       .replace(/\D/g, "")
       .replace(/(\d{2})(\d)/, "($1) $2")
       .replace(/(\d{5})(\d)/, "$1-$2")
-      .substring(0, 15)
-  }
+      .substring(0, 15);
+  };
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCardNumber(formatCardNumber(e.target.value))
-  }
+    setCardNumber(formatCardNumber(e.target.value));
+  };
 
   const handleCardExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCardExpiry(formatCardExpiry(e.target.value))
-  }
+    setCardExpiry(formatCardExpiry(e.target.value));
+  };
 
   const handleCardCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCardCvv(e.target.value.replace(/\D/g, "").substring(0, 3))
-  }
+    setCardCvv(e.target.value.replace(/\D/g, "").substring(0, 3));
+  };
 
   const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDocument(formatDocument(e.target.value))
-  }
+    setDocument(formatDocument(e.target.value));
+  };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPhone(formatPhone(e.target.value))
-  }
+    setPhone(formatPhone(e.target.value));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     // Validação básica
     if (paymentMethod === "credit_card") {
@@ -120,8 +127,8 @@ export default function CheckoutPage() {
           title: "Dados incompletos",
           description: "Por favor, preencha todos os dados do cartão.",
           variant: "destructive",
-        })
-        return
+        });
+        return;
       }
     }
 
@@ -130,40 +137,40 @@ export default function CheckoutPage() {
         title: "Dados incompletos",
         description: "Por favor, preencha todos os dados pessoais.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     // Simulação de processamento
-    setIsProcessing(true)
+    setIsProcessing(true);
 
     try {
       // Simula uma chamada de API
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Simula sucesso
-      setIsProcessing(false)
-      setIsSuccess(true)
+      setIsProcessing(false);
+      setIsSuccess(true);
 
       toast({
         title: "Pagamento realizado com sucesso!",
         description: `Seu plano ${planType} foi ativado.`,
-      })
+      });
 
       // Após 3 segundos, redireciona para a página inicial
       setTimeout(() => {
-        router.push("/dashboard/supplier")
-      }, 3000)
+        router.push("/dashboard/supplier");
+      }, 3000);
     } catch (error) {
-      setIsProcessing(false)
+      setIsProcessing(false);
 
       toast({
         title: "Erro no pagamento",
         description: "Ocorreu um erro ao processar o pagamento. Tente novamente.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   if (isSuccess) {
     return (
@@ -179,7 +186,7 @@ export default function CheckoutPage() {
           <CardContent className="space-y-6">
             <div className="rounded-lg border p-4">
               <h3 className="font-medium mb-2">Detalhes da compra</h3>
-              <div className="space-y-1 text-sm">
+              <div className="space-y-1 text-[1rem]">
                 <div className="flex justify-between">
                   <span>Plano:</span>
                   <span className="font-medium">{planType}</span>
@@ -203,14 +210,14 @@ export default function CheckoutPage() {
                     {paymentMethod === "credit_card"
                       ? "Cartão de Crédito"
                       : paymentMethod === "pix"
-                        ? "PIX"
-                        : "Boleto Bancário"}
+                      ? "PIX"
+                      : "Boleto Bancário"}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="text-center text-sm text-muted-foreground">
+            <div className="text-center text-[1rem] text-muted-foreground">
               Você será redirecionado para o dashboard em instantes...
             </div>
           </CardContent>
@@ -221,14 +228,17 @@ export default function CheckoutPage() {
           </CardFooter>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto py-8 px-4">
         <div className="mb-6">
-          <Button variant="ghost" className="flex items-center gap-2" onClick={() => router.push("/")}>
+          <Button
+            variant="ghost"
+            className="flex items-center gap-2"
+            onClick={() => router.push("/")}>
             <ArrowLeft className="h-4 w-4" />
             Voltar para a página inicial
           </Button>
@@ -241,7 +251,9 @@ export default function CheckoutPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Informações de Pagamento</CardTitle>
-                <CardDescription>Preencha os dados abaixo para finalizar sua compra</CardDescription>
+                <CardDescription>
+                  Preencha os dados abaixo para finalizar sua compra
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -281,7 +293,12 @@ export default function CheckoutPage() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="phone">Telefone</Label>
-                        <Input id="phone" placeholder="(00) 00000-0000" value={phone} onChange={handlePhoneChange} />
+                        <Input
+                          id="phone"
+                          placeholder="(00) 00000-0000"
+                          value={phone}
+                          onChange={handlePhoneChange}
+                        />
                       </div>
                     </div>
                   </div>
@@ -303,8 +320,7 @@ export default function CheckoutPage() {
                             viewBox="0 0 16 16"
                             fill="none"
                             xmlns="http://www.w3.org/2000/svg"
-                            className="h-4 w-4"
-                          >
+                            className="h-4 w-4">
                             <path
                               d="M11.6666 2.66675L13.3333 4.33341M13.3333 4.33341L11.6666 6.00008M13.3333 4.33341H10.6666C9.78216 4.33341 8.93426 4.68469 8.30913 5.30982C7.684 5.93494 7.33331 6.78284 7.33331 7.66675V8.00008M4.33331 13.3334L2.66665 11.6667M2.66665 11.6667L4.33331 10.0001M2.66665 11.6667H5.33331C6.21722 11.6667 7.06512 11.3155 7.69025 10.6903C8.31537 10.0652 8.66665 9.21733 8.66665 8.33341V8.00008M11.6666 11.6667C11.6666 12.0203 11.8071 12.3595 12.0571 12.6095C12.3072 12.8596 12.6463 13.0001 13 13.0001C13.3536 13.0001 13.6928 12.8596 13.9428 12.6095C14.1929 12.3595 14.3333 12.0203 14.3333 11.6667C14.3333 11.3131 14.1929 10.9739 13.9428 10.7239C13.6928 10.4738 13.3536 10.3334 13 10.3334C12.6463 10.3334 12.3072 10.4738 12.0571 10.7239C11.8071 10.9739 11.6666 11.3131 11.6666 11.6667ZM1.66665 4.33341C1.66665 4.68699 1.80712 5.02618 2.05717 5.27622C2.30722 5.52627 2.6464 5.66675 2.99998 5.66675C3.35355 5.66675 3.69274 5.52627 3.94279 5.27622C4.19284 5.02618 4.33331 4.68699 4.33331 4.33341C4.33331 3.97984 4.19284 3.64065 3.94279 3.3906C3.69274 3.14056 3.35355 3.00008 2.99998 3.00008C2.6464 3.00008 2.30722 3.14056 2.05717 3.3906C1.80712 3.64065 1.66665 3.97984 1.66665 4.33341Z"
                               stroke="currentColor"
@@ -352,7 +368,12 @@ export default function CheckoutPage() {
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="card_cvv">CVV</Label>
-                            <Input id="card_cvv" placeholder="123" value={cardCvv} onChange={handleCardCvvChange} />
+                            <Input
+                              id="card_cvv"
+                              placeholder="123"
+                              value={cardCvv}
+                              onChange={handleCardCvvChange}
+                            />
                           </div>
                         </div>
                       </TabsContent>
@@ -365,8 +386,7 @@ export default function CheckoutPage() {
                               height="180"
                               viewBox="0 0 180 180"
                               fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
+                              xmlns="http://www.w3.org/2000/svg">
                               <rect width="180" height="180" fill="white" />
                               <path
                                 d="M20 20H40V40H20V20ZM40 40H60V60H40V40ZM60 60H80V80H60V60ZM80 80H100V100H80V80ZM100 100H120V120H100V100ZM120 120H140V140H120V120ZM20 60H40V80H20V60ZM60 20H80V40H60V20ZM80 40H100V60H80V40ZM100 60H120V80H100V60ZM120 80H140V100H120V80ZM20 100H40V120H20V100ZM40 120H60V140H40V120ZM80 120H100V140H80V120ZM20 140H40V160H20V140ZM60 140H80V160H60V140ZM100 140H120V160H100V140ZM140 20H160V40H140V20ZM140 60H160V80H140V60ZM140 140H160V160H140V140Z"
@@ -374,8 +394,8 @@ export default function CheckoutPage() {
                               />
                             </svg>
                           </div>
-                          <p className="text-sm font-medium">Escaneie o QR Code para pagar</p>
-                          <p className="mt-2 text-xs text-muted-foreground">
+                          <p className="text-[1rem] font-medium">Escaneie o QR Code para pagar</p>
+                          <p className="mt-2 text-[1rem] text-muted-foreground">
                             O pagamento será confirmado automaticamente
                           </p>
                           <div className="mt-4">
@@ -392,18 +412,20 @@ export default function CheckoutPage() {
                             <FileText className="h-5 w-5 text-primary" />
                             <div>
                               <p className="font-medium">Boleto Bancário</p>
-                              <p className="text-sm text-muted-foreground">O boleto será gerado após a confirmação</p>
+                              <p className="text-[1rem] text-muted-foreground">
+                                O boleto será gerado após a confirmação
+                              </p>
                             </div>
                           </div>
                           <div className="mt-4">
-                            <p className="text-sm">
+                            <p className="text-[1rem]">
                               <span className="font-medium">Valor:</span>{" "}
                               {new Intl.NumberFormat("pt-BR", {
                                 style: "currency",
                                 currency: "BRL",
                               }).format(planPrice)}
                             </p>
-                            <p className="text-sm">
+                            <p className="text-[1rem]">
                               <span className="font-medium">Vencimento:</span> 5 dias úteis
                             </p>
                           </div>
@@ -446,21 +468,23 @@ export default function CheckoutPage() {
                 <div className="space-y-4">
                   <div className="rounded-lg border p-4">
                     <h3 className="font-medium mb-2">Plano {planType}</h3>
-                    <p className="text-sm text-muted-foreground mb-4">Acesso por {planDuration}</p>
+                    <p className="text-[1rem] text-muted-foreground mb-4">
+                      Acesso por {planDuration}
+                    </p>
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm">
+                      <div className="flex items-center gap-2 text-[1rem]">
                         <Check className="h-4 w-4 text-green-500" />
                         <span>Acesso a todas as licitações</span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm">
+                      <div className="flex items-center gap-2 text-[1rem]">
                         <Check className="h-4 w-4 text-green-500" />
                         <span>Boletim de Editais</span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm">
+                      <div className="flex items-center gap-2 text-[1rem]">
                         <Check className="h-4 w-4 text-green-500" />
                         <span>Participação limitada em licitações pelo período</span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm">
+                      <div className="flex items-center gap-2 text-[1rem]">
                         <Check className="h-4 w-4 text-green-500" />
                         <span>Assistência Técnica por Telefone</span>
                       </div>
@@ -500,7 +524,7 @@ export default function CheckoutPage() {
               </CardContent>
             </Card>
 
-            <div className="mt-4 text-sm text-center text-muted-foreground">
+            <div className="mt-4 text-[1rem] text-center text-muted-foreground">
               Ao finalizar a compra, você concorda com nossos{" "}
               <a href="#" className="underline underline-offset-4 hover:text-primary">
                 Termos de Serviço
@@ -515,5 +539,5 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

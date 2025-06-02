@@ -1,26 +1,39 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Eye, EyeOff } from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useAuth } from "@/lib/supabase/auth-context"
-import { useToast } from "@/hooks/use-toast"
-import { Logo } from "@/components/logo"
+import type React from "react";
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Eye, EyeOff } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useAuth } from "@/lib/supabase/auth-context";
+import { useToast } from "@/hooks/use-toast";
+import { Logo } from "@/components/logo";
 
 export default function RegisterPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { signUp } = useAuth()
-  const { toast } = useToast()
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { signUp } = useAuth();
+  const { toast } = useToast();
 
-  const defaultType = searchParams.get("type") || ""
+  const defaultType = searchParams.get("type") || "";
 
   const [formData, setFormData] = useState({
     name: "",
@@ -33,11 +46,11 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
     profile_type: defaultType,
-  })
+  });
 
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Format functions
   const formatCPF = (value: string) => {
@@ -46,8 +59,8 @@ export default function RegisterPage() {
       .replace(/(\d{3})(\d)/, "$1.$2")
       .replace(/(\d{3})(\d)/, "$1.$2")
       .replace(/(\d{3})(\d{1,2})/, "$1-$2")
-      .replace(/(-\d{2})\d+?$/, "$1")
-  }
+      .replace(/(-\d{2})\d+?$/, "$1");
+  };
 
   const formatCNPJ = (value: string) => {
     return value
@@ -56,38 +69,38 @@ export default function RegisterPage() {
       .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
       .replace(/\.(\d{3})(\d)/, ".$1/$2")
       .replace(/(\d{4})(\d)/, "$1-$2")
-      .replace(/(-\d{2})\d+?$/, "$1")
-  }
+      .replace(/(-\d{2})\d+?$/, "$1");
+  };
 
   const formatPhone = (value: string) => {
     return value
       .replace(/\D/g, "")
       .replace(/(\d{2})(\d)/, "($1) $2")
       .replace(/(\d{5})(\d)/, "$1-$2")
-      .replace(/(-\d{4})\d+?$/, "$1")
-  }
+      .replace(/(-\d{4})\d+?$/, "$1");
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
 
     if (name === "cpf") {
-      setFormData({ ...formData, [name]: formatCPF(value) })
+      setFormData({ ...formData, [name]: formatCPF(value) });
     } else if (name === "cnpj") {
-      setFormData({ ...formData, [name]: formatCNPJ(value) })
+      setFormData({ ...formData, [name]: formatCNPJ(value) });
     } else if (name === "phone") {
-      setFormData({ ...formData, [name]: formatPhone(value) })
+      setFormData({ ...formData, [name]: formatPhone(value) });
     } else {
-      setFormData({ ...formData, [name]: value })
+      setFormData({ ...formData, [name]: value });
     }
-  }
+  };
 
   const handleProfileChange = (value: string) => {
-    setFormData({ ...formData, profile_type: value })
-  }
+    setFormData({ ...formData, profile_type: value });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
     try {
       // Validate password match
@@ -96,9 +109,9 @@ export default function RegisterPage() {
           title: "Erro",
           description: "As senhas não coincidem",
           variant: "destructive",
-        })
-        setIsLoading(false)
-        return
+        });
+        setIsLoading(false);
+        return;
       }
 
       // Validate profile selection
@@ -107,9 +120,9 @@ export default function RegisterPage() {
           title: "Erro",
           description: "Por favor, selecione um perfil",
           variant: "destructive",
-        })
-        setIsLoading(false)
-        return
+        });
+        setIsLoading(false);
+        return;
       }
 
       // Validate required fields based on profile type
@@ -119,44 +132,44 @@ export default function RegisterPage() {
             title: "Erro",
             description: "CNPJ e Nome da Empresa são obrigatórios para este perfil",
             variant: "destructive",
-          })
-          setIsLoading(false)
-          return
+          });
+          setIsLoading(false);
+          return;
         }
       } else if (!formData.cpf) {
         toast({
           title: "Erro",
           description: "CPF é obrigatório para este perfil",
           variant: "destructive",
-        })
-        setIsLoading(false)
-        return
+        });
+        setIsLoading(false);
+        return;
       }
 
       // Register user with Supabase
-      await signUp(formData.email, formData.password, formData)
+      await signUp(formData.email, formData.password, formData);
 
       toast({
         title: "Cadastro realizado com sucesso",
         description: "Você será redirecionado para a página de login",
-      })
+      });
 
       // Redirect to login page
       setTimeout(() => {
-        router.push("/login")
-      }, 2000)
+        router.push("/login");
+      }, 2000);
     } catch (error: any) {
       toast({
         title: "Erro ao cadastrar",
         description: error.message || "Ocorreu um erro ao processar seu cadastro",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  const isOrganization = formData.profile_type === "supplier" || formData.profile_type === "agency"
+  const isOrganization = formData.profile_type === "supplier" || formData.profile_type === "agency";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
@@ -324,13 +337,13 @@ export default function RegisterPage() {
                     <button
                       type="button"
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
+                      onClick={() => setShowPassword(!showPassword)}>
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
-                  <p className="text-xs text-gray-500 font-gabarito">
-                    A senha deve conter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas e números.
+                  <p className="text-[1rem] text-gray-500 font-gabarito">
+                    A senha deve conter pelo menos 8 caracteres, incluindo letras maiúsculas,
+                    minúsculas e números.
                   </p>
                 </div>
 
@@ -352,8 +365,7 @@ export default function RegisterPage() {
                     <button
                       type="button"
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    >
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
                       {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
@@ -363,14 +375,13 @@ export default function RegisterPage() {
               <Button
                 type="submit"
                 className="w-full bg-canal-blue hover:bg-canal-blue/90 font-gabarito font-medium"
-                disabled={isLoading}
-              >
+                disabled={isLoading}>
                 {isLoading ? "Cadastrando..." : "Cadastrar"}
               </Button>
             </form>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <div className="text-center text-sm font-gabarito">
+            <div className="text-center text-[1rem] font-gabarito">
               Já tem uma conta?{" "}
               <Link href="/login" className="font-medium text-canal-blue hover:underline">
                 Entrar
@@ -380,5 +391,5 @@ export default function RegisterPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

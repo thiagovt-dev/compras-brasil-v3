@@ -1,22 +1,35 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/hooks/use-toast"
-import { Bell, Mail, Smartphone } from "lucide-react"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { Bell, Mail, Smartphone } from "lucide-react";
 
 export default function SettingsPage() {
-  const { toast } = useToast()
-  const [activeTab, setActiveTab] = useState("notifications")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("notifications");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
   // Notification settings
   const [notificationSettings, setNotificationSettings] = useState({
     email: true,
@@ -27,101 +40,101 @@ export default function SettingsPage() {
     results: true,
     documents: true,
     system: true,
-  })
-  
+  });
+
   // Account settings
   const [accountSettings, setAccountSettings] = useState({
     language: "pt-BR",
     timezone: "America/Sao_Paulo",
     dateFormat: "DD/MM/YYYY",
-  })
-  
+  });
+
   // Security settings
   const [securitySettings, setSecuritySettings] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
     twoFactor: false,
-  })
+  });
 
   const handleNotificationChange = (key: string, value: boolean) => {
     setNotificationSettings((prev) => ({
       ...prev,
       [key]: value,
-    }))
-  }
+    }));
+  };
 
   const handleAccountChange = (key: string, value: string) => {
     setAccountSettings((prev) => ({
       ...prev,
       [key]: value,
-    }))
-  }
+    }));
+  };
 
   const handleSecurityChange = (key: string, value: string | boolean) => {
     setSecuritySettings((prev) => ({
       ...prev,
       [key]: value,
-    }))
-  }
+    }));
+  };
 
   const saveNotificationSettings = () => {
-    setIsSubmitting(true)
-    
+    setIsSubmitting(true);
+
     // Simula chamada API
     setTimeout(() => {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
       toast({
         title: "Configurações salvas",
         description: "Suas preferências de notificação foram atualizadas com sucesso.",
-      })
-    }, 1000)
-  }
+      });
+    }, 1000);
+  };
 
   const saveAccountSettings = () => {
-    setIsSubmitting(true)
-    
+    setIsSubmitting(true);
+
     // Simula chamada API
     setTimeout(() => {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
       toast({
         title: "Configurações salvas",
         description: "Suas configurações de conta foram atualizadas com sucesso.",
-      })
-    }, 1000)
-  }
+      });
+    }, 1000);
+  };
 
   const saveSecuritySettings = () => {
-    setIsSubmitting(true)
-    
+    setIsSubmitting(true);
+
     // Validação das senhas
     if (securitySettings.newPassword !== securitySettings.confirmPassword) {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
       toast({
         title: "Erro",
         description: "As senhas não coincidem. Por favor, verifique e tente novamente.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
-    
+
     // Simula chamada API
     setTimeout(() => {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
       toast({
         title: "Configurações salvas",
         description: "Suas configurações de segurança foram atualizadas com sucesso.",
-      })
-      
+      });
+
       // Limpa os campos de senha
       setSecuritySettings((prev) => ({
         ...prev,
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
-      }))
-    }, 1000)
-  }
+      }));
+    }, 1000);
+  };
 
   return (
     <div className="space-y-6">
@@ -141,9 +154,7 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Preferências de Notificação</CardTitle>
-              <CardDescription>
-                Escolha como deseja receber notificações do sistema
-              </CardDescription>
+              <CardDescription>Escolha como deseja receber notificações do sistema</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
@@ -154,7 +165,7 @@ export default function SettingsPage() {
                       <Mail className="h-4 w-4 text-muted-foreground" />
                       <Label htmlFor="email-notifications" className="flex flex-col space-y-1">
                         <span>Notificações por Email</span>
-                        <span className="font-normal text-sm text-muted-foreground">
+                        <span className="font-normal text-[1rem] text-muted-foreground">
                           Receba atualizações sobre licitações e prazos por email
                         </span>
                       </Label>
@@ -162,9 +173,7 @@ export default function SettingsPage() {
                     <Switch
                       id="email-notifications"
                       checked={notificationSettings.email}
-                      onCheckedChange={(checked) =>
-                        handleNotificationChange("email", checked)
-                      }
+                      onCheckedChange={(checked) => handleNotificationChange("email", checked)}
                     />
                   </div>
                   <div className="flex items-center justify-between space-x-2">
@@ -172,7 +181,7 @@ export default function SettingsPage() {
                       <Bell className="h-4 w-4 text-muted-foreground" />
                       <Label htmlFor="browser-notifications" className="flex flex-col space-y-1">
                         <span>Notificações no Navegador</span>
-                        <span className="font-normal text-sm text-muted-foreground">
+                        <span className="font-normal text-[1rem] text-muted-foreground">
                           Receba notificações no navegador quando estiver usando o sistema
                         </span>
                       </Label>
@@ -180,9 +189,7 @@ export default function SettingsPage() {
                     <Switch
                       id="browser-notifications"
                       checked={notificationSettings.browser}
-                      onCheckedChange={(checked) =>
-                        handleNotificationChange("browser", checked)
-                      }
+                      onCheckedChange={(checked) => handleNotificationChange("browser", checked)}
                     />
                   </div>
                   <div className="flex items-center justify-between space-x-2">
@@ -190,7 +197,7 @@ export default function SettingsPage() {
                       <Smartphone className="h-4 w-4 text-muted-foreground" />
                       <Label htmlFor="sms-notifications" className="flex flex-col space-y-1">
                         <span>Notificações por SMS</span>
-                        <span className="font-normal text-sm text-muted-foreground">
+                        <span className="font-normal text-[1rem] text-muted-foreground">
                           Receba notificações importantes por SMS
                         </span>
                       </Label>
@@ -198,9 +205,7 @@ export default function SettingsPage() {
                     <Switch
                       id="sms-notifications"
                       checked={notificationSettings.sms}
-                      onCheckedChange={(checked) =>
-                        handleNotificationChange("sms", checked)
-                      }
+                      onCheckedChange={(checked) => handleNotificationChange("sms", checked)}
                     />
                   </div>
                 </div>
@@ -214,9 +219,7 @@ export default function SettingsPage() {
                     <Switch
                       id="new-tenders"
                       checked={notificationSettings.newTenders}
-                      onCheckedChange={(checked) =>
-                        handleNotificationChange("newTenders", checked)
-                      }
+                      onCheckedChange={(checked) => handleNotificationChange("newTenders", checked)}
                     />
                   </div>
                   <div className="flex items-center justify-between space-x-2">
@@ -224,9 +227,7 @@ export default function SettingsPage() {
                     <Switch
                       id="deadlines"
                       checked={notificationSettings.deadlines}
-                      onCheckedChange={(checked) =>
-                        handleNotificationChange("deadlines", checked)
-                      }
+                      onCheckedChange={(checked) => handleNotificationChange("deadlines", checked)}
                     />
                   </div>
                   <div className="flex items-center justify-between space-x-2">
@@ -234,9 +235,7 @@ export default function SettingsPage() {
                     <Switch
                       id="results"
                       checked={notificationSettings.results}
-                      onCheckedChange={(checked) =>
-                        handleNotificationChange("results", checked)
-                      }
+                      onCheckedChange={(checked) => handleNotificationChange("results", checked)}
                     />
                   </div>
                   <div className="flex items-center justify-between space-x-2">
@@ -244,9 +243,7 @@ export default function SettingsPage() {
                     <Switch
                       id="documents"
                       checked={notificationSettings.documents}
-                      onCheckedChange={(checked) =>
-                        handleNotificationChange("documents", checked)
-                      }
+                      onCheckedChange={(checked) => handleNotificationChange("documents", checked)}
                     />
                   </div>
                   <div className="flex items-center justify-between space-x-2">
@@ -254,9 +251,7 @@ export default function SettingsPage() {
                     <Switch
                       id="system"
                       checked={notificationSettings.system}
-                      onCheckedChange={(checked) =>
-                        handleNotificationChange("system", checked)
-                      }
+                      onCheckedChange={(checked) => handleNotificationChange("system", checked)}
                     />
                   </div>
                 </div>
@@ -274,9 +269,7 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Configurações de Conta</CardTitle>
-              <CardDescription>
-                Gerencie suas preferências de idioma e região
-              </CardDescription>
+              <CardDescription>Gerencie suas preferências de idioma e região</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
@@ -284,8 +277,7 @@ export default function SettingsPage() {
                   <Label htmlFor="language">Idioma</Label>
                   <Select
                     value={accountSettings.language}
-                    onValueChange={(value) => handleAccountChange("language", value)}
-                  >
+                    onValueChange={(value) => handleAccountChange("language", value)}>
                     <SelectTrigger id="language">
                       <SelectValue placeholder="Selecione o idioma" />
                     </SelectTrigger>
@@ -301,24 +293,15 @@ export default function SettingsPage() {
                   <Label htmlFor="timezone">Fuso Horário</Label>
                   <Select
                     value={accountSettings.timezone}
-                    onValueChange={(value) => handleAccountChange("timezone", value)}
-                  >
+                    onValueChange={(value) => handleAccountChange("timezone", value)}>
                     <SelectTrigger id="timezone">
                       <SelectValue placeholder="Selecione o fuso horário" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="America/Sao_Paulo">
-                        Brasília (GMT-3)
-                      </SelectItem>
-                      <SelectItem value="America/Manaus">
-                        Manaus (GMT-4)
-                      </SelectItem>
-                      <SelectItem value="America/Rio_Branco">
-                        Rio Branco (GMT-5)
-                      </SelectItem>
-                      <SelectItem value="America/Noronha">
-                        Fernando de Noronha (GMT-2)
-                      </SelectItem>
+                      <SelectItem value="America/Sao_Paulo">Brasília (GMT-3)</SelectItem>
+                      <SelectItem value="America/Manaus">Manaus (GMT-4)</SelectItem>
+                      <SelectItem value="America/Rio_Branco">Rio Branco (GMT-5)</SelectItem>
+                      <SelectItem value="America/Noronha">Fernando de Noronha (GMT-2)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -348,9 +331,7 @@ export default function SettingsPage() {
                     id="current-password"
                     type="password"
                     value={securitySettings.currentPassword}
-                    onChange={(e) =>
-                      handleSecurityChange("currentPassword", e.target.value)
-                    }
+                    onChange={(e) => handleSecurityChange("currentPassword", e.target.value)}
                     placeholder="Digite sua senha atual"
                   />
                 </div>
@@ -360,9 +341,7 @@ export default function SettingsPage() {
                     id="new-password"
                     type={showPassword ? "text" : "password"}
                     value={securitySettings.newPassword}
-                    onChange={(e) =>
-                      handleSecurityChange("newPassword", e.target.value)
-                    }
+                    onChange={(e) => handleSecurityChange("newPassword", e.target.value)}
                     placeholder="Digite a nova senha"
                   />
                 </div>
@@ -372,9 +351,7 @@ export default function SettingsPage() {
                     id="confirm-password"
                     type={showPassword ? "text" : "password"}
                     value={securitySettings.confirmPassword}
-                    onChange={(e) =>
-                      handleSecurityChange("confirmPassword", e.target.value)
-                    }
+                    onChange={(e) => handleSecurityChange("confirmPassword", e.target.value)}
                     placeholder="Confirme a nova senha"
                   />
                 </div>
@@ -382,13 +359,9 @@ export default function SettingsPage() {
                   <Switch
                     id="two-factor"
                     checked={securitySettings.twoFactor}
-                    onCheckedChange={(checked) =>
-                      handleSecurityChange("twoFactor", checked)
-                    }
+                    onCheckedChange={(checked) => handleSecurityChange("twoFactor", checked)}
                   />
-                  <Label htmlFor="two-factor">
-                    Ativar Autenticação de Dois Fatores
-                  </Label>
+                  <Label htmlFor="two-factor">Ativar Autenticação de Dois Fatores</Label>
                 </div>
               </div>
             </CardContent>
@@ -401,5 +374,5 @@ export default function SettingsPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

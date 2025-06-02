@@ -1,12 +1,19 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -15,11 +22,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Input } from "@/components/ui/input"
-import { useToast } from "@/hooks/use-toast"
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 import {
   CreditCard,
   DollarSign,
@@ -32,90 +39,92 @@ import {
   Wallet,
   BarChart,
   ArrowUpRight,
-} from "lucide-react"
+} from "lucide-react";
 
 export default function FinancialPage() {
-  const { toast } = useToast()
-  const [activeTab, setActiveTab] = useState("plan")
-  const [isRenewDialogOpen, setIsRenewDialogOpen] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState("credit_card")
-  const [planDuration, setPlanDuration] = useState("annual")
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [cardNumber, setCardNumber] = useState("")
-  const [cardName, setCardName] = useState("")
-  const [cardExpiry, setCardExpiry] = useState("")
-  const [cardCvv, setCardCvv] = useState("")
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("plan");
+  const [isRenewDialogOpen, setIsRenewDialogOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("credit_card");
+  const [planDuration, setPlanDuration] = useState("annual");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardName, setCardName] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvv, setCardCvv] = useState("");
 
   const handleRenewPlan = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsProcessing(true)
+    e.preventDefault();
+    setIsProcessing(true);
 
     try {
       // In a real app, we would process the payment through a payment gateway
-      await new Promise((resolve) => setTimeout(resolve, 2000)) // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API call
 
       toast({
         title: "Plano renovado com sucesso",
         description: "Seu plano foi renovado e já está ativo.",
-      })
+      });
 
-      setIsRenewDialogOpen(false)
+      setIsRenewDialogOpen(false);
     } catch (error) {
       toast({
         title: "Erro ao renovar plano",
         description: "Ocorreu um erro ao processar o pagamento. Tente novamente.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }
+  };
 
   const formatCardNumber = (value: string) => {
     return value
       .replace(/\D/g, "")
       .replace(/(\d{4})(?=\d)/g, "$1 ")
       .trim()
-      .substring(0, 19)
-  }
+      .substring(0, 19);
+  };
 
   const formatCardExpiry = (value: string) => {
     return value
       .replace(/\D/g, "")
       .replace(/(\d{2})(?=\d)/, "$1/")
-      .substring(0, 5)
-  }
+      .substring(0, 5);
+  };
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCardNumber(formatCardNumber(e.target.value))
-  }
+    setCardNumber(formatCardNumber(e.target.value));
+  };
 
   const handleCardExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCardExpiry(formatCardExpiry(e.target.value))
-  }
+    setCardExpiry(formatCardExpiry(e.target.value));
+  };
 
   const handleCardCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCardCvv(e.target.value.replace(/\D/g, "").substring(0, 3))
-  }
+    setCardCvv(e.target.value.replace(/\D/g, "").substring(0, 3));
+  };
 
   const getPlanPrice = () => {
     switch (planDuration) {
       case "quarterly":
-        return "R$ 450,00"
+        return "R$ 450,00";
       case "semiannual":
-        return "R$ 750,00"
+        return "R$ 750,00";
       case "annual":
-        return "R$ 1.200,00"
+        return "R$ 1.200,00";
       default:
-        return "R$ 1.200,00"
+        return "R$ 1.200,00";
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Posição Financeira</h1>
-        <p className="text-muted-foreground">Gerencie seu plano e visualize seu histórico financeiro</p>
+        <p className="text-muted-foreground">
+          Gerencie seu plano e visualize seu histórico financeiro
+        </p>
       </div>
 
       <Tabs defaultValue="plan" value={activeTab} onValueChange={setActiveTab}>
@@ -136,7 +145,9 @@ export default function FinancialPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-medium">Plano Anual</h3>
-                    <p className="text-sm text-muted-foreground">Acesso a todas as funcionalidades do sistema</p>
+                    <p className="text-[1rem] text-muted-foreground">
+                      Acesso a todas as funcionalidades do sistema
+                    </p>
                   </div>
                   <Badge variant="outline" className="bg-green-50">
                     Ativo
@@ -144,20 +155,20 @@ export default function FinancialPage() {
                 </div>
                 <div className="mt-4 space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-sm">Validade:</span>
-                    <span className="text-sm font-medium">05/06/2026</span>
+                    <span className="text-[1rem]">Validade:</span>
+                    <span className="text-[1rem] font-medium">05/06/2026</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm">Valor:</span>
-                    <span className="text-sm font-medium">R$ 1.200,00</span>
+                    <span className="text-[1rem]">Valor:</span>
+                    <span className="text-[1rem] font-medium">R$ 1.200,00</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm">Status:</span>
-                    <span className="text-sm font-medium text-green-600">Ativo</span>
+                    <span className="text-[1rem]">Status:</span>
+                    <span className="text-[1rem] font-medium text-green-600">Ativo</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm">Renovação Automática:</span>
-                    <span className="text-sm font-medium">Sim</span>
+                    <span className="text-[1rem]">Renovação Automática:</span>
+                    <span className="text-[1rem] font-medium">Sim</span>
                   </div>
                 </div>
               </div>
@@ -165,23 +176,23 @@ export default function FinancialPage() {
               <div className="rounded-lg border p-4">
                 <h3 className="mb-4 font-medium">Benefícios do Plano</h3>
                 <ul className="space-y-2">
-                  <li className="flex items-center gap-2 text-sm">
+                  <li className="flex items-center gap-2 text-[1rem]">
                     <CheckCircle className="h-4 w-4 text-green-500" />
                     <span>Participação ilimitada em licitações</span>
                   </li>
-                  <li className="flex items-center gap-2 text-sm">
+                  <li className="flex items-center gap-2 text-[1rem]">
                     <CheckCircle className="h-4 w-4 text-green-500" />
                     <span>Alertas personalizados de novas licitações</span>
                   </li>
-                  <li className="flex items-center gap-2 text-sm">
+                  <li className="flex items-center gap-2 text-[1rem]">
                     <CheckCircle className="h-4 w-4 text-green-500" />
                     <span>Acesso a histórico completo de licitações</span>
                   </li>
-                  <li className="flex items-center gap-2 text-sm">
+                  <li className="flex items-center gap-2 text-[1rem]">
                     <CheckCircle className="h-4 w-4 text-green-500" />
                     <span>Suporte prioritário</span>
                   </li>
-                  <li className="flex items-center gap-2 text-sm">
+                  <li className="flex items-center gap-2 text-[1rem]">
                     <CheckCircle className="h-4 w-4 text-green-500" />
                     <span>Relatórios detalhados de participação</span>
                   </li>
@@ -196,7 +207,9 @@ export default function FinancialPage() {
                 <DialogContent className="sm:max-w-[500px]">
                   <DialogHeader>
                     <DialogTitle>Renovar Plano</DialogTitle>
-                    <DialogDescription>Escolha a duração do plano e a forma de pagamento</DialogDescription>
+                    <DialogDescription>
+                      Escolha a duração do plano e a forma de pagamento
+                    </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleRenewPlan}>
                     <div className="grid gap-4 py-4">
@@ -205,25 +218,30 @@ export default function FinancialPage() {
                         <RadioGroup
                           value={planDuration}
                           onValueChange={setPlanDuration}
-                          className="flex flex-col space-y-1"
-                        >
+                          className="flex flex-col space-y-1">
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem value="quarterly" id="quarterly" />
-                            <Label htmlFor="quarterly" className="flex items-center justify-between w-full">
+                            <Label
+                              htmlFor="quarterly"
+                              className="flex items-center justify-between w-full">
                               <span>Trimestral</span>
                               <span className="font-medium">R$ 450,00</span>
                             </Label>
                           </div>
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem value="semiannual" id="semiannual" />
-                            <Label htmlFor="semiannual" className="flex items-center justify-between w-full">
+                            <Label
+                              htmlFor="semiannual"
+                              className="flex items-center justify-between w-full">
                               <span>Semestral</span>
                               <span className="font-medium">R$ 750,00</span>
                             </Label>
                           </div>
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem value="annual" id="annual" />
-                            <Label htmlFor="annual" className="flex items-center justify-between w-full">
+                            <Label
+                              htmlFor="annual"
+                              className="flex items-center justify-between w-full">
                               <span>Anual</span>
                               <span className="font-medium">R$ 1.200,00</span>
                             </Label>
@@ -236,8 +254,7 @@ export default function FinancialPage() {
                         <RadioGroup
                           value={paymentMethod}
                           onValueChange={setPaymentMethod}
-                          className="flex flex-col space-y-1"
-                        >
+                          className="flex flex-col space-y-1">
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem value="credit_card" id="credit_card" />
                             <Label htmlFor="credit_card" className="flex items-center gap-2">
@@ -253,8 +270,7 @@ export default function FinancialPage() {
                                 height="16"
                                 viewBox="0 0 16 16"
                                 fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
+                                xmlns="http://www.w3.org/2000/svg">
                                 <path
                                   d="M11.6666 2.66675L13.3333 4.33341M13.3333 4.33341L11.6666 6.00008M13.3333 4.33341H10.6666C9.78216 4.33341 8.93426 4.68469 8.30913 5.30982C7.684 5.93494 7.33331 6.78284 7.33331 7.66675V8.00008M4.33331 13.3334L2.66665 11.6667M2.66665 11.6667L4.33331 10.0001M2.66665 11.6667H5.33331C6.21722 11.6667 7.06512 11.3155 7.69025 10.6903C8.31537 10.0652 8.66665 9.21733 8.66665 8.33341V8.00008M11.6666 11.6667C11.6666 12.0203 11.8071 12.3595 12.0571 12.6095C12.3072 12.8596 12.6463 13.0001 13 13.0001C13.3536 13.0001 13.6928 12.8596 13.9428 12.6095C14.1929 12.3595 14.3333 12.0203 14.3333 11.6667C14.3333 11.3131 14.1929 10.9739 13.9428 10.7239C13.6928 10.4738 13.3536 10.3334 13 10.3334C12.6463 10.3334 12.3072 10.4738 12.0571 10.7239C11.8071 10.9739 11.6666 11.3131 11.6666 11.6667ZM1.66665 4.33341C1.66665 4.68699 1.80712 5.02618 2.05717 5.27622C2.30722 5.52627 2.6464 5.66675 2.99998 5.66675C3.35355 5.66675 3.69274 5.52627 3.94279 5.27622C4.19284 5.02618 4.33331 4.68699 4.33331 4.33341C4.33331 3.97984 4.19284 3.64065 3.94279 3.3906C3.69274 3.14056 3.35355 3.00008 2.99998 3.00008C2.6464 3.00008 2.30722 3.14056 2.05717 3.3906C1.80712 3.64065 1.66665 3.97984 1.66665 4.33341Z"
                                   stroke="currentColor"
@@ -336,8 +352,7 @@ export default function FinancialPage() {
                                 height="100"
                                 viewBox="0 0 100 100"
                                 fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
+                                xmlns="http://www.w3.org/2000/svg">
                                 <rect width="100" height="100" fill="white" />
                                 <path
                                   d="M20 20H30V30H20V20ZM30 30H40V40H30V30ZM40 40H50V50H40V40ZM50 50H60V60H50V50ZM60 60H70V70H60V60ZM70 70H80V80H70V70ZM20 40H30V50H20V40ZM40 20H50V30H40V20ZM50 30H60V40H50V30ZM60 40H70V50H60V40ZM70 50H80V60H70V50ZM20 60H30V70H20V60ZM30 70H40V80H30V70ZM50 70H60V80H50V70ZM20 80H30V90H20V80ZM40 80H50V90H40V80ZM60 80H70V90H60V80ZM80 20H90V30H80V20ZM80 40H90V50H80V40ZM80 80H90V90H80V80Z"
@@ -345,8 +360,8 @@ export default function FinancialPage() {
                                 />
                               </svg>
                             </div>
-                            <p className="text-sm font-medium">Escaneie o QR Code para pagar</p>
-                            <p className="mt-2 text-xs text-muted-foreground">
+                            <p className="text-[1rem] font-medium">Escaneie o QR Code para pagar</p>
+                            <p className="mt-2 text-[1rem] text-muted-foreground">
                               O pagamento será confirmado automaticamente
                             </p>
                             <div className="mt-4">
@@ -365,14 +380,16 @@ export default function FinancialPage() {
                               <FileText className="h-5 w-5 text-primary" />
                               <div>
                                 <p className="font-medium">Boleto Bancário</p>
-                                <p className="text-sm text-muted-foreground">O boleto será gerado após a confirmação</p>
+                                <p className="text-[1rem] text-muted-foreground">
+                                  O boleto será gerado após a confirmação
+                                </p>
                               </div>
                             </div>
                             <div className="mt-4">
-                              <p className="text-sm">
+                              <p className="text-[1rem]">
                                 <span className="font-medium">Valor:</span> {getPlanPrice()}
                               </p>
-                              <p className="text-sm">
+                              <p className="text-[1rem]">
                                 <span className="font-medium">Vencimento:</span> 5 dias úteis
                               </p>
                             </div>
@@ -382,15 +399,15 @@ export default function FinancialPage() {
                               </Button>
                             </div>
                           </div>
-                          <div className="rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">
+                          <div className="rounded-md bg-yellow-50 p-3 text-[1rem] text-yellow-800">
                             <div className="flex">
                               <div className="flex-shrink-0">
                                 <AlertCircle className="h-5 w-5 text-yellow-600" />
                               </div>
                               <div className="ml-3">
                                 <p>
-                                  O plano será ativado somente após a confirmação do pagamento do boleto, o que pode
-                                  levar até 3 dias úteis.
+                                  O plano será ativado somente após a confirmação do pagamento do
+                                  boleto, o que pode levar até 3 dias úteis.
                                 </p>
                               </div>
                             </div>
@@ -399,7 +416,10 @@ export default function FinancialPage() {
                       )}
                     </div>
                     <DialogFooter>
-                      <Button type="button" variant="outline" onClick={() => setIsRenewDialogOpen(false)}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsRenewDialogOpen(false)}>
                         Cancelar
                       </Button>
                       <Button type="submit" disabled={isProcessing}>
@@ -424,7 +444,7 @@ export default function FinancialPage() {
                   </div>
                   <div>
                     <p className="text-3xl font-bold">42</p>
-                    <p className="text-sm text-muted-foreground">Nos últimos 12 meses</p>
+                    <p className="text-[1rem] text-muted-foreground">Nos últimos 12 meses</p>
                   </div>
                 </div>
               </CardContent>
@@ -441,7 +461,7 @@ export default function FinancialPage() {
                   </div>
                   <div>
                     <p className="text-3xl font-bold">15</p>
-                    <p className="text-sm text-muted-foreground">Nos últimos 12 meses</p>
+                    <p className="text-[1rem] text-muted-foreground">Nos últimos 12 meses</p>
                   </div>
                 </div>
               </CardContent>
@@ -458,7 +478,7 @@ export default function FinancialPage() {
                   </div>
                   <div>
                     <p className="text-3xl font-bold">R$ 1.2M</p>
-                    <p className="text-sm text-muted-foreground">Em contratos</p>
+                    <p className="text-[1rem] text-muted-foreground">Em contratos</p>
                   </div>
                 </div>
               </CardContent>
@@ -474,7 +494,7 @@ export default function FinancialPage() {
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
-                <div className="grid grid-cols-12 border-b bg-gray-50 px-4 py-3 text-sm font-medium">
+                <div className="grid grid-cols-12 border-b bg-gray-50 px-4 py-3 text-[1rem] font-medium">
                   <div className="col-span-3">Número</div>
                   <div className="col-span-2">Data</div>
                   <div className="col-span-2">Valor</div>
@@ -485,18 +505,17 @@ export default function FinancialPage() {
                   {invoices.map((invoice) => (
                     <div key={invoice.id} className="grid grid-cols-12 items-center px-4 py-3">
                       <div className="col-span-3">{invoice.number}</div>
-                      <div className="col-span-2 text-sm">{invoice.date}</div>
-                      <div className="col-span-2 text-sm">{invoice.amount}</div>
+                      <div className="col-span-2 text-[1rem]">{invoice.date}</div>
+                      <div className="col-span-2 text-[1rem]">{invoice.amount}</div>
                       <div className="col-span-2">
                         <Badge
                           variant={
                             invoice.status === "Pago"
                               ? "success"
                               : invoice.status === "Pendente"
-                                ? "warning"
-                                : "default"
-                          }
-                        >
+                              ? "warning"
+                              : "default"
+                          }>
                           {invoice.status}
                         </Badge>
                       </div>
@@ -526,7 +545,7 @@ export default function FinancialPage() {
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
-                <div className="grid grid-cols-12 border-b bg-gray-50 px-4 py-3 text-sm font-medium">
+                <div className="grid grid-cols-12 border-b bg-gray-50 px-4 py-3 text-[1rem] font-medium">
                   <div className="col-span-3">Descrição</div>
                   <div className="col-span-2">Data</div>
                   <div className="col-span-2">Valor</div>
@@ -537,9 +556,9 @@ export default function FinancialPage() {
                   {payments.map((payment) => (
                     <div key={payment.id} className="grid grid-cols-12 items-center px-4 py-3">
                       <div className="col-span-3">{payment.description}</div>
-                      <div className="col-span-2 text-sm">{payment.date}</div>
-                      <div className="col-span-2 text-sm">{payment.amount}</div>
-                      <div className="col-span-2 flex items-center gap-1 text-sm">
+                      <div className="col-span-2 text-[1rem]">{payment.date}</div>
+                      <div className="col-span-2 text-[1rem]">{payment.amount}</div>
+                      <div className="col-span-2 flex items-center gap-1 text-[1rem]">
                         {payment.method === "Cartão de Crédito" ? (
                           <CreditCard className="h-3.5 w-3.5" />
                         ) : payment.method === "PIX" ? (
@@ -548,8 +567,7 @@ export default function FinancialPage() {
                             height="14"
                             viewBox="0 0 16 16"
                             fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
+                            xmlns="http://www.w3.org/2000/svg">
                             <path
                               d="M11.6666 2.66675L13.3333 4.33341M13.3333 4.33341L11.6666 6.00008M13.3333 4.33341H10.6666C9.78216 4.33341 8.93426 4.68469 8.30913 5.30982C7.684 5.93494 7.33331 6.78284 7.33331 7.66675V8.00008M4.33331 13.3334L2.66665 11.6667M2.66665 11.6667L4.33331 10.0001M2.66665 11.6667H5.33331C6.21722 11.6667 7.06512 11.3155 7.69025 10.6903C8.31537 10.0652 8.66665 9.21733 8.66665 8.33341V8.00008M11.6666 11.6667C11.6666 12.0203 11.8071 12.3595 12.0571 12.6095C12.3072 12.8596 12.6463 13.0001 13 13.0001C13.3536 13.0001 13.6928 12.8596 13.9428 12.6095C14.1929 12.3595 14.3333 12.0203 14.3333 11.6667C14.3333 11.3131 14.1929 10.9739 13.9428 10.7239C13.6928 10.4738 13.3536 10.3334 13 10.3334C12.6463 10.3334 12.3072 10.4738 12.0571 10.7239C11.8071 10.9739 11.6666 11.3131 11.6666 11.6667ZM1.66665 4.33341C1.66665 4.68699 1.80712 5.02618 2.05717 5.27622C2.30722 5.52627 2.6464 5.66675 2.99998 5.66675C3.35355 5.66675 3.69274 5.52627 3.94279 5.27622C4.19284 5.02618 4.33331 4.68699 4.33331 4.33341C4.33331 3.97984 4.19284 3.64065 3.94279 3.3906C3.69274 3.14056 3.35355 3.00008 2.99998 3.00008C2.6464 3.00008 2.30722 3.14056 2.05717 3.3906C1.80712 3.64065 1.66665 3.97984 1.66665 4.33341Z"
                               stroke="currentColor"
@@ -567,17 +585,17 @@ export default function FinancialPage() {
                         {payment.status === "Aprovado" ? (
                           <>
                             <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                            <span className="text-sm text-green-600">Aprovado</span>
+                            <span className="text-[1rem] text-green-600">Aprovado</span>
                           </>
                         ) : payment.status === "Pendente" ? (
                           <>
                             <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
-                            <span className="text-sm text-yellow-600">Pendente</span>
+                            <span className="text-[1rem] text-yellow-600">Pendente</span>
                           </>
                         ) : (
                           <>
                             <div className="h-2 w-2 rounded-full bg-red-500"></div>
-                            <span className="text-sm text-red-600">Recusado</span>
+                            <span className="text-[1rem] text-red-600">Recusado</span>
                           </>
                         )}
                       </div>
@@ -601,12 +619,12 @@ export default function FinancialPage() {
                       <Wallet className="h-5 w-5 text-green-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Total Investido</p>
+                      <p className="text-[1rem] text-muted-foreground">Total Investido</p>
                       <p className="text-xl font-bold">R$ 3.600,00</p>
                     </div>
                   </div>
                   <div className="mt-4">
-                    <div className="flex items-center gap-1 text-sm text-green-600">
+                    <div className="flex items-center gap-1 text-[1rem] text-green-600">
                       <ArrowUpRight className="h-4 w-4" />
                       <span>Aumento de 20% em relação ao ano anterior</span>
                     </div>
@@ -619,12 +637,14 @@ export default function FinancialPage() {
                       <BarChart className="h-5 w-5 text-blue-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Retorno sobre Investimento</p>
+                      <p className="text-[1rem] text-muted-foreground">
+                        Retorno sobre Investimento
+                      </p>
                       <p className="text-xl font-bold">R$ 1.200.000,00</p>
                     </div>
                   </div>
                   <div className="mt-4">
-                    <div className="flex items-center gap-1 text-sm text-green-600">
+                    <div className="flex items-center gap-1 text-[1rem] text-green-600">
                       <ArrowUpRight className="h-4 w-4" />
                       <span>ROI de 333x</span>
                     </div>
@@ -637,12 +657,12 @@ export default function FinancialPage() {
                       <Calendar className="h-5 w-5 text-purple-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Próximo Pagamento</p>
+                      <p className="text-[1rem] text-muted-foreground">Próximo Pagamento</p>
                       <p className="text-xl font-bold">05/06/2026</p>
                     </div>
                   </div>
                   <div className="mt-4">
-                    <div className="flex items-center gap-1 text-sm text-yellow-600">
+                    <div className="flex items-center gap-1 text-[1rem] text-yellow-600">
                       <Clock className="h-4 w-4" />
                       <span>Em 365 dias</span>
                     </div>
@@ -654,7 +674,7 @@ export default function FinancialPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
 
 // Mock data for invoices
@@ -680,7 +700,7 @@ const invoices = [
     amount: "R$ 1.200,00",
     status: "Pago",
   },
-]
+];
 
 // Mock data for payments
 const payments = [
@@ -716,4 +736,4 @@ const payments = [
     method: "Cartão de Crédito",
     status: "Recusado",
   },
-]
+];

@@ -1,11 +1,11 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import type { SupabaseClient } from "@supabase/supabase-js"
+import { createClientSupabaseClient } from "@/lib/supabase/client";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-let supabaseInstance: SupabaseClient | null = null
+let supabaseInstance: SupabaseClient | null = null;
 
 export function getSupabaseClient() {
   if (!supabaseInstance) {
-    supabaseInstance = createClientComponentClient()
+    supabaseInstance = createClientSupabaseClient();
   }
-  return supabaseInstance
+  return supabaseInstance;
 }

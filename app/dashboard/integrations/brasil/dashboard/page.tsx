@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { useToast } from "@/hooks/use-toast"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import {
   BarChart,
   Bar,
@@ -17,13 +17,22 @@ import {
   PieChart,
   Pie,
   Cell,
-} from "recharts"
-import { FileText, CheckCircle2, AlertTriangle, Loader2, RefreshCw, Clock, Calendar, BarChart3 } from "lucide-react"
+} from "recharts";
+import {
+  FileText,
+  CheckCircle2,
+  AlertTriangle,
+  Loader2,
+  RefreshCw,
+  Clock,
+  Calendar,
+  BarChart3,
+} from "lucide-react";
 
 export default function BrasilDashboardPage() {
-  const { toast } = useToast()
-  const [isLoading, setIsLoading] = useState(true)
-  const [isRefreshing, setIsRefreshing] = useState(false)
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [dashboardData, setDashboardData] = useState<any>({
     syncHistory: [],
     tenderStats: {
@@ -46,21 +55,21 @@ export default function BrasilDashboardPage() {
       byType: [],
       byMonth: [],
     },
-  })
+  });
 
   // Fetch dashboard data
   useEffect(() => {
-    fetchDashboardData()
-  }, [])
+    fetchDashboardData();
+  }, []);
 
   const fetchDashboardData = async () => {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       // Em um ambiente real, faria uma chamada à API para buscar os dados do dashboard
       // Aqui estamos simulando os dados
 
       // Simula o tempo de carregamento
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Dados simulados para o dashboard
       const mockData = {
@@ -146,53 +155,63 @@ export default function BrasilDashboardPage() {
             { name: "Jun", import: 15, export: 7, documents: 10 },
           ],
         },
-      }
+      };
 
-      setDashboardData(mockData)
+      setDashboardData(mockData);
     } catch (error) {
-      console.error("Erro ao carregar dados do dashboard:", error)
+      console.error("Erro ao carregar dados do dashboard:", error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os dados do dashboard.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleRefresh = async () => {
-    setIsRefreshing(true)
-    await fetchDashboardData()
-    setIsRefreshing(false)
-  }
+    setIsRefreshing(true);
+    await fetchDashboardData();
+    setIsRefreshing(false);
+  };
 
   // Cores para os gráficos
-  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82CA9D"]
+  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82CA9D"];
 
   // Format date for display
   const formatDate = (dateString: string) => {
-    if (!dateString) return ""
-    const date = new Date(dateString)
+    if (!dateString) return "";
+    const date = new Date(dateString);
     return new Intl.DateTimeFormat("pt-BR", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    }).format(date)
-  }
+    }).format(date);
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard de Integração</h1>
-          <p className="text-muted-foreground">Visualize métricas e estatísticas da integração com o +Brasil</p>
+          <p className="text-muted-foreground">
+            Visualize métricas e estatísticas da integração com o +Brasil
+          </p>
         </div>
         <div className="mt-4 flex items-center gap-2 md:mt-0">
-          <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing} className="flex items-center gap-1">
-            {isRefreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-1">
+            {isRefreshing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
             <span>Atualizar Dados</span>
           </Button>
         </div>
@@ -208,41 +227,45 @@ export default function BrasilDashboardPage() {
           <div className="grid gap-4 md:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total de Licitações</CardTitle>
+                <CardTitle className="text-[1rem] font-medium">Total de Licitações</CardTitle>
                 <BarChart3 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{dashboardData.tenderStats.total}</div>
-                <p className="text-xs text-muted-foreground">
-                  {dashboardData.tenderStats.imported} importadas, {dashboardData.tenderStats.exported} exportadas
+                <p className="text-[1rem] text-muted-foreground">
+                  {dashboardData.tenderStats.imported} importadas,{" "}
+                  {dashboardData.tenderStats.exported} exportadas
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total de Documentos</CardTitle>
+                <CardTitle className="text-[1rem] font-medium">Total de Documentos</CardTitle>
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{dashboardData.documentStats.total}</div>
-                <p className="text-xs text-muted-foreground">{dashboardData.documentStats.imported} importados</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Sincronizações</CardTitle>
-                <RefreshCw className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{dashboardData.syncStats.total}</div>
-                <p className="text-xs text-muted-foreground">
-                  {dashboardData.syncStats.success} com sucesso, {dashboardData.syncStats.failed} falhas
+                <p className="text-[1rem] text-muted-foreground">
+                  {dashboardData.documentStats.imported} importados
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Última Sincronização</CardTitle>
+                <CardTitle className="text-[1rem] font-medium">Sincronizações</CardTitle>
+                <RefreshCw className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{dashboardData.syncStats.total}</div>
+                <p className="text-[1rem] text-muted-foreground">
+                  {dashboardData.syncStats.success} com sucesso, {dashboardData.syncStats.failed}{" "}
+                  falhas
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-[1rem] font-medium">Última Sincronização</CardTitle>
                 <Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -251,7 +274,7 @@ export default function BrasilDashboardPage() {
                     ? formatDate(dashboardData.syncHistory[0].created_at).split(" ")[0]
                     : "N/A"}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[1rem] text-muted-foreground">
                   {dashboardData.syncHistory.length > 0
                     ? `${formatDate(dashboardData.syncHistory[0].created_at).split(" ")[1]}`
                     : "Nenhuma sincronização"}
@@ -270,7 +293,9 @@ export default function BrasilDashboardPage() {
               </CardHeader>
               <CardContent className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dashboardData.syncStats.byMonth} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <BarChart
+                    data={dashboardData.syncStats.byMonth}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
@@ -301,8 +326,7 @@ export default function BrasilDashboardPage() {
                       label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                       outerRadius={80}
                       fill="#8884d8"
-                      dataKey="value"
-                    >
+                      dataKey="value">
                       {dashboardData.tenderStats.byStatus.map((entry: any, index: number) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
@@ -330,8 +354,7 @@ export default function BrasilDashboardPage() {
                       label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                       outerRadius={80}
                       fill="#8884d8"
-                      dataKey="value"
-                    >
+                      dataKey="value">
                       {dashboardData.tenderStats.byModality.map((entry: any, index: number) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
@@ -353,7 +376,10 @@ export default function BrasilDashboardPage() {
               <div className="space-y-4">
                 {dashboardData.syncHistory.map((sync: any) => (
                   <div key={sync.id} className="flex items-center gap-4 rounded-lg border p-4">
-                    <div className={`rounded-full p-2 ${sync.success ? "bg-green-100" : "bg-red-100"}`}>
+                    <div
+                      className={`rounded-full p-2 ${
+                        sync.success ? "bg-green-100" : "bg-red-100"
+                      }`}>
                       {sync.success ? (
                         <CheckCircle2 className="h-5 w-5 text-green-600" />
                       ) : (
@@ -366,8 +392,8 @@ export default function BrasilDashboardPage() {
                           {sync.type === "import"
                             ? "Importação de Licitações"
                             : sync.type === "export"
-                              ? "Exportação de Licitações"
-                              : "Sincronização de Documentos"}
+                            ? "Exportação de Licitações"
+                            : "Sincronização de Documentos"}
                         </h3>
                         <div className="mt-1 sm:mt-0">
                           <Badge variant="outline" className="flex items-center gap-1">
@@ -376,15 +402,19 @@ export default function BrasilDashboardPage() {
                           </Badge>
                         </div>
                       </div>
-                      <div className="mt-1 flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center">
+                      <div className="mt-1 flex flex-col gap-1 text-[1rem] text-muted-foreground sm:flex-row sm:items-center">
                         <span>
-                          {sync.success ? `${sync.items_processed} itens processados` : "Falha na sincronização"}
+                          {sync.success
+                            ? `${sync.items_processed} itens processados`
+                            : "Falha na sincronização"}
                         </span>
                         {sync.details && (
                           <>
                             <div className="hidden sm:block">•</div>
                             <span className="text-red-500">
-                              {typeof sync.details === "string" ? sync.details : sync.details.error || "Erro"}
+                              {typeof sync.details === "string"
+                                ? sync.details
+                                : sync.details.error || "Erro"}
                             </span>
                           </>
                         )}
@@ -401,5 +431,5 @@ export default function BrasilDashboardPage() {
         </>
       )}
     </div>
-  )
+  );
 }

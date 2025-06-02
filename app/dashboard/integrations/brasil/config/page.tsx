@@ -1,20 +1,33 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/hooks/use-toast"
-import { Loader2, Save, RefreshCw, Key } from "lucide-react"
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, Save, RefreshCw, Key } from "lucide-react";
 
 export default function BrasilConfigPage() {
-  const { toast } = useToast()
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
-  const [isTesting, setIsTesting] = useState(false)
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const [config, setConfig] = useState({
     apiKey: "",
     enabled: false,
@@ -24,21 +37,21 @@ export default function BrasilConfigPage() {
     exportTenders: false,
     importDocuments: true,
     notifyChanges: true,
-  })
+  });
 
   // Fetch config
   useEffect(() => {
-    fetchConfig()
-  }, [])
+    fetchConfig();
+  }, []);
 
   const fetchConfig = async () => {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       // Em um ambiente real, faria uma chamada à API para buscar a configuração
       // Aqui estamos simulando os dados
 
       // Simula o tempo de carregamento
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Dados simulados para a configuração
       const mockConfig = {
@@ -50,70 +63,70 @@ export default function BrasilConfigPage() {
         exportTenders: false,
         importDocuments: true,
         notifyChanges: true,
-      }
+      };
 
-      setConfig(mockConfig)
+      setConfig(mockConfig);
     } catch (error) {
-      console.error("Erro ao carregar configuração:", error)
+      console.error("Erro ao carregar configuração:", error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar a configuração da integração.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleSave = async () => {
     try {
-      setIsSaving(true)
+      setIsSaving(true);
       // Em um ambiente real, faria uma chamada à API para salvar a configuração
       // Aqui estamos apenas simulando o salvamento
 
       // Simula o tempo de processamento
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       toast({
         title: "Sucesso",
         description: "Configuração da integração salva com sucesso.",
-      })
+      });
     } catch (error) {
-      console.error("Erro ao salvar configuração:", error)
+      console.error("Erro ao salvar configuração:", error);
       toast({
         title: "Erro",
         description: "Não foi possível salvar a configuração da integração.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   const handleTestConnection = async () => {
     try {
-      setIsTesting(true)
+      setIsTesting(true);
       // Em um ambiente real, faria uma chamada à API para testar a conexão
       // Aqui estamos apenas simulando o teste
 
       // Simula o tempo de processamento
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       toast({
         title: "Sucesso",
         description: "Conexão com a API do +Brasil estabelecida com sucesso.",
-      })
+      });
     } catch (error) {
-      console.error("Erro ao testar conexão:", error)
+      console.error("Erro ao testar conexão:", error);
       toast({
         title: "Erro",
         description: "Não foi possível estabelecer conexão com a API do +Brasil.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsTesting(false)
+      setIsTesting(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -148,11 +161,15 @@ export default function BrasilConfigPage() {
                   <Key className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 </div>
                 <Button variant="outline" onClick={handleTestConnection} disabled={isTesting}>
-                  {isTesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                  {isTesting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
                   <span className="ml-2">Testar Conexão</span>
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[1rem] text-muted-foreground">
                 A chave de API é necessária para autenticar as requisições à API do +Brasil.
               </p>
             </div>
@@ -161,7 +178,9 @@ export default function BrasilConfigPage() {
             <div className="flex items-center justify-between space-y-0 pb-2">
               <div className="space-y-0.5">
                 <Label htmlFor="enabled">Status da Integração</Label>
-                <p className="text-xs text-muted-foreground">Ativar ou desativar a integração com o +Brasil</p>
+                <p className="text-[1rem] text-muted-foreground">
+                  Ativar ou desativar a integração com o +Brasil
+                </p>
               </div>
               <Switch
                 id="enabled"
@@ -174,7 +193,7 @@ export default function BrasilConfigPage() {
             <div className="flex items-center justify-between space-y-0 pb-2">
               <div className="space-y-0.5">
                 <Label htmlFor="autoSync">Sincronização Automática</Label>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[1rem] text-muted-foreground">
                   Sincronizar automaticamente dados com o +Brasil no intervalo configurado
                 </p>
               </div>
@@ -191,8 +210,7 @@ export default function BrasilConfigPage() {
               <Select
                 value={config.syncInterval}
                 onValueChange={(value) => setConfig({ ...config, syncInterval: value })}
-                disabled={!config.autoSync}
-              >
+                disabled={!config.autoSync}>
                 <SelectTrigger id="syncInterval">
                   <SelectValue placeholder="Selecione um intervalo" />
                 </SelectTrigger>
@@ -203,19 +221,21 @@ export default function BrasilConfigPage() {
                   <SelectItem value="monthly">Mensalmente</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[1rem] text-muted-foreground">
                 Define com que frequência os dados serão sincronizados automaticamente.
               </p>
             </div>
 
             {/* Opções de Sincronização */}
             <div className="space-y-4">
-              <h3 className="text-sm font-medium">Opções de Sincronização</h3>
+              <h3 className="text-[1rem] font-medium">Opções de Sincronização</h3>
 
               <div className="flex items-center justify-between space-y-0">
                 <div className="space-y-0.5">
                   <Label htmlFor="importTenders">Importar Licitações</Label>
-                  <p className="text-xs text-muted-foreground">Importar licitações do +Brasil para o sistema</p>
+                  <p className="text-[1rem] text-muted-foreground">
+                    Importar licitações do +Brasil para o sistema
+                  </p>
                 </div>
                 <Switch
                   id="importTenders"
@@ -227,7 +247,9 @@ export default function BrasilConfigPage() {
               <div className="flex items-center justify-between space-y-0">
                 <div className="space-y-0.5">
                   <Label htmlFor="exportTenders">Exportar Licitações</Label>
-                  <p className="text-xs text-muted-foreground">Exportar licitações do sistema para o +Brasil</p>
+                  <p className="text-[1rem] text-muted-foreground">
+                    Exportar licitações do sistema para o +Brasil
+                  </p>
                 </div>
                 <Switch
                   id="exportTenders"
@@ -239,7 +261,9 @@ export default function BrasilConfigPage() {
               <div className="flex items-center justify-between space-y-0">
                 <div className="space-y-0.5">
                   <Label htmlFor="importDocuments">Importar Documentos</Label>
-                  <p className="text-xs text-muted-foreground">Importar documentos do +Brasil para o sistema</p>
+                  <p className="text-[1rem] text-muted-foreground">
+                    Importar documentos do +Brasil para o sistema
+                  </p>
                 </div>
                 <Switch
                   id="importDocuments"
@@ -251,7 +275,7 @@ export default function BrasilConfigPage() {
               <div className="flex items-center justify-between space-y-0">
                 <div className="space-y-0.5">
                   <Label htmlFor="notifyChanges">Notificar Alterações</Label>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[1rem] text-muted-foreground">
                     Gerar notificações quando houver alterações em licitações sincronizadas
                   </p>
                 </div>
@@ -265,12 +289,16 @@ export default function BrasilConfigPage() {
           </CardContent>
           <CardFooter className="flex justify-end">
             <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              {isSaving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
               Salvar Configurações
             </Button>
           </CardFooter>
         </Card>
       )}
     </div>
-  )
+  );
 }

@@ -1,49 +1,58 @@
-import { redirect } from "next/navigation"
-import Link from "next/link"
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { ArrowRight, FileText, Plus } from "lucide-react"
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ArrowRight, FileText, Plus } from "lucide-react";
 
 export default async function SupplierProposalsPage() {
-  const cookieStore = await cookies()
-  const supabase = createServerComponentClient({ cookies: () => cookieStore })
+  const cookieStore = await cookies();
+  const supabase = createServerComponentClient({ cookies: () => cookieStore });
 
   // Check if user is authenticated
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    redirect("/login")
+    redirect("/login");
   }
 
   // Get user profile
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
 
   if (!profile || profile.profile_type !== "supplier") {
-    redirect("/dashboard")
+    redirect("/dashboard");
   }
 
   // Get supplier proposals with only existing columns
   const { data: proposals, error } = await supabase
     .from("proposals")
-    .select(`
+    .select(
+      `
       *,
       tenders!inner(
         id,
         title,
         status
       )
-    `)
+    `
+    )
     .eq("supplier_id", user.id)
-    .order("created_at", { ascending: false })
+    .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Error fetching proposals:", error)
+    console.error("Error fetching proposals:", error);
   }
 
   const getStatusBadge = (status: string) => {
@@ -57,14 +66,14 @@ export default async function SupplierProposalsPage() {
       accepted: { label: "Aceita", variant: "default" },
       rejected: { label: "Rejeitada", variant: "destructive" },
       winner: { label: "Vencedora", variant: "default" },
-    }
+    };
 
-    const config = statusConfig[status] || { label: status, variant: "outline" }
-    return <Badge variant={config.variant}>{config.label}</Badge>
-  }
+    const config = statusConfig[status] || { label: status, variant: "outline" };
+    return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return "Data não definida"
+    if (!dateString) return "Data não definida";
     try {
       return new Intl.DateTimeFormat("pt-BR", {
         day: "2-digit",
@@ -72,19 +81,19 @@ export default async function SupplierProposalsPage() {
         year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
-      }).format(new Date(dateString))
+      }).format(new Date(dateString));
     } catch (error) {
-      return "Data inválida"
+      return "Data inválida";
     }
-  }
+  };
 
   const formatCurrency = (value: number | null) => {
-    if (!value) return "R$ 0,00"
+    if (!value) return "R$ 0,00";
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
-    }).format(value)
-  }
+    }).format(value);
+  };
 
   return (
     <div className="container py-6 space-y-6">
@@ -118,24 +127,27 @@ export default async function SupplierProposalsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="pb-2 space-y-2 flex-grow">
-                <div className="text-sm">
-                  <span className="font-medium">Valor Total:</span> {formatCurrency(proposal.total_value || 0)}
+                <div className="text-[1rem]">
+                  <span className="font-medium">Valor Total:</span>{" "}
+                  {formatCurrency(proposal.total_value || 0)}
                 </div>
-                <div className="text-sm">
-                  <span className="font-medium">Enviada em:</span> {formatDate(proposal.created_at || "")}
+                <div className="text-[1rem]">
+                  <span className="font-medium">Enviada em:</span>{" "}
+                  {formatDate(proposal.created_at || "")}
                 </div>
                 {proposal.updated_at && proposal.updated_at !== proposal.created_at && (
-                  <div className="text-sm">
-                    <span className="font-medium">Atualizada em:</span> {formatDate(proposal.updated_at)}
+                  <div className="text-[1rem]">
+                    <span className="font-medium">Atualizada em:</span>{" "}
+                    {formatDate(proposal.updated_at)}
                   </div>
                 )}
                 {proposal.notes && (
-                  <div className="text-sm">
+                  <div className="text-[1rem]">
                     <span className="font-medium">Observações:</span>
                     <p className="text-muted-foreground mt-1 line-clamp-2">{proposal.notes}</p>
                   </div>
                 )}
-                <div className="text-sm">
+                <div className="text-[1rem]">
                   <span className="font-medium">Status da Licitação:</span>
                   <Badge variant="outline" className="ml-2">
                     {proposal.tenders?.status || "N/A"}
@@ -163,5 +175,5 @@ export default async function SupplierProposalsPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

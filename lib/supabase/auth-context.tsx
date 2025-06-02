@@ -6,6 +6,8 @@ import type { User, Session } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { getSupabaseClient } from "./client-singleton";
 import { createClientSupabaseClient } from "./client";
+import { getSession } from "@/lib/supabase/auth-utils";
+
 
 type AuthContextType = {
   user: User | null;
@@ -36,10 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const getInitialSession = async () => {
       setIsLoading(true);
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        console.log("Initial session:", session);
+        const session = await getSession();;
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
@@ -57,7 +56,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session);
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {

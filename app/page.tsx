@@ -1,9 +1,9 @@
-import Image from "next/image"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Check, Globe, Clock, FileText, Shield, BarChart3 } from "lucide-react"
-import { Logo } from "@/components/logo"
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Check, Globe, Clock, FileText, Shield, BarChart3 } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 export default function Home() {
   return (
@@ -16,32 +16,27 @@ export default function Home() {
           <nav className="hidden md:flex items-center gap-6">
             <Link
               href="#sobre"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
+              className="text-[1rem] font-medium text-muted-foreground transition-colors hover:text-primary">
               Sobre Nós
             </Link>
             <Link
               href="#fornecedor"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
+              className="text-[1rem] font-medium text-muted-foreground transition-colors hover:text-primary">
               Para Fornecedor
             </Link>
             <Link
               href="#comprador"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
+              className="text-[1rem] font-medium text-muted-foreground transition-colors hover:text-primary">
               Para Comprador
             </Link>
             <Link
               href="#vantagens"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
+              className="text-[1rem] font-medium text-muted-foreground transition-colors hover:text-primary">
               Vantagens
             </Link>
             <Link
               href="#planos"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
+              className="text-[1rem] font-medium text-muted-foreground transition-colors hover:text-primary">
               Planos
             </Link>
           </nav>
@@ -49,13 +44,14 @@ export default function Home() {
             <Link href="/login">
               <Button
                 variant="outline"
-                className="font-medium border-primary text-primary hover:bg-primary hover:text-white"
-              >
+                className="font-medium border-primary text-primary hover:bg-primary hover:text-white">
                 Login
               </Button>
             </Link>
             <Link href="/register">
-              <Button className="font-medium bg-primary text-white hover:bg-primary/90">Registrar</Button>
+              <Button className="font-medium bg-primary text-white hover:bg-primary/90">
+                Registrar
+              </Button>
             </Link>
           </div>
         </div>
@@ -70,8 +66,8 @@ export default function Home() {
                   Inclua sua empresa em mais processos de licitação!
                 </h1>
                 <p className="max-w-[600px] text-white/80 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Oferecemos um canal completo, com todo auxílio que sua empresa precisa para inserir-se ativamente no
-                  processo de compras públicas.
+                  Oferecemos um canal completo, com todo auxílio que sua empresa precisa para
+                  inserir-se ativamente no processo de compras públicas.
                 </p>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
                   <Link href="/register?type=supplier">
@@ -122,8 +118,8 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-bold text-[#1916a1] mb-4">COMPRADOR</h3>
                 <p className="text-gray-600 mb-6">
-                  Podem ser Órgãos Públicos, Empresas Públicas e Fundações que utilizam licitação eletrônica para
-                  adquirir produtos e contratar serviços.
+                  Podem ser Órgãos Públicos, Empresas Públicas e Fundações que utilizam licitação
+                  eletrônica para adquirir produtos e contratar serviços.
                 </p>
                 <Link href="/register?type=agency">
                   <Button className="bg-[#1916a1] hover:bg-[#150f8b]">PLANOS PARA COMPRADOR</Button>
@@ -136,11 +132,13 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-bold text-[#1916a1] mb-4">FORNECEDOR</h3>
                 <p className="text-gray-600 mb-6">
-                  Podem ser Órgãos Públicos, Empresas Públicas e Fundações que utilizam licitação eletrônica para
-                  adquirir produtos e contratar serviços.
+                  Podem ser Órgãos Públicos, Empresas Públicas e Fundações que utilizam licitação
+                  eletrônica para adquirir produtos e contratar serviços.
                 </p>
                 <Link href="/register?type=supplier">
-                  <Button className="bg-[#f4d400] text-[#1916a1] hover:bg-[#e6c800]">PLANOS PARA FORNECEDOR</Button>
+                  <Button className="bg-[#f4d400] text-[#1916a1] hover:bg-[#e6c800]">
+                    PLANOS PARA FORNECEDOR
+                  </Button>
                 </Link>
               </div>
             </div>
@@ -160,7 +158,9 @@ export default function Home() {
               <div className="bg-gradient-to-b from-[#1916a1] to-[#3730c9] rounded-lg overflow-hidden text-white">
                 <div className="p-8 flex flex-col items-center text-center h-full">
                   <h3 className="text-xl font-bold mb-4">NEGOCIE DE FORMA DIGITAL</h3>
-                  <p className="mb-4 flex-grow">Faça propostas, analisar documentos e negociar de forma facilitada.</p>
+                  <p className="mb-4 flex-grow">
+                    Faça propostas, analisar documentos e negociar de forma facilitada.
+                  </p>
                   <FileText className="h-16 w-16 opacity-80" />
                 </div>
               </div>
@@ -168,7 +168,9 @@ export default function Home() {
               <div className="bg-gradient-to-b from-[#1916a1] to-[#3730c9] rounded-lg overflow-hidden text-white">
                 <div className="p-8 flex flex-col items-center text-center h-full">
                   <h3 className="text-xl font-bold mb-4">A QUALQUER LUGAR, A QUALQUER HORA</h3>
-                  <p className="mb-4 flex-grow">Garanta sua participação em licitações seja onde estiver.</p>
+                  <p className="mb-4 flex-grow">
+                    Garanta sua participação em licitações seja onde estiver.
+                  </p>
                   <Globe className="h-16 w-16 opacity-80" />
                 </div>
               </div>
@@ -177,7 +179,8 @@ export default function Home() {
                 <div className="p-8 flex flex-col items-center text-center h-full">
                   <h3 className="text-xl font-bold mb-4">ACOMPANHAMENTO EM TEMPO REAL</h3>
                   <p className="mb-4 flex-grow">
-                    Acesso fácil às publicações online de editais, agilidade nos processos para fornecedores.
+                    Acesso fácil às publicações online de editais, agilidade nos processos para
+                    fornecedores.
                   </p>
                   <Clock className="h-16 w-16 opacity-80" />
                 </div>
@@ -190,7 +193,9 @@ export default function Home() {
         <section className="py-16 bg-[#1916a1] text-white">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold">Identifique o melhor plano para você, fornecedor!</h2>
+              <h2 className="text-3xl font-bold">
+                Identifique o melhor plano para você, fornecedor!
+              </h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -199,9 +204,9 @@ export default function Home() {
                   <div className="text-center mb-6">
                     <h3 className="text-xl font-bold text-[#1916a1] mb-2">TRIMESTRAL</h3>
                     <div className="flex items-baseline justify-center">
-                      <span className="text-sm">R$</span>
+                      <span className="text-[1rem]">R$</span>
                       <span className="text-4xl font-bold">600</span>
-                      <span className="text-sm">,00</span>
+                      <span className="text-[1rem]">,00</span>
                     </div>
                   </div>
 
@@ -225,7 +230,9 @@ export default function Home() {
                   </div>
 
                   <Link href="/checkout?plan=trimestral">
-                    <Button className="w-full bg-[#1916a1] hover:bg-blue-900">QUERO CONTRATAR</Button>
+                    <Button className="w-full bg-[#1916a1] hover:bg-blue-900">
+                      QUERO CONTRATAR
+                    </Button>
                   </Link>
                 </CardContent>
               </Card>
@@ -235,9 +242,9 @@ export default function Home() {
                   <div className="text-center mb-6">
                     <h3 className="text-xl font-bold text-[#1916a1] mb-2">SEMESTRAL</h3>
                     <div className="flex items-baseline justify-center">
-                      <span className="text-sm">R$</span>
+                      <span className="text-[1rem]">R$</span>
                       <span className="text-4xl font-bold">720</span>
-                      <span className="text-sm">,00</span>
+                      <span className="text-[1rem]">,00</span>
                     </div>
                   </div>
 
@@ -261,7 +268,9 @@ export default function Home() {
                   </div>
 
                   <Link href="/checkout?plan=semestral">
-                    <Button className="w-full bg-[#1916a1] hover:bg-blue-900">QUERO CONTRATAR</Button>
+                    <Button className="w-full bg-[#1916a1] hover:bg-blue-900">
+                      QUERO CONTRATAR
+                    </Button>
                   </Link>
                 </CardContent>
               </Card>
@@ -271,9 +280,9 @@ export default function Home() {
                   <div className="text-center mb-6">
                     <h3 className="text-xl font-bold mb-2">ANUAL</h3>
                     <div className="flex items-baseline justify-center">
-                      <span className="text-sm">R$</span>
+                      <span className="text-[1rem]">R$</span>
                       <span className="text-4xl font-bold">880</span>
-                      <span className="text-sm">,00</span>
+                      <span className="text-[1rem]">,00</span>
                     </div>
                   </div>
 
@@ -297,7 +306,9 @@ export default function Home() {
                   </div>
 
                   <Link href="/checkout?plan=anual">
-                    <Button className="w-full bg-[#1916a1] hover:bg-blue-900">QUERO CONTRATAR</Button>
+                    <Button className="w-full bg-[#1916a1] hover:bg-blue-900">
+                      QUERO CONTRATAR
+                    </Button>
                   </Link>
                 </CardContent>
               </Card>
@@ -311,16 +322,18 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
-              <p className="text-sm text-gray-600">© 2025 Canal de Compras Brasil. Todos os direitos reservados.</p>
+              <p className="text-[1rem] text-gray-600">
+                © 2025 Canal de Compras Brasil. Todos os direitos reservados.
+              </p>
             </div>
             <div className="flex gap-4">
-              <Link href="#" className="text-sm text-gray-600 hover:text-[#1916a1]">
+              <Link href="#" className="text-[1rem] text-gray-600 hover:text-[#1916a1]">
                 Termos
               </Link>
-              <Link href="#" className="text-sm text-gray-600 hover:text-[#1916a1]">
+              <Link href="#" className="text-[1rem] text-gray-600 hover:text-[#1916a1]">
                 Privacidade
               </Link>
-              <Link href="#" className="text-sm text-gray-600 hover:text-[#1916a1]">
+              <Link href="#" className="text-[1rem] text-gray-600 hover:text-[#1916a1]">
                 Contato
               </Link>
             </div>
@@ -328,5 +341,5 @@ export default function Home() {
         </div>
       </footer>
     </div>
-  )
+  );
 }

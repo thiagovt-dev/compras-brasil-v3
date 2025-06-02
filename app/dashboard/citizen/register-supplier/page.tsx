@@ -361,7 +361,9 @@ export default function RegisterSupplierPage() {
               <div className="space-y-6">
                 <Tabs defaultValue="national" onValueChange={(value) => setSupplierType(value)}>
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="national">Fornecedor Nacional</TabsTrigger>
+                    <TabsTrigger className="!py-1" value="national">
+                      Fornecedor Nacional
+                    </TabsTrigger>
                     <TabsTrigger value="foreign">Fornecedor Estrangeiro</TabsTrigger>
                   </TabsList>
                   <TabsContent value="national" className="space-y-6 pt-4">

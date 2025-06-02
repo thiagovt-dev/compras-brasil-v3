@@ -1,20 +1,34 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Textarea } from "@/components/ui/textarea"
-import { Separator } from "@/components/ui/separator"
-import { toast } from "@/components/ui/use-toast"
-import { FileUploadField } from "@/components/file-upload-field"
-import { useAuth } from "@/lib/supabase/auth-context"
-import { AlertTriangle, Loader2, MessageSquare, Clock } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { useState, useEffect } from "react";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { toast } from "@/components/ui/use-toast";
+import { FileUploadField } from "@/components/file-upload-field";
+import { useAuth } from "@/lib/supabase/auth-context";
+import { AlertTriangle, Loader2, MessageSquare, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -23,90 +37,90 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 
 const impugnationSchema = z.object({
   content: z.string().min(10, "A impugnação deve ter pelo menos 10 caracteres"),
-})
+});
 
 const responseSchema = z.object({
   response: z.string().min(10, "A resposta deve ter pelo menos 10 caracteres"),
-})
+});
 
-type ImpugnationFormValues = z.infer<typeof impugnationSchema>
-type ResponseFormValues = z.infer<typeof responseSchema>
+type ImpugnationFormValues = z.infer<typeof impugnationSchema>;
+type ResponseFormValues = z.infer<typeof responseSchema>;
 
 interface TenderImpugnationsProps {
-  tenderId: string
+  tenderId: string;
 }
 
 export function TenderImpugnations({ tenderId }: TenderImpugnationsProps) {
-  const supabase = createClientComponentClient()
-  const { user, profile } = useAuth()
-  const [impugnations, setImpugnations] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [responding, setResponding] = useState(false)
-  const [selectedImpugnation, setSelectedImpugnation] = useState<string | null>(null)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [deadline, setDeadline] = useState<Date | null>(null)
-  const [deadlinePassed, setDeadlinePassed] = useState(false)
+  const supabase = createClientSupabaseClient();
+  const { user, profile } = useAuth();
+  const [impugnations, setImpugnations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [responding, setResponding] = useState(false);
+  const [selectedImpugnation, setSelectedImpugnation] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [deadline, setDeadline] = useState<Date | null>(null);
+  const [deadlinePassed, setDeadlinePassed] = useState(false);
 
   const form = useForm<ImpugnationFormValues>({
     resolver: zodResolver(impugnationSchema),
     defaultValues: {
       content: "",
     },
-  })
+  });
 
   const responseForm = useForm<ResponseFormValues>({
     resolver: zodResolver(responseSchema),
     defaultValues: {
       response: "",
     },
-  })
+  });
 
   // Fetch impugnations and tender details
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true)
+        setLoading(true);
 
         // Fetch tender details to get deadline
         const { data: tenderData, error: tenderError } = await supabase
           .from("tenders")
           .select("impugnation_deadline")
           .eq("id", tenderId)
-          .single()
+          .single();
 
-        if (tenderError) throw tenderError
+        if (tenderError) throw tenderError;
 
         if (tenderData?.impugnation_deadline) {
-          const deadlineDate = new Date(tenderData.impugnation_deadline)
-          setDeadline(deadlineDate)
-          setDeadlinePassed(new Date() > deadlineDate)
+          const deadlineDate = new Date(tenderData.impugnation_deadline);
+          setDeadline(deadlineDate);
+          setDeadlinePassed(new Date() > deadlineDate);
         }
 
         // Fetch impugnations
-        const response = await fetch(`/api/tenders/${tenderId}/impugnations`)
-        if (!response.ok) throw new Error("Falha ao carregar impugnações")
+        const response = await fetch(`/api/tenders/${tenderId}/impugnations`);
+        if (!response.ok) throw new Error("Falha ao carregar impugnações");
 
-        const { data } = await response.json()
-        setImpugnations(data || [])
+        const { data } = await response.json();
+        setImpugnations(data || []);
       } catch (error: any) {
-        console.error("Error fetching data:", error)
+        console.error("Error fetching data:", error);
         toast({
           title: "Erro ao carregar impugnações",
           description: error.message || "Ocorreu um erro ao carregar os dados.",
           variant: "destructive",
-        })
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchData()
-  }, [supabase, tenderId])
+    fetchData();
+  }, [supabase, tenderId]);
 
   const onSubmit = async (data: ImpugnationFormValues) => {
     if (!user) {
@@ -114,12 +128,12 @@ export function TenderImpugnations({ tenderId }: TenderImpugnationsProps) {
         title: "Erro",
         description: "Você precisa estar logado para enviar uma impugnação.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     try {
-      setSubmitting(true)
+      setSubmitting(true);
 
       const response = await fetch(`/api/tenders/${tenderId}/impugnations`, {
         method: "POST",
@@ -129,84 +143,87 @@ export function TenderImpugnations({ tenderId }: TenderImpugnationsProps) {
         body: JSON.stringify({
           content: data.content,
         }),
-      })
+      });
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Erro ao enviar impugnação")
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro ao enviar impugnação");
       }
 
-      form.reset()
+      form.reset();
 
       toast({
         title: "Impugnação enviada",
         description: "Sua impugnação foi enviada com sucesso e está aguardando resposta.",
-      })
+      });
 
       // Refresh impugnations
-      const refreshResponse = await fetch(`/api/tenders/${tenderId}/impugnations`)
-      if (!refreshResponse.ok) throw new Error("Falha ao atualizar impugnações")
+      const refreshResponse = await fetch(`/api/tenders/${tenderId}/impugnations`);
+      if (!refreshResponse.ok) throw new Error("Falha ao atualizar impugnações");
 
-      const { data: refreshedData } = await refreshResponse.json()
-      setImpugnations(refreshedData || [])
+      const { data: refreshedData } = await refreshResponse.json();
+      setImpugnations(refreshedData || []);
     } catch (error: any) {
-      console.error("Error submitting impugnation:", error)
+      console.error("Error submitting impugnation:", error);
       toast({
         title: "Erro ao enviar impugnação",
         description: error.message || "Ocorreu um erro ao enviar a impugnação.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const handleRespond = async (data: ResponseFormValues) => {
-    if (!selectedImpugnation) return
+    if (!selectedImpugnation) return;
 
     try {
-      setResponding(true)
+      setResponding(true);
 
-      const response = await fetch(`/api/tenders/${tenderId}/impugnations/${selectedImpugnation}/respond`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          response: data.response,
-        }),
-      })
+      const response = await fetch(
+        `/api/tenders/${tenderId}/impugnations/${selectedImpugnation}/respond`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            response: data.response,
+          }),
+        }
+      );
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Erro ao responder impugnação")
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro ao responder impugnação");
       }
 
-      responseForm.reset()
-      setDialogOpen(false)
+      responseForm.reset();
+      setDialogOpen(false);
 
       toast({
         title: "Resposta enviada",
         description: "Sua resposta foi enviada com sucesso.",
-      })
+      });
 
       // Refresh impugnations
-      const refreshResponse = await fetch(`/api/tenders/${tenderId}/impugnations`)
-      if (!refreshResponse.ok) throw new Error("Falha ao atualizar impugnações")
+      const refreshResponse = await fetch(`/api/tenders/${tenderId}/impugnations`);
+      if (!refreshResponse.ok) throw new Error("Falha ao atualizar impugnações");
 
-      const { data: refreshedData } = await refreshResponse.json()
-      setImpugnations(refreshedData || [])
+      const { data: refreshedData } = await refreshResponse.json();
+      setImpugnations(refreshedData || []);
     } catch (error: any) {
-      console.error("Error responding to impugnation:", error)
+      console.error("Error responding to impugnation:", error);
       toast({
         title: "Erro ao responder impugnação",
         description: error.message || "Ocorreu um erro ao responder a impugnação.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setResponding(false)
+      setResponding(false);
     }
-  }
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
@@ -215,12 +232,12 @@ export function TenderImpugnations({ tenderId }: TenderImpugnationsProps) {
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    })
-  }
+    });
+  };
 
-  const isAgencyUser = profile?.role === "agency"
-  const isAdminUser = profile?.role === "admin"
-  const canRespond = isAgencyUser || isAdminUser
+  const isAgencyUser = profile?.role === "agency";
+  const isAdminUser = profile?.role === "admin";
+  const canRespond = isAgencyUser || isAdminUser;
 
   return (
     <div className="space-y-6">
@@ -235,8 +252,10 @@ export function TenderImpugnations({ tenderId }: TenderImpugnationsProps) {
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">
-                  {deadlinePassed ? "O prazo para impugnações já expirou." : "O prazo para impugnações termina em:"}
+                <p className="text-[1rem] text-muted-foreground">
+                  {deadlinePassed
+                    ? "O prazo para impugnações já expirou."
+                    : "O prazo para impugnações termina em:"}
                 </p>
                 <p className="font-medium">{formatDate(deadline.toISOString())}</p>
               </div>
@@ -258,7 +277,9 @@ export function TenderImpugnations({ tenderId }: TenderImpugnationsProps) {
         <Card>
           <CardHeader>
             <CardTitle>Enviar Impugnação</CardTitle>
-            <CardDescription>Envie uma impugnação ao edital caso identifique alguma irregularidade</CardDescription>
+            <CardDescription>
+              Envie uma impugnação ao edital caso identifique alguma irregularidade
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -270,7 +291,11 @@ export function TenderImpugnations({ tenderId }: TenderImpugnationsProps) {
                     <FormItem>
                       <FormLabel>Impugnação</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="Digite sua impugnação..." className="min-h-[120px]" {...field} />
+                        <Textarea
+                          placeholder="Digite sua impugnação..."
+                          className="min-h-[120px]"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -325,14 +350,19 @@ export function TenderImpugnations({ tenderId }: TenderImpugnationsProps) {
                       <div className="space-y-1 flex-1">
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">{impugnation.user?.name || "Usuário"}</span>
-                            <span className="text-sm text-muted-foreground">{formatDate(impugnation.created_at)}</span>
+                            <span className="font-medium">
+                              {impugnation.user?.name || "Usuário"}
+                            </span>
+                            <span className="text-[1rem] text-muted-foreground">
+                              {formatDate(impugnation.created_at)}
+                            </span>
                           </div>
-                          <Badge variant={impugnation.status === "pending" ? "outline" : "secondary"}>
+                          <Badge
+                            variant={impugnation.status === "pending" ? "outline" : "secondary"}>
                             {impugnation.status === "pending" ? "Pendente" : "Respondida"}
                           </Badge>
                         </div>
-                        <p className="text-sm whitespace-pre-line">{impugnation.content}</p>
+                        <p className="text-[1rem] whitespace-pre-line">{impugnation.content}</p>
 
                         {impugnation.attachment_url && (
                           <div className="mt-2">
@@ -340,8 +370,7 @@ export function TenderImpugnations({ tenderId }: TenderImpugnationsProps) {
                               href={impugnation.attachment_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm text-primary hover:underline flex items-center"
-                            >
+                              className="text-[1rem] text-primary hover:underline flex items-center">
                               Ver anexo
                             </a>
                           </div>
@@ -359,11 +388,15 @@ export function TenderImpugnations({ tenderId }: TenderImpugnationsProps) {
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <span className="font-medium">Resposta</span>
-                              <span className="text-sm text-muted-foreground">
-                                {impugnation.response_date ? formatDate(impugnation.response_date) : ""}
+                              <span className="text-[1rem] text-muted-foreground">
+                                {impugnation.response_date
+                                  ? formatDate(impugnation.response_date)
+                                  : ""}
                               </span>
                             </div>
-                            <p className="text-sm whitespace-pre-line">{impugnation.response}</p>
+                            <p className="text-[1rem] whitespace-pre-line">
+                              {impugnation.response}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -374,12 +407,14 @@ export function TenderImpugnations({ tenderId }: TenderImpugnationsProps) {
                         <Dialog
                           open={dialogOpen && selectedImpugnation === impugnation.id}
                           onOpenChange={(open) => {
-                            setDialogOpen(open)
-                            if (!open) setSelectedImpugnation(null)
-                          }}
-                        >
+                            setDialogOpen(open);
+                            if (!open) setSelectedImpugnation(null);
+                          }}>
                           <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" onClick={() => setSelectedImpugnation(impugnation.id)}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSelectedImpugnation(impugnation.id)}>
                               Responder
                             </Button>
                           </DialogTrigger>
@@ -387,12 +422,14 @@ export function TenderImpugnations({ tenderId }: TenderImpugnationsProps) {
                             <DialogHeader>
                               <DialogTitle>Responder Impugnação</DialogTitle>
                               <DialogDescription>
-                                Forneça uma resposta para a impugnação. Esta resposta será visível para todos os
-                                participantes.
+                                Forneça uma resposta para a impugnação. Esta resposta será visível
+                                para todos os participantes.
                               </DialogDescription>
                             </DialogHeader>
                             <Form {...responseForm}>
-                              <form onSubmit={responseForm.handleSubmit(handleRespond)} className="space-y-4">
+                              <form
+                                onSubmit={responseForm.handleSubmit(handleRespond)}
+                                className="space-y-4">
                                 <FormField
                                   control={responseForm.control}
                                   name="response"
@@ -413,14 +450,16 @@ export function TenderImpugnations({ tenderId }: TenderImpugnationsProps) {
                               </form>
                             </Form>
                             <DialogFooter>
-                              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setDialogOpen(false)}>
                                 Cancelar
                               </Button>
                               <Button
                                 type="submit"
                                 onClick={responseForm.handleSubmit(handleRespond)}
-                                disabled={responding}
-                              >
+                                disabled={responding}>
                                 {responding ? (
                                   <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -449,5 +488,5 @@ export function TenderImpugnations({ tenderId }: TenderImpugnationsProps) {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

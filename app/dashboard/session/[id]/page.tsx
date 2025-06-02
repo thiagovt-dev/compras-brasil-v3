@@ -1,90 +1,90 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect, useRef } from "react"
-import { useParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Send, Clock, Hand, FileText, AlertCircle, CheckCircle, X, DollarSign } from "lucide-react"
-import { useAuth } from "@/lib/supabase/auth-context"
+import { useState, useEffect, useRef } from "react";
+import { useParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Send, Clock, Hand, FileText, AlertCircle, CheckCircle, X, DollarSign } from "lucide-react";
+import { useAuth } from "@/lib/supabase/auth-context";
 
 export default function PublicSessionPage() {
-  const params = useParams()
-  const tenderId = params.id as string
-  const { profile } = useAuth()
-  const [message, setMessage] = useState("")
-  const [activeTab, setActiveTab] = useState("chat")
-  const [isRaisingHand, setIsRaisingHand] = useState(false)
-  const [bidValue, setBidValue] = useState("")
-  const [currentLot, setCurrentLot] = useState(0)
-  const chatEndRef = useRef<HTMLDivElement>(null)
-  const [countdown, setCountdown] = useState<number | null>(null)
-  const [isSupplier, setIsSupplier] = useState(false)
+  const params = useParams();
+  const tenderId = params.id as string;
+  const { profile } = useAuth();
+  const [message, setMessage] = useState("");
+  const [activeTab, setActiveTab] = useState("chat");
+  const [isRaisingHand, setIsRaisingHand] = useState(false);
+  const [bidValue, setBidValue] = useState("");
+  const [currentLot, setCurrentLot] = useState(0);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [isSupplier, setIsSupplier] = useState(false);
 
   // In a real app, we would fetch the tender data from an API
   // For now, we'll use mock data
-  const tender = tenders.find((t) => t.id === tenderId) || tenders[0]
+  const tender = tenders.find((t) => t.id === tenderId) || tenders[0];
 
   useEffect(() => {
     // Check if the user is a supplier
     if (profile?.profile_type === "supplier") {
-      setIsSupplier(true)
+      setIsSupplier(true);
     }
 
     // Scroll to the bottom of the chat when new messages arrive
     if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: "smooth" })
+      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
 
     // Simulate countdown for bidding
     if (tender.status === "Em disputa" && countdown === null) {
-      setCountdown(300) // 5 minutes in seconds
+      setCountdown(300); // 5 minutes in seconds
     }
 
     // Countdown timer
-    let timer: NodeJS.Timeout
+    let timer: NodeJS.Timeout;
     if (countdown !== null && countdown > 0) {
       timer = setTimeout(() => {
-        setCountdown(countdown - 1)
-      }, 1000)
+        setCountdown(countdown - 1);
+      }, 1000);
     }
 
     return () => {
-      if (timer) clearTimeout(timer)
-    }
-  }, [countdown, profile, tender.status])
+      if (timer) clearTimeout(timer);
+    };
+  }, [countdown, profile, tender.status]);
 
   const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     // In a real app, we would send the message to an API
-    console.log("Message sent:", message)
-    setMessage("")
-  }
+    console.log("Message sent:", message);
+    setMessage("");
+  };
 
   const handleRaiseHand = () => {
-    setIsRaisingHand(!isRaisingHand)
+    setIsRaisingHand(!isRaisingHand);
     // In a real app, we would send a notification to the auctioneer
-    console.log("Hand raised:", !isRaisingHand)
-  }
+    console.log("Hand raised:", !isRaisingHand);
+  };
 
   const handleSendBid = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     // In a real app, we would send the bid to an API
-    console.log("Bid sent:", bidValue)
-    setBidValue("")
-  }
+    console.log("Bid sent:", bidValue);
+    setBidValue("");
+  };
 
   const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60)
-    const remainingSeconds = seconds % 60
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`
-  }
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+  };
 
   return (
     <div className="flex h-screen flex-col">
@@ -92,7 +92,7 @@ export default function PublicSessionPage() {
         <div className="container flex h-16 items-center justify-between">
           <div>
             <h1 className="text-xl font-bold">{tender.title}</h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-[1rem] text-muted-foreground">
               {tender.number} • {tender.agency}
             </p>
           </div>
@@ -100,7 +100,7 @@ export default function PublicSessionPage() {
             <div className="flex items-center gap-2">
               <Badge variant={getStatusBadgeVariant(tender.status)}>{tender.status}</Badge>
               {countdown !== null && (
-                <div className="flex items-center gap-1 rounded-md bg-yellow-100 px-2 py-1 text-sm font-medium text-yellow-800">
+                <div className="flex items-center gap-1 rounded-md bg-yellow-100 px-2 py-1 text-[1rem] font-medium text-yellow-800">
                   <Clock className="h-4 w-4" />
                   {formatTime(countdown)}
                 </div>
@@ -112,7 +112,11 @@ export default function PublicSessionPage() {
 
       <div className="container flex flex-1 gap-4 overflow-hidden py-4">
         <div className="flex w-3/4 flex-col overflow-hidden rounded-lg border">
-          <Tabs defaultValue="chat" value={activeTab} onValueChange={setActiveTab} className="flex-1">
+          <Tabs
+            defaultValue="chat"
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="flex-1">
             <div className="flex items-center justify-between border-b px-4">
               <TabsList className="h-12">
                 <TabsTrigger value="chat" className="relative">
@@ -134,8 +138,7 @@ export default function PublicSessionPage() {
                     variant={isRaisingHand ? "destructive" : "outline"}
                     size="sm"
                     onClick={handleRaiseHand}
-                    className="gap-2"
-                  >
+                    className="gap-2">
                     <Hand className="h-4 w-4" />
                     {isRaisingHand ? "Cancelar Pedido" : "Pedir a Palavra"}
                   </Button>
@@ -150,16 +153,17 @@ export default function PublicSessionPage() {
                     {tender.sessionChat.map((chatMessage, index) => (
                       <div key={index} className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-muted-foreground">{chatMessage.time}</span>
+                          <span className="text-[1rem] font-medium text-muted-foreground">
+                            {chatMessage.time}
+                          </span>
                           <span
-                            className={`text-sm font-medium ${
+                            className={`text-[1rem] font-medium ${
                               chatMessage.sender === "Pregoeiro" ? "text-primary" : "text-gray-800"
-                            }`}
-                          >
+                            }`}>
                             {chatMessage.sender}:
                           </span>
                         </div>
-                        <p className="text-sm">{chatMessage.content}</p>
+                        <p className="text-[1rem]">{chatMessage.content}</p>
                       </div>
                     ))}
                     <div ref={chatEndRef} />
@@ -189,7 +193,8 @@ export default function PublicSessionPage() {
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg">
-                          {tender.judgmentCriteria === "Menor Preço por item" ? "Item" : "Lote"} {lot.id}
+                          {tender.judgmentCriteria === "Menor Preço por item" ? "Item" : "Lote"}{" "}
+                          {lot.id}
                         </CardTitle>
                         <Badge variant={getLotStatusBadgeVariant(lot.status || tender.status)}>
                           {lot.status || tender.status}
@@ -199,7 +204,7 @@ export default function PublicSessionPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="w-full text-[1rem]">
                           <thead>
                             <tr className="border-b">
                               <th className="px-2 py-2 text-left font-medium">Item</th>
@@ -219,7 +224,11 @@ export default function PublicSessionPage() {
                                 <td className="px-2 py-2">{item.unit}</td>
                                 <td className="px-2 py-2">R$ {item.unitPrice}</td>
                                 <td className="px-2 py-2">
-                                  R$ {(Number.parseFloat(item.unitPrice) * Number.parseInt(item.quantity)).toFixed(2)}
+                                  R${" "}
+                                  {(
+                                    Number.parseFloat(item.unitPrice) *
+                                    Number.parseInt(item.quantity)
+                                  ).toFixed(2)}
                                 </td>
                               </tr>
                             ))}
@@ -259,26 +268,31 @@ export default function PublicSessionPage() {
                   <Card key={lot.id}>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg">
-                        {tender.judgmentCriteria === "Menor Preço por item" ? "Item" : "Lote"} {lot.id}
+                        {tender.judgmentCriteria === "Menor Preço por item" ? "Item" : "Lote"}{" "}
+                        {lot.id}
                       </CardTitle>
                       <CardDescription>{lot.description}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
                         <div className="rounded-md border">
-                          <div className="border-b bg-gray-50 px-4 py-2 font-medium">Classificação</div>
+                          <div className="border-b bg-gray-50 px-4 py-2 font-medium">
+                            Classificação
+                          </div>
                           <div className="divide-y">
                             {lot.proposals?.map((proposal, index) => (
                               <div
                                 key={index}
-                                className={`flex items-center justify-between p-3 ${index === 0 ? "bg-green-50" : ""}`}
-                              >
+                                className={`flex items-center justify-between p-3 ${
+                                  index === 0 ? "bg-green-50" : ""
+                                }`}>
                                 <div className="flex items-center gap-3">
                                   <div
                                     className={`flex h-6 w-6 items-center justify-center rounded-full ${
-                                      index === 0 ? "bg-green-500 text-white" : "bg-gray-200 text-gray-700"
-                                    }`}
-                                  >
+                                      index === 0
+                                        ? "bg-green-500 text-white"
+                                        : "bg-gray-200 text-gray-700"
+                                    }`}>
                                     {index + 1}
                                   </div>
                                   <div>
@@ -287,7 +301,7 @@ export default function PublicSessionPage() {
                                         ? `Fornecedor ${proposal.supplier}`
                                         : proposal.supplierName}
                                     </p>
-                                    <p className="text-sm text-muted-foreground">
+                                    <p className="text-[1rem] text-muted-foreground">
                                       {proposal.date} • {proposal.time}
                                     </p>
                                   </div>
@@ -321,12 +335,14 @@ export default function PublicSessionPage() {
                   <CardContent>
                     <div className="space-y-4">
                       {tender.documents.map((doc, index) => (
-                        <div key={index} className="flex items-center justify-between rounded-md border p-4">
+                        <div
+                          key={index}
+                          className="flex items-center justify-between rounded-md border p-4">
                           <div className="flex items-center gap-3">
                             <FileText className="h-6 w-6 text-primary" />
                             <div>
                               <p className="font-medium">{doc.name}</p>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-[1rem] text-muted-foreground">
                                 Publicado em {doc.date} • {doc.size}
                               </p>
                             </div>
@@ -355,7 +371,9 @@ export default function PublicSessionPage() {
                                 <div className="flex items-center gap-2">
                                   <FileText className="h-5 w-5 text-primary" />
                                   <h3 className="font-medium">
-                                    {tender.status === "Em disputa" ? `Fornecedor ${doc.supplier}` : doc.supplierName}
+                                    {tender.status === "Em disputa"
+                                      ? `Fornecedor ${doc.supplier}`
+                                      : doc.supplierName}
                                   </h3>
                                 </div>
                                 <Badge
@@ -363,10 +381,9 @@ export default function PublicSessionPage() {
                                     doc.status === "Aprovado"
                                       ? "success"
                                       : doc.status === "Reprovado"
-                                        ? "destructive"
-                                        : "outline"
-                                  }
-                                >
+                                      ? "destructive"
+                                      : "outline"
+                                  }>
                                   {doc.status}
                                 </Badge>
                               </div>
@@ -374,11 +391,10 @@ export default function PublicSessionPage() {
                                 {doc.files.map((file, fileIndex) => (
                                   <div
                                     key={fileIndex}
-                                    className="flex items-center justify-between rounded-md bg-gray-50 p-2"
-                                  >
+                                    className="flex items-center justify-between rounded-md bg-gray-50 p-2">
                                     <div className="flex items-center gap-2">
                                       <FileText className="h-4 w-4" />
-                                      <span className="text-sm">{file.name}</span>
+                                      <span className="text-[1rem]">{file.name}</span>
                                     </div>
                                     <Button variant="ghost" size="sm">
                                       Download
@@ -392,7 +408,7 @@ export default function PublicSessionPage() {
                       ) : (
                         <div className="rounded-md border border-dashed p-6 text-center">
                           <FileText className="mx-auto h-8 w-8 text-muted-foreground" />
-                          <p className="mt-2 text-sm text-muted-foreground">
+                          <p className="mt-2 text-[1rem] text-muted-foreground">
                             Nenhum documento de habilitação disponível.
                           </p>
                         </div>
@@ -413,23 +429,23 @@ export default function PublicSessionPage() {
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-medium">Status</h3>
+                  <h3 className="text-[1rem] font-medium">Status</h3>
                   <Badge variant={getStatusBadgeVariant(tender.status)} className="mt-1">
                     {tender.status}
                   </Badge>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium">Pregoeiro</h3>
-                  <p className="text-sm">{tender.team?.auctioneer}</p>
+                  <h3 className="text-[1rem] font-medium">Pregoeiro</h3>
+                  <p className="text-[1rem]">{tender.team?.auctioneer}</p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium">Início da Sessão</h3>
-                  <p className="text-sm">{tender.sessionStartTime || tender.openingDate}</p>
+                  <h3 className="text-[1rem] font-medium">Início da Sessão</h3>
+                  <p className="text-[1rem]">{tender.sessionStartTime || tender.openingDate}</p>
                 </div>
                 {tender.status === "Em disputa" && (
                   <div>
-                    <h3 className="text-sm font-medium">Tempo Restante</h3>
-                    <div className="mt-1 flex items-center gap-1 rounded-md bg-yellow-100 px-2 py-1 text-sm font-medium text-yellow-800">
+                    <h3 className="text-[1rem] font-medium">Tempo Restante</h3>
+                    <div className="mt-1 flex items-center gap-1 rounded-md bg-yellow-100 px-2 py-1 text-[1rem] font-medium text-yellow-800">
                       <Clock className="h-4 w-4" />
                       {countdown !== null ? formatTime(countdown) : "00:00"}
                     </div>
@@ -446,7 +462,9 @@ export default function PublicSessionPage() {
             <CardContent>
               <div className="space-y-2">
                 {tender.participants?.map((participant, index) => (
-                  <div key={index} className="flex items-center justify-between rounded-md border p-2">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between rounded-md border p-2">
                     <div className="flex items-center gap-2">
                       {participant.type === "auctioneer" ? (
                         <Badge variant="outline" className="bg-primary/10">
@@ -461,7 +479,7 @@ export default function PublicSessionPage() {
                           Fornecedor {participant.code}
                         </Badge>
                       )}
-                      <span className="text-sm">
+                      <span className="text-[1rem]">
                         {participant.type === "supplier"
                           ? tender.status === "Em disputa"
                             ? `Fornecedor ${participant.code}`
@@ -502,51 +520,51 @@ export default function PublicSessionPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 // Helper functions for badges
 function getStatusBadgeVariant(status: string) {
   switch (status) {
     case "Publicada":
-      return "secondary"
+      return "secondary";
     case "Aguardando abertura":
-      return "default"
+      return "default";
     case "Em disputa":
-      return "warning"
+      return "warning";
     case "Em andamento":
-      return "default"
+      return "default";
     case "Homologada":
-      return "success"
+      return "success";
     case "Revogada":
-      return "destructive"
+      return "destructive";
     case "Anulada":
-      return "destructive"
+      return "destructive";
     default:
-      return "outline"
+      return "outline";
   }
 }
 
 function getLotStatusBadgeVariant(status: string) {
   switch (status) {
     case "Em disputa":
-      return "warning"
+      return "warning";
     case "Em negociação":
-      return "default"
+      return "default";
     case "Em habilitação":
-      return "secondary"
+      return "secondary";
     case "Declarado vencedor":
-      return "success"
+      return "success";
     case "Em recurso":
-      return "destructive"
+      return "destructive";
     case "Homologado":
-      return "success"
+      return "success";
     case "Fracassado":
-      return "destructive"
+      return "destructive";
     case "Deserto":
-      return "outline"
+      return "outline";
     default:
-      return getStatusBadgeVariant(status)
+      return getStatusBadgeVariant(status);
   }
 }
 
@@ -787,4 +805,4 @@ const tenders = [
       },
     ],
   },
-]
+];

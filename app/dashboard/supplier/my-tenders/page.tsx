@@ -1,40 +1,50 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
-import { redirect } from "next/navigation"
-import Link from "next/link"
-import { Search, Calendar, MapPin, Building2, FileText, Clock, DollarSign, Eye } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import {
+  Search,
+  Calendar,
+  MapPin,
+  Building2,
+  FileText,
+  Clock,
+  DollarSign,
+  Eye,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
-export const dynamic = "force-dynamic"
+export const dynamic = "force-dynamic";
 
 export default async function MyTendersPage() {
-  const cookieStore = await cookies()
-  const supabase = createServerComponentClient({ cookies: () => cookieStore })
+  const cookieStore = await cookies();
+  const supabase = createServerComponentClient({ cookies: () => cookieStore });
 
   // Get current user
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    redirect("/login")
+    redirect("/login");
   }
 
   // Get user profile
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
 
   if (!profile || profile.profile_type !== "supplier") {
-    redirect("/dashboard")
+    redirect("/dashboard");
   }
 
   // Fetch tenders where I have proposals
   const { data: myTenders, error } = await supabase
     .from("tenders")
-    .select(`
+    .select(
+      `
       *,
       agency:agencies(name, city, state),
       proposals!inner(
@@ -44,24 +54,25 @@ export default async function MyTendersPage() {
         created_at,
         updated_at
       )
-    `)
+    `
+    )
     .eq("proposals.supplier_id", user.id)
-    .order("created_at", { ascending: false })
+    .order("created_at", { ascending: false });
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
-    }).format(value)
-  }
+    }).format(value);
+  };
 
   const formatDate = (date: string) => {
     return new Intl.DateTimeFormat("pt-BR", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
-    }).format(new Date(date))
-  }
+    }).format(new Date(date));
+  };
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
@@ -71,11 +82,14 @@ export default async function MyTendersPage() {
       in_progress: { label: "Em Andamento", variant: "default" as const },
       finished: { label: "Finalizada", variant: "outline" as const },
       cancelled: { label: "Cancelada", variant: "destructive" as const },
-    }
+    };
 
-    const statusInfo = statusMap[status as keyof typeof statusMap] || { label: status, variant: "secondary" as const }
-    return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
-  }
+    const statusInfo = statusMap[status as keyof typeof statusMap] || {
+      label: status,
+      variant: "secondary" as const,
+    };
+    return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
+  };
 
   const getProposalStatusBadge = (status: string) => {
     const statusMap = {
@@ -84,11 +98,14 @@ export default async function MyTendersPage() {
       accepted: { label: "Aceita", variant: "default" as const },
       rejected: { label: "Rejeitada", variant: "destructive" as const },
       winner: { label: "Vencedora", variant: "default" as const },
-    }
+    };
 
-    const statusInfo = statusMap[status as keyof typeof statusMap] || { label: status, variant: "secondary" as const }
-    return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
-  }
+    const statusInfo = statusMap[status as keyof typeof statusMap] || {
+      label: status,
+      variant: "secondary" as const,
+    };
+    return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
+  };
 
   return (
     <div className="space-y-6">
@@ -118,14 +135,16 @@ export default async function MyTendersPage() {
       {myTenders && myTenders.length > 0 ? (
         <div className="grid gap-6">
           {myTenders.map((tender) => {
-            const proposal = tender.proposals[0] // Since we have inner join, there's always one proposal
+            const proposal = tender.proposals[0]; // Since we have inner join, there's always one proposal
             return (
               <Card key={tender.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="space-y-2">
                       <CardTitle className="text-xl">{tender.title}</CardTitle>
-                      <CardDescription className="line-clamp-2">{tender.description}</CardDescription>
+                      <CardDescription className="line-clamp-2">
+                        {tender.description}
+                      </CardDescription>
                     </div>
                     <div className="flex flex-col gap-2">
                       {getStatusBadge(tender.status)}
@@ -137,21 +156,25 @@ export default async function MyTendersPage() {
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <div className="flex items-center gap-2">
                       <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{tender.agency?.name}</span>
+                      <span className="text-[1rem]">{tender.agency?.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">
+                      <span className="text-[1rem]">
                         {tender.agency?.city}, {tender.agency?.state}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">Abertura: {formatDate(tender.opening_date)}</span>
+                      <span className="text-[1rem]">
+                        Abertura: {formatDate(tender.opening_date)}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">Encerramento: {formatDate(tender.closing_date)}</span>
+                      <span className="text-[1rem]">
+                        Encerramento: {formatDate(tender.closing_date)}
+                      </span>
                     </div>
                   </div>
 
@@ -159,19 +182,23 @@ export default async function MyTendersPage() {
                     {tender.estimated_value && (
                       <div className="flex items-center gap-2">
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">Valor Estimado: {formatCurrency(tender.estimated_value)}</span>
+                        <span className="text-[1rem]">
+                          Valor Estimado: {formatCurrency(tender.estimated_value)}
+                        </span>
                       </div>
                     )}
                     {proposal.total_value && (
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">Minha Proposta: {formatCurrency(proposal.total_value)}</span>
+                        <span className="text-[1rem]">
+                          Minha Proposta: {formatCurrency(proposal.total_value)}
+                        </span>
                       </div>
                     )}
                   </div>
 
                   <div className="mt-4 flex items-center justify-between">
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-[1rem] text-muted-foreground">
                       Modalidade: <span className="font-medium">{tender.modality}</span>
                     </div>
                     <div className="flex gap-2">
@@ -191,7 +218,7 @@ export default async function MyTendersPage() {
                   </div>
                 </CardContent>
               </Card>
-            )
+            );
           })}
         </div>
       ) : (
@@ -212,5 +239,5 @@ export default async function MyTendersPage() {
         </Card>
       )}
     </div>
-  )
+  );
 }

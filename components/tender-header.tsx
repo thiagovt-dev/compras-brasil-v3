@@ -1,12 +1,12 @@
-import Link from "next/link"
-import { ChevronLeft } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface TenderHeaderProps {
-  title: string
-  number: string
-  agency: string
-  id: string
+  title: string;
+  number: string;
+  agency: string;
+  id: string;
 }
 
 export function TenderHeader({ title, number, agency, id }: TenderHeaderProps) {
@@ -23,11 +23,11 @@ export function TenderHeader({ title, number, agency, id }: TenderHeaderProps) {
 
       <div>
         <h1 className="text-2xl font-bold">{title}</h1>
-        <div className="flex flex-wrap gap-x-4 text-sm text-muted-foreground">
+        <div className="flex flex-wrap gap-x-4 text-[1rem] text-muted-foreground">
           <span>Nº {number}</span>
           {agency && <span>• {agency}</span>}
         </div>
       </div>
     </div>
-  )
+  );
 }

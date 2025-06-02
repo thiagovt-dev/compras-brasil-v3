@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { useToast } from "@/hooks/use-toast"
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
 import {
   FileCheck,
   Upload,
@@ -22,7 +22,7 @@ import {
   Search,
   Download,
   Eye,
-} from "lucide-react"
+} from "lucide-react";
 
 // Mock document types
 const documentTypes = [
@@ -34,7 +34,7 @@ const documentTypes = [
   { id: "6", name: "Contrato Social" },
   { id: "7", name: "Balanço Patrimonial" },
   { id: "8", name: "Atestado de Capacidade Técnica" },
-]
+];
 
 // Mock validation history
 const validationHistory = [
@@ -77,22 +77,22 @@ const validationHistory = [
     date: "15/05/2025",
     time: "15:10",
   },
-]
+];
 
 export default function DocumentValidationPage() {
-  const { toast } = useToast()
-  const [activeTab, setActiveTab] = useState("upload")
-  const [isUploading, setIsUploading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
-  const [selectedDocumentType, setSelectedDocumentType] = useState("")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("upload");
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [selectedDocumentType, setSelectedDocumentType] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0])
+      setSelectedFile(e.target.files[0]);
     }
-  }
+  };
 
   const handleUpload = () => {
     if (!selectedFile) {
@@ -100,8 +100,8 @@ export default function DocumentValidationPage() {
         title: "Erro",
         description: "Por favor, selecione um arquivo para upload.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     if (!selectedDocumentType) {
@@ -109,45 +109,45 @@ export default function DocumentValidationPage() {
         title: "Erro",
         description: "Por favor, selecione o tipo de documento.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
-    setIsUploading(true)
-    setUploadProgress(0)
+    setIsUploading(true);
+    setUploadProgress(0);
 
     // Simulate upload progress
     const interval = setInterval(() => {
       setUploadProgress((prev) => {
         if (prev >= 100) {
-          clearInterval(interval)
-          return 100
+          clearInterval(interval);
+          return 100;
         }
-        return prev + 10
-      })
-    }, 300)
+        return prev + 10;
+      });
+    }, 300);
 
     // Simulate upload completion
     setTimeout(() => {
-      clearInterval(interval)
-      setUploadProgress(100)
+      clearInterval(interval);
+      setUploadProgress(100);
 
       setTimeout(() => {
-        setIsUploading(false)
-        setSelectedFile(null)
-        setSelectedDocumentType("")
+        setIsUploading(false);
+        setSelectedFile(null);
+        setSelectedDocumentType("");
 
         toast({
           title: "Upload concluído",
           description: "O documento foi enviado para validação com sucesso.",
-        })
-      }, 500)
-    }, 3000)
-  }
+        });
+      }, 500);
+    }, 3000);
+  };
 
   const filteredHistory = validationHistory.filter((item) =>
-    item.documentName.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+    item.documentName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -157,32 +157,32 @@ export default function DocumentValidationPage() {
             <CheckCircle2 className="mr-1 h-3 w-3" />
             Válido
           </Badge>
-        )
+        );
       case "invalid":
         return (
           <Badge variant="outline" className="bg-red-50 text-red-600 hover:bg-red-50">
             <XCircle className="mr-1 h-3 w-3" />
             Inválido
           </Badge>
-        )
+        );
       case "expired":
         return (
           <Badge variant="outline" className="bg-amber-50 text-amber-600 hover:bg-amber-50">
             <AlertTriangle className="mr-1 h-3 w-3" />
             Expirado
           </Badge>
-        )
+        );
       case "pending":
         return (
           <Badge variant="outline" className="bg-blue-50 text-blue-600 hover:bg-blue-50">
             <Clock className="mr-1 h-3 w-3" />
             Pendente
           </Badge>
-        )
+        );
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -213,8 +213,7 @@ export default function DocumentValidationPage() {
                     id="documentType"
                     value={selectedDocumentType}
                     onChange={(e) => setSelectedDocumentType(e.target.value)}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  >
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-[1rem] ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                     <option value="">Selecione o tipo de documento</option>
                     {documentTypes.map((type) => (
                       <option key={type.id} value={type.id}>
@@ -234,7 +233,9 @@ export default function DocumentValidationPage() {
                       onChange={handleFileChange}
                       className="flex-1"
                     />
-                    <Button onClick={handleUpload} disabled={isUploading || !selectedFile || !selectedDocumentType}>
+                    <Button
+                      onClick={handleUpload}
+                      disabled={isUploading || !selectedFile || !selectedDocumentType}>
                       {isUploading ? (
                         <>
                           <Clock className="mr-2 h-4 w-4 animate-spin" />
@@ -248,7 +249,7 @@ export default function DocumentValidationPage() {
                       )}
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[1rem] text-muted-foreground">
                     Formatos aceitos: PDF, JPG, JPEG, PNG. Tamanho máximo: 10MB.
                   </p>
                 </div>
@@ -256,8 +257,8 @@ export default function DocumentValidationPage() {
                 {isUploading && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm">Progresso do upload</span>
-                      <span className="text-sm">{uploadProgress}%</span>
+                      <span className="text-[1rem]">Progresso do upload</span>
+                      <span className="text-[1rem]">{uploadProgress}%</span>
                     </div>
                     <Progress value={uploadProgress} className="h-2" />
                   </div>
@@ -270,9 +271,9 @@ export default function DocumentValidationPage() {
                     <FileCheck className="h-6 w-6 text-primary" />
                   </div>
                   <h3 className="text-lg font-medium">Validação Automática</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Nosso sistema validará automaticamente seu documento após o upload. O processo pode levar alguns
-                    minutos dependendo do tipo de documento.
+                  <p className="text-[1rem] text-muted-foreground">
+                    Nosso sistema validará automaticamente seu documento após o upload. O processo
+                    pode levar alguns minutos dependendo do tipo de documento.
                   </p>
                 </div>
               </div>
@@ -282,21 +283,25 @@ export default function DocumentValidationPage() {
           <Card>
             <CardHeader>
               <CardTitle>Documentos Necessários</CardTitle>
-              <CardDescription>Lista de documentos necessários para participação em licitações</CardDescription>
+              <CardDescription>
+                Lista de documentos necessários para participação em licitações
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {documentTypes.map((type) => {
-                  const doc = validationHistory.find((item) => item.documentName === type.name)
+                  const doc = validationHistory.find((item) => item.documentName === type.name);
 
                   return (
-                    <div key={type.id} className="flex items-center justify-between rounded-lg border p-4">
+                    <div
+                      key={type.id}
+                      className="flex items-center justify-between rounded-lg border p-4">
                       <div className="flex items-center gap-3">
                         <FileText className="h-5 w-5 text-muted-foreground" />
                         <div>
                           <h4 className="font-medium">{type.name}</h4>
                           {doc && (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-[1rem] text-muted-foreground">
                               {doc.status === "valid" && `Válido até ${doc.validUntil}`}
                               {doc.status === "expired" && `Expirado em ${doc.validUntil}`}
                               {doc.status === "invalid" && doc.error}
@@ -321,7 +326,7 @@ export default function DocumentValidationPage() {
                         )}
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             </CardContent>
@@ -354,12 +359,11 @@ export default function DocumentValidationPage() {
                           item.status === "valid"
                             ? "bg-green-100"
                             : item.status === "invalid"
-                              ? "bg-red-100"
-                              : item.status === "expired"
-                                ? "bg-amber-100"
-                                : "bg-blue-100"
-                        }`}
-                      >
+                            ? "bg-red-100"
+                            : item.status === "expired"
+                            ? "bg-amber-100"
+                            : "bg-blue-100"
+                        }`}>
                         {item.status === "valid" ? (
                           <CheckCircle2 className="h-5 w-5 text-green-600" />
                         ) : item.status === "invalid" ? (
@@ -375,7 +379,7 @@ export default function DocumentValidationPage() {
                           <h3 className="font-medium">{item.documentName}</h3>
                           <div className="mt-1 sm:mt-0">{getStatusBadge(item.status)}</div>
                         </div>
-                        <div className="mt-1 flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center">
+                        <div className="mt-1 flex flex-col gap-1 text-[1rem] text-muted-foreground sm:flex-row sm:items-center">
                           <span>
                             Enviado em {item.date} às {item.time}
                           </span>
@@ -412,7 +416,7 @@ export default function DocumentValidationPage() {
                 <div className="flex h-[300px] flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
                   <FileCheck className="h-10 w-10 text-muted-foreground" />
                   <h3 className="mt-4 text-lg font-medium">Nenhum documento encontrado</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
+                  <p className="mt-2 text-[1rem] text-muted-foreground">
                     {searchTerm
                       ? "Nenhum documento corresponde à sua pesquisa."
                       : "Você ainda não enviou nenhum documento para validação."}
@@ -429,5 +433,5 @@ export default function DocumentValidationPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

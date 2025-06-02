@@ -1,35 +1,49 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { toast } from "@/components/ui/use-toast"
-import { useAuth } from "@/lib/supabase/auth-context"
-import { Loader2, Save, Send } from "lucide-react"
-import type { ProposalFormData } from "@/types/proposal"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "@/components/ui/use-toast";
+import { useAuth } from "@/lib/supabase/auth-context";
+import { Loader2, Save, Send } from "lucide-react";
+import type { ProposalFormData } from "@/types/proposal";
 
 interface ProposalFormProps {
-  tenderId: string
-  initialData?: any
+  tenderId: string;
+  initialData?: any;
 }
 
 export function ProposalForm({ tenderId, initialData }: ProposalFormProps) {
-  const router = useRouter()
-  const supabase = createClientComponentClient()
-  const { user, profile } = useAuth()
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [tender, setTender] = useState<any>(null)
-  const [selectedLot, setSelectedLot] = useState<string>("")
+  const router = useRouter();
+  const supabase = createClientSupabaseClient();
+  const { user, profile } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tender, setTender] = useState<any>(null);
+  const [selectedLot, setSelectedLot] = useState<string>("");
 
   // Fetch tender data
   useEffect(() => {
@@ -45,64 +59,66 @@ export function ProposalForm({ tenderId, initialData }: ProposalFormProps) {
               *,
               items:tender_items(*)
             )
-          `,
+          `
           )
           .eq("id", tenderId)
-          .single()
+          .single();
 
-        if (error) throw error
+        if (error) throw error;
 
-        setTender(data)
+        setTender(data);
 
         // Set default selected lot if there's only one
         if (data.lots && data.lots.length === 1) {
-          setSelectedLot(data.lots[0].id)
+          setSelectedLot(data.lots[0].id);
         }
 
-        setIsLoading(false)
+        setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching tender:", error)
+        console.error("Error fetching tender:", error);
         toast({
           title: "Erro ao carregar licitação",
           description: "Não foi possível carregar os dados da licitação.",
           variant: "destructive",
-        })
-        setIsLoading(false)
+        });
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchTender()
-  }, [tenderId, supabase])
+    fetchTender();
+  }, [tenderId, supabase]);
 
   // Create form schema based on selected lot
   const createFormSchema = (lotId: string) => {
-    if (!tender || !lotId) return z.object({})
+    if (!tender || !lotId) return z.object({});
 
-    const selectedLotData = tender.lots.find((lot: any) => lot.id === lotId)
-    if (!selectedLotData) return z.object({})
+    const selectedLotData = tender.lots.find((lot: any) => lot.id === lotId);
+    if (!selectedLotData) return z.object({});
 
-    const itemFields: any = {}
+    const itemFields: any = {};
 
     selectedLotData.items.forEach((item: any) => {
       itemFields[item.id] = z.object({
-        unit_price: z.coerce.number().min(0.01, { message: "O preço unitário deve ser maior que zero" }),
+        unit_price: z.coerce
+          .number()
+          .min(0.01, { message: "O preço unitário deve ser maior que zero" }),
         brand: selectedLotData.require_brand
           ? z.string().min(1, { message: "A marca é obrigatória" })
           : z.string().optional(),
         model: z.string().optional(),
         description: z.string().optional(),
-      })
-    })
+      });
+    });
 
     return z.object({
       tender_id: z.string(),
       lot_id: z.string(),
       items: z.object(itemFields),
       notes: z.string().optional(),
-    })
-  }
+    });
+  };
 
-  const formSchema = createFormSchema(selectedLot)
+  const formSchema = createFormSchema(selectedLot);
 
   // Initialize form
   const form = useForm<ProposalFormData>({
@@ -113,32 +129,32 @@ export function ProposalForm({ tenderId, initialData }: ProposalFormProps) {
       items: {},
       notes: "",
     },
-  })
+  });
 
   // Update form when lot changes
   useEffect(() => {
     if (selectedLot) {
-      form.setValue("lot_id", selectedLot)
+      form.setValue("lot_id", selectedLot);
 
       // Reset items when lot changes
-      form.setValue("items", {})
+      form.setValue("items", {});
 
       // Initialize items with empty values
-      const selectedLotData = tender?.lots.find((lot: any) => lot.id === selectedLot)
+      const selectedLotData = tender?.lots.find((lot: any) => lot.id === selectedLot);
       if (selectedLotData) {
-        const items: any = {}
+        const items: any = {};
         selectedLotData.items.forEach((item: any) => {
           items[item.id] = {
             unit_price: 0,
             brand: "",
             model: "",
             description: "",
-          }
-        })
-        form.setValue("items", items)
+          };
+        });
+        form.setValue("items", items);
       }
     }
-  }, [selectedLot, form, tender])
+  }, [selectedLot, form, tender]);
 
   // Handle form submission
   const onSubmit = async (data: ProposalFormData, isDraft = false) => {
@@ -147,24 +163,24 @@ export function ProposalForm({ tenderId, initialData }: ProposalFormProps) {
         title: "Erro",
         description: "Você precisa estar logado para enviar uma proposta.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     try {
-      setIsSubmitting(true)
+      setIsSubmitting(true);
 
       // Calculate total value
-      let totalValue = 0
-      const selectedLotData = tender.lots.find((lot: any) => lot.id === data.lot_id)
+      let totalValue = 0;
+      const selectedLotData = tender.lots.find((lot: any) => lot.id === data.lot_id);
 
       if (selectedLotData) {
         selectedLotData.items.forEach((item: any) => {
-          const proposalItem = data.items[item.id]
+          const proposalItem = data.items[item.id];
           if (proposalItem) {
-            totalValue += proposalItem.unit_price * item.quantity
+            totalValue += proposalItem.unit_price * item.quantity;
           }
-        })
+        });
       }
 
       // Check if proposal already exists
@@ -174,11 +190,11 @@ export function ProposalForm({ tenderId, initialData }: ProposalFormProps) {
         .eq("tender_id", data.tender_id)
         .eq("lot_id", data.lot_id)
         .eq("supplier_id", profile.id)
-        .maybeSingle()
+        .maybeSingle();
 
-      if (checkError) throw checkError
+      if (checkError) throw checkError;
 
-      let proposalId
+      let proposalId;
 
       if (existingProposal) {
         // Update existing proposal
@@ -192,15 +208,18 @@ export function ProposalForm({ tenderId, initialData }: ProposalFormProps) {
           })
           .eq("id", existingProposal.id)
           .select()
-          .single()
+          .single();
 
-        if (updateError) throw updateError
-        proposalId = existingProposal.id
+        if (updateError) throw updateError;
+        proposalId = existingProposal.id;
 
         // Delete existing items
-        const { error: deleteError } = await supabase.from("proposal_items").delete().eq("proposal_id", proposalId)
+        const { error: deleteError } = await supabase
+          .from("proposal_items")
+          .delete()
+          .eq("proposal_id", proposalId);
 
-        if (deleteError) throw deleteError
+        if (deleteError) throw deleteError;
       } else {
         // Create new proposal
         const { data: newProposal, error: insertError } = await supabase
@@ -214,10 +233,10 @@ export function ProposalForm({ tenderId, initialData }: ProposalFormProps) {
             notes: data.notes,
           })
           .select()
-          .single()
+          .single();
 
-        if (insertError) throw insertError
-        proposalId = newProposal.id
+        if (insertError) throw insertError;
+        proposalId = newProposal.id;
       }
 
       // Insert proposal items
@@ -229,39 +248,42 @@ export function ProposalForm({ tenderId, initialData }: ProposalFormProps) {
         model: item.model || null,
         description: item.description || null,
         total_price:
-          item.unit_price * (selectedLotData?.items.find((i: any) => i.id === tender_item_id)?.quantity || 0),
-      }))
+          item.unit_price *
+          (selectedLotData?.items.find((i: any) => i.id === tender_item_id)?.quantity || 0),
+      }));
 
-      const { error: itemsError } = await supabase.from("proposal_items").insert(proposalItems)
+      const { error: itemsError } = await supabase.from("proposal_items").insert(proposalItems);
 
-      if (itemsError) throw itemsError
+      if (itemsError) throw itemsError;
 
       toast({
         title: isDraft ? "Rascunho salvo" : "Proposta enviada",
-        description: isDraft ? "Seu rascunho foi salvo com sucesso." : "Sua proposta foi enviada com sucesso.",
-      })
+        description: isDraft
+          ? "Seu rascunho foi salvo com sucesso."
+          : "Sua proposta foi enviada com sucesso.",
+      });
 
       // Redirect to proposals list
-      router.push("/dashboard/supplier/proposals")
-      router.refresh()
+      router.push("/dashboard/supplier/proposals");
+      router.refresh();
     } catch (error: any) {
-      console.error("Error submitting proposal:", error)
+      console.error("Error submitting proposal:", error);
       toast({
         title: "Erro ao enviar proposta",
         description: error.message || "Ocorreu um erro ao enviar sua proposta.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center p-8">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
-    )
+    );
   }
 
   if (!tender) {
@@ -269,7 +291,7 @@ export function ProposalForm({ tenderId, initialData }: ProposalFormProps) {
       <div className="p-8">
         <p>Licitação não encontrada.</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -315,7 +337,7 @@ export function ProposalForm({ tenderId, initialData }: ProposalFormProps) {
                                 <h4 className="font-medium">
                                   Item {item.number}: {item.description}
                                 </h4>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-[1rem] text-muted-foreground">
                                   Quantidade: {item.quantity} {item.unit}
                                 </p>
                               </div>
@@ -328,14 +350,20 @@ export function ProposalForm({ tenderId, initialData }: ProposalFormProps) {
                                     <FormItem>
                                       <FormLabel>Preço Unitário (R$)</FormLabel>
                                       <FormControl>
-                                        <Input type="number" step="0.01" placeholder="0,00" {...field} />
+                                        <Input
+                                          type="number"
+                                          step="0.01"
+                                          placeholder="0,00"
+                                          {...field}
+                                        />
                                       </FormControl>
                                       <FormMessage />
                                     </FormItem>
                                   )}
                                 />
 
-                                {tender.lots.find((lot: any) => lot.id === selectedLot)?.require_brand && (
+                                {tender.lots.find((lot: any) => lot.id === selectedLot)
+                                  ?.require_brand && (
                                   <FormField
                                     control={form.control}
                                     name={`items.${item.id}.brand`}
@@ -365,7 +393,8 @@ export function ProposalForm({ tenderId, initialData }: ProposalFormProps) {
                                   )}
                                 />
 
-                                {tender.lots.find((lot: any) => lot.id === selectedLot)?.allow_description_change && (
+                                {tender.lots.find((lot: any) => lot.id === selectedLot)
+                                  ?.allow_description_change && (
                                   <FormField
                                     control={form.control}
                                     name={`items.${item.id}.description`}
@@ -373,7 +402,10 @@ export function ProposalForm({ tenderId, initialData }: ProposalFormProps) {
                                       <FormItem className="col-span-full">
                                         <FormLabel>Descrição Detalhada</FormLabel>
                                         <FormControl>
-                                          <Textarea placeholder="Descrição detalhada do item" {...field} />
+                                          <Textarea
+                                            placeholder="Descrição detalhada do item"
+                                            {...field}
+                                          />
                                         </FormControl>
                                         <FormMessage />
                                       </FormItem>
@@ -394,7 +426,10 @@ export function ProposalForm({ tenderId, initialData }: ProposalFormProps) {
                       <FormItem>
                         <FormLabel>Observações</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="Observações adicionais sobre sua proposta" {...field} />
+                          <Textarea
+                            placeholder="Observações adicionais sobre sua proposta"
+                            {...field}
+                          />
                         </FormControl>
                         <FormDescription>
                           Informações adicionais que você deseja incluir na sua proposta.
@@ -409,8 +444,7 @@ export function ProposalForm({ tenderId, initialData }: ProposalFormProps) {
                       type="button"
                       variant="outline"
                       onClick={() => onSubmit(form.getValues(), true)}
-                      disabled={isSubmitting}
-                    >
+                      disabled={isSubmitting}>
                       {isSubmitting ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       ) : (
@@ -438,5 +472,5 @@ export function ProposalForm({ tenderId, initialData }: ProposalFormProps) {
         </div>
       )}
     </div>
-  )
+  );
 }

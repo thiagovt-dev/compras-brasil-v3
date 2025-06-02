@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +15,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -24,10 +24,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Search,
   MoreHorizontal,
@@ -43,26 +49,26 @@ import {
   Users,
   CheckCircle,
   XCircle,
-} from "lucide-react"
+} from "lucide-react";
 
 export default function ManageUsersPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedTab, setSelectedTab] = useState("all")
-  const [isAddUserOpen, setIsAddUserOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedTab, setSelectedTab] = useState("all");
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [newUser, setNewUser] = useState({
     name: "",
     email: "",
     cpf: "",
     profile_type: "",
     status: "active",
-  })
+  });
 
   // Filter users based on search term and selected tab
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.cpf.toLowerCase().includes(searchTerm.toLowerCase())
+      user.cpf.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesTab =
       selectedTab === "all" ||
@@ -73,24 +79,24 @@ export default function ManageUsersPage() {
       (selectedTab === "support" && user.profile_type === "support") ||
       (selectedTab === "registration" && user.profile_type === "registration") ||
       (selectedTab === "pending" && user.status === "pending") ||
-      (selectedTab === "blocked" && user.status === "blocked")
+      (selectedTab === "blocked" && user.status === "blocked");
 
-    return matchesSearch && matchesTab
-  })
+    return matchesSearch && matchesTab;
+  });
 
   const handleAddUser = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     // In a real app, we would send the data to an API
-    console.log("New user:", newUser)
-    setIsAddUserOpen(false)
+    console.log("New user:", newUser);
+    setIsAddUserOpen(false);
     setNewUser({
       name: "",
       email: "",
       cpf: "",
       profile_type: "",
       status: "active",
-    })
-  }
+    });
+  };
 
   const formatCPF = (value: string) => {
     return value
@@ -98,77 +104,77 @@ export default function ManageUsersPage() {
       .replace(/(\d{3})(\d)/, "$1.$2")
       .replace(/(\d{3})(\d)/, "$1.$2")
       .replace(/(\d{3})(\d{1,2})/, "$1-$2")
-      .replace(/(-\d{2})\d+?$/, "$1")
-  }
+      .replace(/(-\d{2})\d+?$/, "$1");
+  };
 
   const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setNewUser({ ...newUser, cpf: formatCPF(value) })
-  }
+    const value = e.target.value;
+    setNewUser({ ...newUser, cpf: formatCPF(value) });
+  };
 
   const getProfileTypeIcon = (profileType: string) => {
     switch (profileType) {
       case "citizen":
-        return <User className="h-4 w-4" />
+        return <User className="h-4 w-4" />;
       case "supplier":
-        return <Building2 className="h-4 w-4" />
+        return <Building2 className="h-4 w-4" />;
       case "agency":
-        return <Landmark className="h-4 w-4" />
+        return <Landmark className="h-4 w-4" />;
       case "admin":
-        return <Shield className="h-4 w-4" />
+        return <Shield className="h-4 w-4" />;
       case "support":
-        return <Users className="h-4 w-4" />
+        return <Users className="h-4 w-4" />;
       case "registration":
-        return <CheckCircle className="h-4 w-4" />
+        return <CheckCircle className="h-4 w-4" />;
       default:
-        return <User className="h-4 w-4" />
+        return <User className="h-4 w-4" />;
     }
-  }
+  };
 
   const getProfileTypeLabel = (profileType: string) => {
     switch (profileType) {
       case "citizen":
-        return "Cidadão"
+        return "Cidadão";
       case "supplier":
-        return "Fornecedor"
+        return "Fornecedor";
       case "agency":
-        return "Órgão Público"
+        return "Órgão Público";
       case "admin":
-        return "Administrador"
+        return "Administrador";
       case "support":
-        return "Suporte"
+        return "Suporte";
       case "registration":
-        return "Cadastro"
+        return "Cadastro";
       default:
-        return profileType
+        return profileType;
     }
-  }
+  };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case "active":
-        return "success"
+        return "success";
       case "pending":
-        return "warning"
+        return "warning";
       case "blocked":
-        return "destructive"
+        return "destructive";
       default:
-        return "outline"
+        return "outline";
     }
-  }
+  };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "active":
-        return "Ativo"
+        return "Ativo";
       case "pending":
-        return "Pendente"
+        return "Pendente";
       case "blocked":
-        return "Bloqueado"
+        return "Bloqueado";
       default:
-        return status
+        return status;
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -197,7 +203,9 @@ export default function ManageUsersPage() {
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Adicionar Novo Usuário</DialogTitle>
-              <DialogDescription>Preencha os dados para adicionar um novo usuário ao sistema.</DialogDescription>
+              <DialogDescription>
+                Preencha os dados para adicionar um novo usuário ao sistema.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleAddUser}>
               <div className="grid gap-4 py-4">
@@ -245,8 +253,7 @@ export default function ManageUsersPage() {
                   </Label>
                   <Select
                     value={newUser.profile_type}
-                    onValueChange={(value) => setNewUser({ ...newUser, profile_type: value })}
-                  >
+                    onValueChange={(value) => setNewUser({ ...newUser, profile_type: value })}>
                     <SelectTrigger id="profile_type" className="col-span-3">
                       <SelectValue placeholder="Selecione o perfil" />
                     </SelectTrigger>
@@ -264,7 +271,9 @@ export default function ManageUsersPage() {
                   <Label htmlFor="status" className="text-right">
                     Status
                   </Label>
-                  <Select value={newUser.status} onValueChange={(value) => setNewUser({ ...newUser, status: value })}>
+                  <Select
+                    value={newUser.status}
+                    onValueChange={(value) => setNewUser({ ...newUser, status: value })}>
                     <SelectTrigger id="status" className="col-span-3">
                       <SelectValue placeholder="Selecione o status" />
                     </SelectTrigger>
@@ -317,7 +326,7 @@ export default function ManageUsersPage() {
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
-                <div className="grid grid-cols-12 border-b bg-gray-50 px-4 py-3 text-sm font-medium">
+                <div className="grid grid-cols-12 border-b bg-gray-50 px-4 py-3 text-[1rem] font-medium">
                   <div className="col-span-4">Nome / E-mail</div>
                   <div className="col-span-2">CPF</div>
                   <div className="col-span-2">Perfil</div>
@@ -330,17 +339,21 @@ export default function ManageUsersPage() {
                       <div key={user.id} className="grid grid-cols-12 items-center px-4 py-3">
                         <div className="col-span-4">
                           <div className="font-medium">{user.name}</div>
-                          <div className="text-sm text-muted-foreground">{user.email}</div>
+                          <div className="text-[1rem] text-muted-foreground">{user.email}</div>
                         </div>
-                        <div className="col-span-2 text-sm">{user.cpf}</div>
+                        <div className="col-span-2 text-[1rem]">{user.cpf}</div>
                         <div className="col-span-2">
                           <div className="flex items-center gap-1">
                             {getProfileTypeIcon(user.profile_type)}
-                            <span className="text-sm">{getProfileTypeLabel(user.profile_type)}</span>
+                            <span className="text-[1rem]">
+                              {getProfileTypeLabel(user.profile_type)}
+                            </span>
                           </div>
                         </div>
                         <div className="col-span-2">
-                          <Badge variant={getStatusBadgeVariant(user.status)}>{getStatusLabel(user.status)}</Badge>
+                          <Badge variant={getStatusBadgeVariant(user.status)}>
+                            {getStatusLabel(user.status)}
+                          </Badge>
                         </div>
                         <div className="col-span-2 text-right">
                           <DropdownMenu>
@@ -405,7 +418,7 @@ export default function ManageUsersPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
 
 // Mock data for users
@@ -490,4 +503,4 @@ const users = [
     profile_type: "citizen",
     status: "blocked",
   },
-]
+];

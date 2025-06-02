@@ -1,15 +1,28 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { AlertCircle, CheckCircle, Clock, Filter, MessageSquare, Plus, Search } from "lucide-react"
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { AlertCircle, CheckCircle, Clock, Filter, MessageSquare, Plus, Search } from "lucide-react";
 
 // Sample data - in a real app, this would come from an API
 const tickets = [
@@ -19,10 +32,18 @@ const tickets = [
     status: "open",
     priority: "high",
     category: "Acesso",
-    user: { name: "João Silva", email: "joao.silva@example.com", avatar: "/placeholder.svg?height=32&width=32" },
+    user: {
+      name: "João Silva",
+      email: "joao.silva@example.com",
+      avatar: "/placeholder.svg?height=32&width=32",
+    },
     createdAt: "2023-05-15T10:30:00Z",
     updatedAt: "2023-05-15T14:45:00Z",
-    assignedTo: { name: "Ana Souza", email: "ana.souza@example.com", avatar: "/placeholder.svg?height=32&width=32" },
+    assignedTo: {
+      name: "Ana Souza",
+      email: "ana.souza@example.com",
+      avatar: "/placeholder.svg?height=32&width=32",
+    },
     messages: 3,
   },
   {
@@ -51,10 +72,18 @@ const tickets = [
     status: "waiting",
     priority: "low",
     category: "Documentação",
-    user: { name: "Pedro Santos", email: "pedro.santos@example.com", avatar: "/placeholder.svg?height=32&width=32" },
+    user: {
+      name: "Pedro Santos",
+      email: "pedro.santos@example.com",
+      avatar: "/placeholder.svg?height=32&width=32",
+    },
     createdAt: "2023-05-13T14:20:00Z",
     updatedAt: "2023-05-14T10:30:00Z",
-    assignedTo: { name: "Ana Souza", email: "ana.souza@example.com", avatar: "/placeholder.svg?height=32&width=32" },
+    assignedTo: {
+      name: "Ana Souza",
+      email: "ana.souza@example.com",
+      avatar: "/placeholder.svg?height=32&width=32",
+    },
     messages: 2,
   },
   {
@@ -99,10 +128,18 @@ const tickets = [
     status: "closed",
     priority: "high",
     category: "Certificados",
-    user: { name: "Fernanda Lima", email: "fernanda.lima@example.com", avatar: "/placeholder.svg?height=32&width=32" },
+    user: {
+      name: "Fernanda Lima",
+      email: "fernanda.lima@example.com",
+      avatar: "/placeholder.svg?height=32&width=32",
+    },
     createdAt: "2023-05-09T13:20:00Z",
     updatedAt: "2023-05-11T10:15:00Z",
-    assignedTo: { name: "Ana Souza", email: "ana.souza@example.com", avatar: "/placeholder.svg?height=32&width=32" },
+    assignedTo: {
+      name: "Ana Souza",
+      email: "ana.souza@example.com",
+      avatar: "/placeholder.svg?height=32&width=32",
+    },
     messages: 6,
   },
   {
@@ -131,24 +168,32 @@ const tickets = [
     status: "waiting",
     priority: "low",
     category: "Cadastro",
-    user: { name: "Luciana Costa", email: "luciana.costa@example.com", avatar: "/placeholder.svg?height=32&width=32" },
+    user: {
+      name: "Luciana Costa",
+      email: "luciana.costa@example.com",
+      avatar: "/placeholder.svg?height=32&width=32",
+    },
     createdAt: "2023-05-13T09:50:00Z",
     updatedAt: "2023-05-14T14:25:00Z",
-    assignedTo: { name: "Ana Souza", email: "ana.souza@example.com", avatar: "/placeholder.svg?height=32&width=32" },
+    assignedTo: {
+      name: "Ana Souza",
+      email: "ana.souza@example.com",
+      avatar: "/placeholder.svg?height=32&width=32",
+    },
     messages: 3,
   },
-]
+];
 
 const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
+  const date = new Date(dateString);
   return new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(date)
-}
+  }).format(date);
+};
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -158,32 +203,32 @@ const getStatusBadge = (status: string) => {
           <AlertCircle className="mr-1 h-3 w-3" />
           Aberto
         </Badge>
-      )
+      );
     case "in_progress":
       return (
         <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
           <Clock className="mr-1 h-3 w-3" />
           Em Andamento
         </Badge>
-      )
+      );
     case "waiting":
       return (
         <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
           <Clock className="mr-1 h-3 w-3" />
           Aguardando
         </Badge>
-      )
+      );
     case "closed":
       return (
         <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
           <CheckCircle className="mr-1 h-3 w-3" />
           Resolvido
         </Badge>
-      )
+      );
     default:
-      return <Badge variant="outline">{status}</Badge>
+      return <Badge variant="outline">{status}</Badge>;
   }
-}
+};
 
 const getPriorityBadge = (priority: string) => {
   switch (priority) {
@@ -192,46 +237,47 @@ const getPriorityBadge = (priority: string) => {
         <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
           Alta
         </Badge>
-      )
+      );
     case "medium":
       return (
         <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
           Média
         </Badge>
-      )
+      );
     case "low":
       return (
         <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
           Baixa
         </Badge>
-      )
+      );
     default:
-      return <Badge variant="outline">{priority}</Badge>
+      return <Badge variant="outline">{priority}</Badge>;
   }
-}
+};
 
 export default function SupportTicketsPage() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [priorityFilter, setPriorityFilter] = useState("all")
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
 
   const filteredTickets = tickets.filter((ticket) => {
     const matchesSearch =
       ticket.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ticket.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.user.email.toLowerCase().includes(searchQuery.toLowerCase())
+      ticket.user.email.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesStatus = statusFilter === "all" || ticket.status === statusFilter
-    const matchesPriority = priorityFilter === "all" || ticket.priority === priorityFilter
+    const matchesStatus = statusFilter === "all" || ticket.status === statusFilter;
+    const matchesPriority = priorityFilter === "all" || ticket.priority === priorityFilter;
 
-    return matchesSearch && matchesStatus && matchesPriority
-  })
+    return matchesSearch && matchesStatus && matchesPriority;
+  });
 
   const openTickets = tickets.filter(
-    (ticket) => ticket.status === "open" || ticket.status === "in_progress" || ticket.status === "waiting",
-  )
-  const closedTickets = tickets.filter((ticket) => ticket.status === "closed")
+    (ticket) =>
+      ticket.status === "open" || ticket.status === "in_progress" || ticket.status === "waiting"
+  );
+  const closedTickets = tickets.filter((ticket) => ticket.status === "closed");
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -246,46 +292,48 @@ export default function SupportTicketsPage() {
       <div className="grid gap-6 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Tickets</CardTitle>
+            <CardTitle className="text-[1rem] font-medium">Total de Tickets</CardTitle>
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{tickets.length}</div>
-            <p className="text-xs text-muted-foreground">+3 nas últimas 24 horas</p>
+            <p className="text-[1rem] text-muted-foreground">+3 nas últimas 24 horas</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tickets Abertos</CardTitle>
+            <CardTitle className="text-[1rem] font-medium">Tickets Abertos</CardTitle>
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{openTickets.length}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[1rem] text-muted-foreground">
               {Math.round((openTickets.length / tickets.length) * 100)}% do total
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tickets Resolvidos</CardTitle>
+            <CardTitle className="text-[1rem] font-medium">Tickets Resolvidos</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{closedTickets.length}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[1rem] text-muted-foreground">
               {Math.round((closedTickets.length / tickets.length) * 100)}% do total
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tempo Médio de Resolução</CardTitle>
+            <CardTitle className="text-[1rem] font-medium">Tempo Médio de Resolução</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">1.5 dias</div>
-            <p className="text-xs text-muted-foreground">-0.5 dias em relação ao mês anterior</p>
+            <p className="text-[1rem] text-muted-foreground">
+              -0.5 dias em relação ao mês anterior
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -379,10 +427,13 @@ export default function SupportTicketsPage() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Avatar className="h-6 w-6">
-                            <AvatarImage src={ticket.user.avatar || "/placeholder.svg"} alt={ticket.user.name} />
+                            <AvatarImage
+                              src={ticket.user.avatar || "/placeholder.svg"}
+                              alt={ticket.user.name}
+                            />
                             <AvatarFallback>{ticket.user.name.charAt(0)}</AvatarFallback>
                           </Avatar>
-                          <span className="text-sm">{ticket.user.name}</span>
+                          <span className="text-[1rem]">{ticket.user.name}</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -395,10 +446,12 @@ export default function SupportTicketsPage() {
                               />
                               <AvatarFallback>{ticket.assignedTo.name.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <span className="text-sm">{ticket.assignedTo.name}</span>
+                            <span className="text-[1rem]">{ticket.assignedTo.name}</span>
                           </div>
                         ) : (
-                          <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                          <Badge
+                            variant="outline"
+                            className="bg-gray-50 text-gray-700 border-gray-200">
                             Não atribuído
                           </Badge>
                         )}
@@ -420,5 +473,5 @@ export default function SupportTicketsPage() {
         {/* Other tab contents would follow the same pattern */}
       </Tabs>
     </div>
-  )
+  );
 }

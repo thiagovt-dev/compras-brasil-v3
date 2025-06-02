@@ -1,15 +1,22 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { useRouter } from "next/navigation"
-import { FileText, Upload, Trash2, Download, Search, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useState, useEffect } from "react";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { FileText, Upload, Trash2, Download, Search, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -18,116 +25,124 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/components/ui/use-toast"
-import { formatFileSize } from "@/lib/utils"
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
+import { formatFileSize } from "@/lib/utils";
 
 export default function DocumentsPage() {
-  const [documents, setDocuments] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [uploading, setUploading] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [documentType, setDocumentType] = useState("all")
-  const [file, setFile] = useState<File | null>(null)
-  const [description, setDescription] = useState("")
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const router = useRouter()
-  const { toast } = useToast()
-  const supabase = createClientComponentClient()
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [documentType, setDocumentType] = useState("all");
+  const [file, setFile] = useState<File | null>(null);
+  const [description, setDescription] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const router = useRouter();
+  const { toast } = useToast();
+  const supabase = createClientSupabaseClient();
 
   // Carregar documentos do usuário
   useEffect(() => {
     const fetchDocuments = async () => {
-      setLoading(true)
+      setLoading(true);
 
       try {
         const {
           data: { user },
-        } = await supabase.auth.getUser()
+        } = await supabase.auth.getUser();
 
         if (!user) {
-          router.push("/login")
-          return
+          router.push("/login");
+          return;
         }
 
         const query = supabase
           .from("documents")
           .select("*")
           .eq("uploaded_by", user.id)
-          .order("created_at", { ascending: false })
+          .order("created_at", { ascending: false });
 
-        const { data, error } = await query
+        const { data, error } = await query;
 
-        if (error) throw error
+        if (error) throw error;
 
-        setDocuments(data || [])
+        setDocuments(data || []);
       } catch (error) {
-        console.error("Erro ao buscar documentos:", error)
+        console.error("Erro ao buscar documentos:", error);
         toast({
           title: "Erro ao carregar documentos",
           description: "Não foi possível carregar seus documentos. Tente novamente.",
           variant: "destructive",
-        })
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchDocuments()
-  }, [supabase, router, toast])
+    fetchDocuments();
+  }, [supabase, router, toast]);
 
   // Filtrar documentos
   const filteredDocuments = documents.filter((doc) => {
     const matchesSearch =
       doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (doc.description && doc.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      (doc.description && doc.description.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    const matchesType = documentType === "all" || doc.entity_type === documentType
+    const matchesType = documentType === "all" || doc.entity_type === documentType;
 
-    return matchesSearch && matchesType
-  })
+    return matchesSearch && matchesType;
+  });
 
   // Fazer upload de documento
   const uploadDocument = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!file) {
       toast({
         title: "Nenhum arquivo selecionado",
         description: "Por favor, selecione um arquivo para fazer upload.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
-    setUploading(true)
+    setUploading(true);
 
     try {
       const {
         data: { user },
-      } = await supabase.auth.getUser()
+      } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push("/login")
-        return
+        router.push("/login");
+        return;
       }
 
       // Gerar nome único para o arquivo
-      const fileExt = file.name.split(".").pop()
-      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`
-      const filePath = `documents/${user.id}/${fileName}`
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+      const filePath = `documents/${user.id}/${fileName}`;
 
       // Fazer upload do arquivo para o storage
-      const { error: uploadError } = await supabase.storage.from("documents").upload(filePath, file)
+      const { error: uploadError } = await supabase.storage
+        .from("documents")
+        .upload(filePath, file);
 
-      if (uploadError) throw uploadError
+      if (uploadError) throw uploadError;
 
       // Obter URL pública do arquivo
       const {
         data: { publicUrl },
-      } = supabase.storage.from("documents").getPublicUrl(filePath)
+      } = supabase.storage.from("documents").getPublicUrl(filePath);
 
       // Salvar informações do documento no banco de dados
       const { error: dbError } = await supabase.from("documents").insert({
@@ -140,69 +155,69 @@ export default function DocumentsPage() {
         uploaded_by: user.id,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      })
+      });
 
-      if (dbError) throw dbError
+      if (dbError) throw dbError;
 
       // Atualizar lista de documentos
       const { data: newDocuments, error } = await supabase
         .from("documents")
         .select("*")
         .eq("uploaded_by", user.id)
-        .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false });
 
-      if (error) throw error
+      if (error) throw error;
 
-      setDocuments(newDocuments || [])
+      setDocuments(newDocuments || []);
 
       toast({
         title: "Documento enviado com sucesso",
         description: "Seu documento foi enviado e está disponível para uso.",
-      })
+      });
 
       // Limpar formulário
-      setFile(null)
-      setDescription("")
-      setDialogOpen(false)
+      setFile(null);
+      setDescription("");
+      setDialogOpen(false);
     } catch (error) {
-      console.error("Erro ao fazer upload do documento:", error)
+      console.error("Erro ao fazer upload do documento:", error);
       toast({
         title: "Erro ao enviar documento",
         description: "Ocorreu um erro ao enviar seu documento. Tente novamente.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setUploading(false)
+      setUploading(false);
     }
-  }
+  };
 
   // Excluir documento
   const deleteDocument = async (id: string) => {
     if (!confirm("Tem certeza que deseja excluir este documento?")) {
-      return
+      return;
     }
 
     try {
-      const { error } = await supabase.from("documents").delete().eq("id", id)
+      const { error } = await supabase.from("documents").delete().eq("id", id);
 
-      if (error) throw error
+      if (error) throw error;
 
       // Atualizar lista de documentos
-      setDocuments(documents.filter((doc) => doc.id !== id))
+      setDocuments(documents.filter((doc) => doc.id !== id));
 
       toast({
         title: "Documento excluído",
         description: "O documento foi excluído com sucesso.",
-      })
+      });
     } catch (error) {
-      console.error("Erro ao excluir documento:", error)
+      console.error("Erro ao excluir documento:", error);
       toast({
         title: "Erro ao excluir documento",
         description: "Ocorreu um erro ao excluir o documento. Tente novamente.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -228,7 +243,12 @@ export default function DocumentsPage() {
             <form onSubmit={uploadDocument} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="file">Arquivo</Label>
-                <Input id="file" type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} required />
+                <Input
+                  id="file"
+                  type="file"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description">Descrição (opcional)</Label>
@@ -299,15 +319,21 @@ export default function DocumentsPage() {
                 <CardTitle className="text-lg font-medium truncate" title={doc.name}>
                   {doc.name}
                 </CardTitle>
-                <CardDescription>{new Date(doc.created_at).toLocaleDateString("pt-BR")}</CardDescription>
+                <CardDescription>
+                  {new Date(doc.created_at).toLocaleDateString("pt-BR")}
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center text-sm text-muted-foreground mb-2">
+                <div className="flex items-center text-[1rem] text-muted-foreground mb-2">
                   <FileText className="mr-2 h-4 w-4" />
                   <span>{doc.file_type?.toUpperCase()}</span>
                   {doc.file_size && <span className="ml-2">({formatFileSize(doc.file_size)})</span>}
                 </div>
-                {doc.description && <p className="text-sm text-muted-foreground line-clamp-2">{doc.description}</p>}
+                {doc.description && (
+                  <p className="text-[1rem] text-muted-foreground line-clamp-2">
+                    {doc.description}
+                  </p>
+                )}
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button variant="outline" size="sm" asChild>
@@ -337,5 +363,5 @@ export default function DocumentsPage() {
         </Card>
       )}
     </div>
-  )
+  );
 }

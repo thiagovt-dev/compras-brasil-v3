@@ -22,7 +22,9 @@ export function Logo({
   const content = (
     <>
       <div className={`${sizeClasses[size]}`}>
-<img src="/logo-canal-compras.png" alt="Canal de Compras Brasil"
+        <img
+          src="/logo-canal-compras.png"
+          alt="Canal de Compras Brasil"
           className={`w-full h-full object-contain ${variant === "white" ? "invert" : ""}`}
         />
       </div>
@@ -34,7 +36,7 @@ export function Logo({
             CANAL DE COMPRAS
           </span>
           <span
-            className={`font-bold text-xs tracking-[0.3em] ${
+            className={`font-bold text-[1rem] tracking-[0.3em] ${
               variant === "white" ? "text-white" : ""
             } text-secondary`}>
             BRASIL
