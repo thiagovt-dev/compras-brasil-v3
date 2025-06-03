@@ -14,13 +14,31 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeftIcon } from 'lucide-react';
 
 
-const TenderDetails = ({tender, showProposals, isAgencyUser = false}: {tender: any, showProposals: boolean, isAgencyUser: boolean}) => {
-    const router = useRouter()
+const TenderDetails = ({
+  tender,
+  showProposals,
+  isAgencyUser = false,
+  isAuctioneer = false,
+  isAdmin = false
+}: {
+  tender: any;
+  showProposals: boolean;
+  isAgencyUser: boolean;
+  isAuctioneer: boolean;
+  isAdmin: boolean
+}) => {
+  const router = useRouter();
+
   return (
     <div className="container py-6 space-y-6">
-      <Button onClick={() => router.back()}>
-        <span><ArrowLeftIcon className='h-2 w-2'/></span>
-        Voltar</Button>
+      <div className="flex justify-between items-start gap-4">
+        <Button onClick={() => router.back()}>
+          <ArrowLeftIcon className="h-4 w-4 mr-2" />
+          Voltar
+        </Button>
+        <Button onClick={()=> router.push(`/tenders/${tender.id}/session`)}>Abrir Sala de Disputa</Button>
+        {/* {(isAuctioneer || isAdmin) && } */}
+      </div>
       <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
         <div>
           <h1 className="text-3xl font-bold">{tender.title}</h1>
@@ -148,6 +166,6 @@ const TenderDetails = ({tender, showProposals, isAgencyUser = false}: {tender: a
       </Tabs>
     </div>
   );
-}
+};
 
 export default TenderDetails

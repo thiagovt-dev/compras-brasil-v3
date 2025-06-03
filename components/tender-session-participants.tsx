@@ -1,6 +1,9 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+"use client";
+
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
 
 type Participant = {
   id: string;
@@ -15,48 +18,49 @@ type Participant = {
   };
 };
 
-export async function TenderSessionParticipants({ tenderId }: { tenderId: string }) {
-  const supabase = createServerSupabaseClient();
+type TeamMember = {
+  id: string;
+  role: string;
+  user_id: string;
+  auth?: {
+    users?: {
+      email?: string;
+    };
+  };
+};
 
-  // Buscar participantes da licitação
-  const { data: participants, error } = await supabase
-    .from("tender_suppliers")
-    .select(
-      `
-      id,
-      user_id,
-      supplier_id,
-      created_at,
-      auth.users!user_id (
-        email
-      ),
-      suppliers!supplier_id (
-        name
-      )
-    `
-    )
-    .eq("tender_id", tenderId)
-    .order("created_at", { ascending: false });
+export function TenderSessionParticipants({ tenderId }: { tenderId: string }) {
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const supabase = createClientSupabaseClient();
 
-  // Buscar equipe da licitação
-  const { data: team } = await supabase
-    .from("tender_team")
-    .select(
-      `
-      id,
-      role,
-      user_id,
-      auth.users!user_id (
-        email
-      )
-    `
-    )
-    .eq("tender_id", tenderId);
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: participantsData, error: participantsError } = await supabase
+        .from("tender_suppliers")
+        .select("*")
+        .eq("tender_id", tenderId)
+        .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Erro ao buscar participantes:", error);
-    return <div>Erro ao carregar participantes</div>;
-  }
+      const { data: teamData, error: teamError } = await supabase
+        .from("tender_team")
+        .select("*")
+        .eq("tender_id", tenderId);
+    
+
+      if (participantsError || teamError) {
+        setError("Erro ao carregar participantes");
+        console.error("Erro:", participantsError || teamError);
+        return;
+      }
+
+      setParticipants(participantsData || []);
+      setTeam(teamData || []);
+    };
+
+    fetchData();
+  }, [tenderId]);
 
   const getInitials = (text?: string) => {
     if (!text) return "U";
@@ -73,6 +77,10 @@ export async function TenderSessionParticipants({ tenderId }: { tenderId: string
 
     return roleMap[role] || role;
   };
+
+  if (error) {
+    return <div>{error}</div>;
+  }
 
   return (
     <div className="space-y-6">

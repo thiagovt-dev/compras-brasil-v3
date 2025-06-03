@@ -44,6 +44,17 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
     redirect("/dashboard/tenders")
   }
 
+  const { data: tenderTeam } = await supabase
+    .from("tender_team")
+    .select("user_id, role")
+    .eq("tender_id", params.id);
+
+  // Check if current user is auctioneer
+  const isAuctioneer = tenderTeam?.some(
+    (member) => member.user_id === session?.user.id && member.role === "auctioneer"
+  );
+
+
   const isAgencyUser = profile?.role === "agency"
   const isSupplierUser = profile?.role === "supplier"
   const isAdminUser = profile?.role === "admin"
@@ -54,6 +65,6 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
   // Determine if proposals tab should be shown
   const showProposals = (isAgencyUser && isOwner) || isAdminUser
   return (
-<TenderDetails tender={tender} isAgencyUser={isAgencyUser} showProposals={showProposals}/>
+<TenderDetails tender={tender} isAgencyUser={isAgencyUser} showProposals={showProposals} isAuctioneer={isAuctioneer as boolean} isAdmin={isAdminUser}/>
   );
 }

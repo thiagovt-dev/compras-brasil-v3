@@ -74,7 +74,7 @@ export default async function TenderSessionManagePage({ params }: { params: { id
               <TabsTrigger value="participants">Participantes</TabsTrigger>
             </TabsList>
             <TabsContent value="chat" className="h-[500px]">
-              <SessionChat />
+              <SessionChat tenderId={params.id}/>
             </TabsContent>
             <TabsContent value="participants">
               <TenderSessionParticipants tenderId={params.id} />

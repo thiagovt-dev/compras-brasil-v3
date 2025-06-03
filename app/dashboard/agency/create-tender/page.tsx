@@ -348,6 +348,7 @@ export default function CreateTenderPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log("submit")
     e.preventDefault();
     setIsSubmitting(true);
 

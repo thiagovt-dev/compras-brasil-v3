@@ -24,8 +24,8 @@ type Message = {
   };
 };
 
-export function SessionChat() {
-  const { id } = useParams<{ id: string }>();
+export function SessionChat({ tenderId }: { tenderId : string}) {
+  // const { id } = useParams<{ id: string }>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -52,7 +52,7 @@ export function SessionChat() {
             )
           `
           )
-          .eq("tender_id", id)
+          .eq("tender_id", tenderId)
           .order("created_at", { ascending: true })
           .limit(100);
 
@@ -99,7 +99,7 @@ export function SessionChat() {
           event: "INSERT",
           schema: "public",
           table: "session_messages",
-          filter: `tender_id=eq.${id}`,
+          filter: `tender_id=eq.${tenderId}`,
         },
         async (payload) => {
           const newMessage = payload.new as Message;
@@ -128,7 +128,7 @@ export function SessionChat() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [id, supabase, toast]);
+  }, [tenderId, supabase, toast]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -145,7 +145,7 @@ export function SessionChat() {
 
     try {
       const { error } = await supabase.from("session_messages").insert({
-        tender_id: id,
+        tender_id: tenderId,
         user_id: user.id,
         content: newMessage,
         type: "chat",

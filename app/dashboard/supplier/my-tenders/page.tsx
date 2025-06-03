@@ -21,6 +21,7 @@ import { useEffect, useState } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { getSession } from "@/lib/supabase/auth-utils";
 import { getSupabaseClient } from "@/lib/supabase/client-singleton";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
 
 interface Tender {
   id: string;
@@ -53,7 +54,7 @@ export default function MyTendersPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
-  const supabase = getSupabaseClient();
+  const supabase = createClientSupabaseClient();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -67,7 +68,7 @@ export default function MyTendersPage() {
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("*")
-          .eq("id", user.id)
+          .eq("id", session?.user?.id)
           .single();
 
         if (profileError || !profileData || profileData.profile_type !== "supplier") {
@@ -82,11 +83,11 @@ export default function MyTendersPage() {
           .select(
             `
             *,
-            agency:agencies(name, city, state),
+            agency:agencies(name, address),
             proposals!inner(id, status, total_value, created_at, updated_at)
           `
           )
-          .eq("proposals.supplier_id", user.id)
+          .eq("proposals.supplier_id", profileData?.id)
           .order("created_at", { ascending: false });
 
         const { data: tendersData, error: tendersError } = await query;
