@@ -1,6 +1,6 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Search,
@@ -11,53 +11,99 @@ import {
   Clock,
   DollarSign,
   Eye,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { useEffect, useState } from "react";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { getSession } from "@/lib/supabase/auth-utils";
+import { getSupabaseClient } from "@/lib/supabase/client-singleton";
 
-export const dynamic = "force-dynamic";
+interface Tender {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  opening_date: string;
+  closing_date: string;
+  estimated_value?: number;
+  modality: string;
+  agency: {
+    name: string;
+    city: string;
+    state: string;
+  };
+  proposals: Array<{
+    id: string;
+    status: string;
+    total_value?: number;
+    created_at: string;
+    updated_at: string;
+  }>;
+}
 
-export default async function MyTendersPage() {
-  const cookieStore = await cookies();
-  const supabase = createServerComponentClient({ cookies: () => cookieStore });
+export default function MyTendersPage() {
+  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [myTenders, setMyTenders] = useState<Tender[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const router = useRouter();
+  const supabase = getSupabaseClient();
 
-  // Get current user
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const session = await getSession();
 
-  if (userError || !user) {
-    redirect("/login");
-  }
+        setUser(session?.user);
 
-  // Get user profile
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+        // Get user profile
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
 
-  if (!profile || profile.profile_type !== "supplier") {
-    redirect("/dashboard");
-  }
+        if (profileError || !profileData || profileData.profile_type !== "supplier") {
+          router.push("/dashboard");
+          return;
+        }
+        setProfile(profileData);
 
-  // Fetch tenders where I have proposals
-  const { data: myTenders, error } = await supabase
-    .from("tenders")
-    .select(
-      `
-      *,
-      agency:agencies(name, city, state),
-      proposals!inner(
-        id,
-        status,
-        total_value,
-        created_at,
-        updated_at
-      )
-    `
-    )
-    .eq("proposals.supplier_id", user.id)
-    .order("created_at", { ascending: false });
+        // Fetch tenders with proposals
+        let query = supabase
+          .from("tenders")
+          .select(
+            `
+            *,
+            agency:agencies(name, city, state),
+            proposals!inner(id, status, total_value, created_at, updated_at)
+          `
+          )
+          .eq("proposals.supplier_id", user.id)
+          .order("created_at", { ascending: false });
+
+        const { data: tendersData, error: tendersError } = await query;
+
+        if (tendersError) throw tendersError;
+
+        setMyTenders(tendersData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Ocorreu um erro");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [supabase, router]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -107,6 +153,36 @@ export default async function MyTendersPage() {
     return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
   };
 
+  const filteredTenders = myTenders?.filter(
+    (tender) =>
+      tender.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tender.agency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tender.modality.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <p className="mt-4">Carregando suas licitações...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
+        <div className="text-red-500 text-center max-w-md p-4 rounded-lg bg-red-50">
+          <p className="font-medium">Erro ao carregar licitações</p>
+          <p className="mt-2 text-sm">{error}</p>
+          <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+            Tentar novamente
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -127,15 +203,20 @@ export default async function MyTendersPage() {
       <div className="flex items-center space-x-2">
         <div className="relative flex-1">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar por título, órgão ou modalidade..." className="pl-8" />
+          <Input
+            placeholder="Buscar por título, órgão ou modalidade..."
+            className="pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
       </div>
 
       {/* Tenders List */}
-      {myTenders && myTenders.length > 0 ? (
+      {filteredTenders && filteredTenders.length > 0 ? (
         <div className="grid gap-6">
-          {myTenders.map((tender) => {
-            const proposal = tender.proposals[0]; // Since we have inner join, there's always one proposal
+          {filteredTenders.map((tender) => {
+            const proposal = tender.proposals[0];
             return (
               <Card key={tender.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
@@ -227,7 +308,9 @@ export default async function MyTendersPage() {
             <FileText className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">Nenhuma licitação encontrada</h3>
             <p className="text-muted-foreground text-center mb-4">
-              Você ainda não possui propostas enviadas para nenhuma licitação.
+              {searchTerm
+                ? "Nenhum resultado para sua busca."
+                : "Você ainda não possui propostas enviadas para nenhuma licitação."}
             </p>
             <Button asChild>
               <Link href="/dashboard/supplier/tenders">

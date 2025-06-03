@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const getInitialSession = async () => {
       setIsLoading(true);
       try {
-        const session = await getSession();;
+        const session = await getSession();
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
