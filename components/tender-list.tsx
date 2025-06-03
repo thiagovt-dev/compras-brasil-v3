@@ -176,7 +176,7 @@ export function TenderList({
   return (
     <div className={`space-y-6 ${className}`}>
       {showFilters && (
-        <div className="flex flex-col sm:flex-row justify-between gap-4">
+        <div className="flex flex-col sm:flex-row justify-between gap-4 w-full">
           <TenderFilters onFilterChange={handleFilterChange} agencies={agencies} />
           <div className="flex items-center gap-2">
             {showSort && <TenderSort onSortChange={handleSortChange} currentSort={sort} />}

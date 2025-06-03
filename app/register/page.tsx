@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,36 +16,23 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { signUp } = useAuth();
   const { toast } = useToast();
-
-  const defaultType = searchParams.get("type") || "";
 
   const [formData, setFormData] = useState({
     name: "",
     cpf: "",
-    cnpj: "",
-    company_name: "",
     email: "",
     phone: "",
     address: "",
     password: "",
     confirmPassword: "",
-    profile_type: defaultType,
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -62,16 +49,6 @@ export default function RegisterPage() {
       .replace(/(-\d{2})\d+?$/, "$1");
   };
 
-  const formatCNPJ = (value: string) => {
-    return value
-      .replace(/\D/g, "")
-      .replace(/^(\d{2})(\d)/, "$1.$2")
-      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-      .replace(/\.(\d{3})(\d)/, ".$1/$2")
-      .replace(/(\d{4})(\d)/, "$1-$2")
-      .replace(/(-\d{2})\d+?$/, "$1");
-  };
-
   const formatPhone = (value: string) => {
     return value
       .replace(/\D/g, "")
@@ -85,17 +62,11 @@ export default function RegisterPage() {
 
     if (name === "cpf") {
       setFormData({ ...formData, [name]: formatCPF(value) });
-    } else if (name === "cnpj") {
-      setFormData({ ...formData, [name]: formatCNPJ(value) });
     } else if (name === "phone") {
       setFormData({ ...formData, [name]: formatPhone(value) });
     } else {
       setFormData({ ...formData, [name]: value });
     }
-  };
-
-  const handleProfileChange = (value: string) => {
-    setFormData({ ...formData, profile_type: value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -114,47 +85,17 @@ export default function RegisterPage() {
         return;
       }
 
-      // Validate profile selection
-      if (!formData.profile_type) {
-        toast({
-          title: "Erro",
-          description: "Por favor, selecione um perfil",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      // Validate required fields based on profile type
-      if (formData.profile_type === "supplier" || formData.profile_type === "agency") {
-        if (!formData.cnpj || !formData.company_name) {
-          toast({
-            title: "Erro",
-            description: "CNPJ e Nome da Empresa são obrigatórios para este perfil",
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          return;
-        }
-      } else if (!formData.cpf) {
-        toast({
-          title: "Erro",
-          description: "CPF é obrigatório para este perfil",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      // Register user with Supabase
-      await signUp(formData.email, formData.password, formData);
+      // Register user with Supabase (agora sempre como citizen)
+      await signUp(formData.email, formData.password, {
+        ...formData,
+        profile_type: "citizen", // Adiciona o profile_type fixo
+      });
 
       toast({
         title: "Cadastro realizado com sucesso",
         description: "Você será redirecionado para a página de login",
       });
 
-      // Redirect to login page
       setTimeout(() => {
         router.push("/login");
       }, 2000);
@@ -168,8 +109,6 @@ export default function RegisterPage() {
       setIsLoading(false);
     }
   };
-
-  const isOrganization = formData.profile_type === "supplier" || formData.profile_type === "agency";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
@@ -189,23 +128,7 @@ export default function RegisterPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="profile_type" className="font-gabarito font-medium">
-                  Perfil
-                </Label>
-                <Select onValueChange={handleProfileChange} value={formData.profile_type}>
-                  <SelectTrigger id="profile_type">
-                    <SelectValue placeholder="Selecione seu perfil" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="citizen">Cidadão</SelectItem>
-                    <SelectItem value="supplier">Fornecedor</SelectItem>
-                    <SelectItem value="agency">Órgão Público</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="font-gabarito font-medium">
                     Nome Completo
@@ -221,56 +144,21 @@ export default function RegisterPage() {
                   />
                 </div>
 
-                {isOrganization ? (
-                  <div className="space-y-2">
-                    <Label htmlFor="cnpj" className="font-gabarito font-medium">
-                      CNPJ
-                    </Label>
-                    <Input
-                      id="cnpj"
-                      name="cnpj"
-                      placeholder="00.000.000/0000-00"
-                      value={formData.cnpj}
-                      onChange={handleChange}
-                      maxLength={18}
-                      required
-                      className="font-gabarito"
-                    />
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Label htmlFor="cpf" className="font-gabarito font-medium">
-                      CPF
-                    </Label>
-                    <Input
-                      id="cpf"
-                      name="cpf"
-                      placeholder="000.000.000-00"
-                      value={formData.cpf}
-                      onChange={handleChange}
-                      maxLength={14}
-                      required
-                      className="font-gabarito"
-                    />
-                  </div>
-                )}
-
-                {isOrganization && (
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="company_name" className="font-gabarito font-medium">
-                      Nome da Empresa/Órgão
-                    </Label>
-                    <Input
-                      id="company_name"
-                      name="company_name"
-                      placeholder="Digite o nome da empresa ou órgão"
-                      value={formData.company_name}
-                      onChange={handleChange}
-                      required
-                      className="font-gabarito"
-                    />
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <Label htmlFor="cpf" className="font-gabarito font-medium">
+                    CPF
+                  </Label>
+                  <Input
+                    id="cpf"
+                    name="cpf"
+                    placeholder="000.000.000-00"
+                    value={formData.cpf}
+                    onChange={handleChange}
+                    maxLength={14}
+                    required
+                    className="font-gabarito"
+                  />
+                </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="email" className="font-gabarito font-medium">
@@ -304,7 +192,7 @@ export default function RegisterPage() {
                   />
                 </div>
 
-                <div className="space-y-2 md:col-span-2">
+                <div className="space-y-2 col-span-2">
                   <Label htmlFor="address" className="font-gabarito font-medium">
                     Endereço
                   </Label>

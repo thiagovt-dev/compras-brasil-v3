@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClientSupabaseClient } from "@/lib/supabase/client";
@@ -38,6 +37,31 @@ import { FileUploadField } from "@/components/file-upload-field";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { toast } from "@/components/ui/use-toast";
 
+interface TenderItem {
+  id: number;
+  description: string;
+  quantity: string;
+  unit: string;
+  unitPrice: string;
+  benefitType: string;
+}
+
+interface TenderGroup {
+  id: number;
+  description: string;
+  type: string;
+  requireBrand: boolean;
+  allowDescriptionChange: boolean;
+  items: TenderItem[];
+}
+
+interface TenderDocument {
+  name: string;
+  file: File | null;
+  document_id?: string;
+  file_path?: string;
+}
+
 export default function CreateTenderPage() {
   const router = useRouter();
   const supabase = createClientSupabaseClient();
@@ -49,7 +73,7 @@ export default function CreateTenderPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [formData, setFormData] = useState({
-    agency_id: "", // Movido para o topo
+    agency_id: "",
     modality: "",
     category: "",
     editalTitle: "",
@@ -61,11 +85,11 @@ export default function CreateTenderPage() {
     valueBetweenBids: "",
     secretValue: false,
     impugnationDate: undefined as Date | undefined,
-    impugnationTime: "17:00", // Novo campo para horário
+    impugnationTime: "17:00",
     proposalDate: undefined as Date | undefined,
-    proposalTime: "17:00", // Novo campo para horário
+    proposalTime: "17:00",
     openingDate: undefined as Date | undefined,
-    openingTime: "09:00", // Novo campo para horário
+    openingTime: "09:00",
     documentationMode: "winner",
     phaseInversion: false,
     segments: [],
@@ -75,8 +99,18 @@ export default function CreateTenderPage() {
       authority: "",
       supportTeam: [""],
     },
+    itemStructure: "single", // 'single', 'multiple', 'group', 'multiple-groups'
+    items: [
+      {
+        id: 1,
+        description: "",
+        quantity: "",
+        unit: "",
+        unitPrice: "",
+        benefitType: "open",
+      },
+    ] as TenderItem[],
     groups: [
-      // Renomeado de 'lots' para 'groups'
       {
         id: 1,
         description: "",
@@ -90,17 +124,12 @@ export default function CreateTenderPage() {
             quantity: "",
             unit: "",
             unitPrice: "",
-            benefitType: "",
+            benefitType: "open",
           },
         ],
       },
-    ],
-    documents: [] as {
-      name: string;
-      file: File | null;
-      document_id?: string;
-      file_path?: string;
-    }[],
+    ] as TenderGroup[],
+    documents: [] as TenderDocument[],
   });
 
   // Fetch agencies and users
@@ -179,25 +208,48 @@ export default function CreateTenderPage() {
     });
   };
 
+  // Funções para itens (sem grupo)
+  const handleItemChange = (index: number, field: string, value: any) => {
+    const newItems = [...formData.items];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setFormData({ ...formData, items: newItems });
+  };
+
+  const addItem = () => {
+    const newId =
+      formData.items.length > 0 ? Math.max(...formData.items.map((item) => item.id)) + 1 : 1;
+    setFormData({
+      ...formData,
+      items: [
+        ...formData.items,
+        {
+          id: newId,
+          description: "",
+          quantity: "",
+          unit: "",
+          unitPrice: "",
+          benefitType: "open",
+        },
+      ],
+    });
+  };
+
+  const removeItem = (index: number) => {
+    const newItems = [...formData.items];
+    newItems.splice(index, 1);
+    setFormData({ ...formData, items: newItems });
+  };
+
+  // Funções para grupos
   const handleGroupChange = (groupIndex: number, field: string, value: any) => {
     const newGroups = [...formData.groups];
     newGroups[groupIndex] = { ...newGroups[groupIndex], [field]: value };
     setFormData({ ...formData, groups: newGroups });
   };
 
-  const handleItemChange = (groupIndex: number, itemIndex: number, field: string, value: any) => {
-    const newGroups = [...formData.groups];
-    newGroups[groupIndex].items[itemIndex] = {
-      ...newGroups[groupIndex].items[itemIndex],
-      [field]: value,
-    };
-    setFormData({ ...formData, groups: newGroups });
-  };
-
   const addGroup = () => {
     const newGroupId =
       formData.groups.length > 0 ? Math.max(...formData.groups.map((group) => group.id)) + 1 : 1;
-
     setFormData({
       ...formData,
       groups: [
@@ -223,32 +275,44 @@ export default function CreateTenderPage() {
     });
   };
 
-  const removeGroup = (index: number) => {
+  const removeGroup = (groupIndex: number) => {
     const newGroups = [...formData.groups];
-    newGroups.splice(index, 1);
+    newGroups.splice(groupIndex, 1);
     setFormData({ ...formData, groups: newGroups });
   };
 
-  const addItem = (groupIndex: number) => {
+  // Funções para itens dentro de grupos
+  const handleGroupItemChange = (
+    groupIndex: number,
+    itemIndex: number,
+    field: string,
+    value: any
+  ) => {
     const newGroups = [...formData.groups];
-    const newItemId =
-      newGroups[groupIndex].items.length > 0
-        ? Math.max(...newGroups[groupIndex].items.map((item) => item.id)) + 1
-        : 1;
+    newGroups[groupIndex].items[itemIndex] = {
+      ...newGroups[groupIndex].items[itemIndex],
+      [field]: value,
+    };
+    setFormData({ ...formData, groups: newGroups });
+  };
 
-    newGroups[groupIndex].items.push({
+  const addItemToGroup = (groupIndex: number) => {
+    const newGroups = [...formData.groups];
+    const group = newGroups[groupIndex];
+    const newItemId =
+      group.items.length > 0 ? Math.max(...group.items.map((item) => item.id)) + 1 : 1;
+    group.items.push({
       id: newItemId,
       description: "",
       quantity: "",
       unit: "",
       unitPrice: "",
-      benefitType: "",
+      benefitType: "open",
     });
-
     setFormData({ ...formData, groups: newGroups });
   };
 
-  const removeItem = (groupIndex: number, itemIndex: number) => {
+  const removeItemFromGroup = (groupIndex: number, itemIndex: number) => {
     const newGroups = [...formData.groups];
     newGroups[groupIndex].items.splice(itemIndex, 1);
     setFormData({ ...formData, groups: newGroups });
@@ -284,7 +348,6 @@ export default function CreateTenderPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log("Submitting form data:", formData);
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -293,8 +356,8 @@ export default function CreateTenderPage() {
         router.push("/login");
         return;
       }
-      console.log("User ID:", user.id);
-      // Combinar data e horário para criar datetime completo
+
+      // Converter datas e horários para datetime
       const impugnationDateTime =
         formData.impugnationDate && formData.impugnationTime
           ? new Date(
@@ -312,38 +375,108 @@ export default function CreateTenderPage() {
           ? new Date(`${format(formData.openingDate, "yyyy-MM-dd")}T${formData.openingTime}:00`)
           : null;
 
-      // Create tender in Supabase
-      // Mapear o valor de formData.modality para o valor aceito na coluna tender_type
+      // Mapeamento de modalidades
       const tenderTypeMap: { [key: string]: string } = {
         "pregao-eletronico": "pregao_eletronico",
         "concorrencia-eletronica": "concorrencia",
         "dispensa-eletronica": "tomada_de_precos",
       };
 
-      console.log("Opening date and time:", openingDateTime);
+      // Determinar itens e grupos para submissão
+      const itemsToSubmit =
+        formData.itemStructure === "single" || formData.itemStructure === "multiple"
+          ? formData.items
+          : [];
 
+      const groupsToSubmit =
+        formData.itemStructure === "group" || formData.itemStructure === "multiple-groups"
+          ? formData.groups
+          : [];
+
+      // Calcular valor estimado total
+      let totalEstimatedValue = 0;
+
+      // Para itens sem grupo
+      for (const item of itemsToSubmit) {
+        const quantity = parseFloat(item.quantity.replace(",", ".")) || 0;
+        const unitPrice = parseFloat(item.unitPrice.replace(",", ".")) || 0;
+        totalEstimatedValue += quantity * unitPrice;
+      }
+
+      // Para grupos e seus itens
+      for (const group of groupsToSubmit) {
+        for (const item of group.items) {
+          const quantity = parseFloat(item.quantity.replace(",", ".")) || 0;
+          const unitPrice = parseFloat(item.unitPrice.replace(",", ".")) || 0;
+          totalEstimatedValue += quantity * unitPrice;
+        }
+      }
+
+      // 1. Criar a licitação principal
       const { data: tenderData, error: tenderError } = await supabase
         .from("tenders")
         .insert({
           title: formData.editalTitle,
           description: formData.object,
           tender_number: formData.editalNumber,
+          process_number: formData.processNumber,
           tender_type: tenderTypeMap[formData.modality] || formData.modality,
+          category: formData.category,
           agency_id: formData.agency_id,
           opening_date: openingDateTime,
           closing_date: proposalDateTime,
+          impugnation_deadline: impugnationDateTime,
+          judgment_criteria: formData.judgmentCriteria,
+          dispute_mode: formData.disputeMode,
+          price_decimals: parseInt(formData.priceDecimals),
+          bid_increment: formData.valueBetweenBids,
+          secret_value: formData.secretValue,
+          documentation_mode: formData.documentationMode,
+          phase_inversion: formData.phaseInversion,
+          estimated_value: totalEstimatedValue,
           status: "published",
           created_by: user.id,
         })
         .select()
         .single();
 
-      console.log("Tender data:", tenderData);
-      if (tenderError) console.log("Error creating tender:", tenderError);
       if (tenderError) throw tenderError;
 
-      // Create groups (anteriormente lots)
-      for (const group of formData.groups) {
+      // 2. Adicionar membros da equipe
+      const teamRoles = [
+        {
+          user_id: formData.team.auctioneer,
+          role: formData.modality === "pregao-eletronico" ? "auctioneer" : "contracting_agent",
+        },
+        {
+          user_id: formData.team.authority,
+          role: "authority",
+        },
+        ...formData.team.supportTeam.map((member) => ({
+          user_id: member,
+          role: "support",
+        })),
+      ];
+
+      const { error: teamError } = await supabase.from("tender_team").insert(
+        teamRoles.map((team) => ({
+          tender_id: tenderData.id,
+          user_id: team.user_id,
+          role: team.role,
+        }))
+      );
+
+      if (teamError) throw teamError;
+
+      // 3. Criar grupos (se necessário)
+      for (const group of groupsToSubmit) {
+        // Calcular valor estimado do grupo
+        const groupEstimatedValue = group.items.reduce((sum: number, item: TenderItem) => {
+          const quantity = parseFloat(item.quantity.replace(",", ".")) || 0;
+          const unitPrice = parseFloat(item.unitPrice.replace(",", ".")) || 0;
+          return sum + quantity * unitPrice;
+        }, 0);
+
         const { data: groupData, error: groupError } = await supabase
           .from("tender_lots")
           .insert({
@@ -353,6 +486,7 @@ export default function CreateTenderPage() {
             type: group.type,
             require_brand: group.requireBrand,
             allow_description_change: group.allowDescriptionChange,
+            estimated_value: groupEstimatedValue,
             status: "active",
           })
           .select()
@@ -360,51 +494,135 @@ export default function CreateTenderPage() {
 
         if (groupError) throw groupError;
 
-        console.log("Group data:", groupData);
+        // Adicionar itens do grupo
+        const itemsToInsert = group.items.map((item) => {
+          const quantity = parseFloat(item.quantity.replace(",", ".")) || 0;
+          const unitPrice = parseFloat(item.unitPrice.replace(",", ".")) || 0;
 
-        // Create items for this group
-        for (const item of group.items) {
-          const { error: itemError } = await supabase.from("tender_items").insert({
-            lot_id: groupData.id,
+          return {
             tender_id: tenderData.id,
+            lot_id: groupData.id,
             item_number: item.id,
             description: item.description,
-            quantity: Number.parseFloat(item.quantity) || 0,
+            quantity: quantity,
             unit: item.unit,
-            estimated_unit_price: Number.parseFloat(item.unitPrice) || 0,
+            estimated_unit_price: unitPrice,
             benefit_type: item.benefitType,
-          });
+          };
+        });
 
-          console.log("Item data:", item);
-          if (itemError) throw itemError;
-        }
+        const { error: itemsError } = await supabase.from("tender_items").insert(itemsToInsert);
+        if (itemsError) throw itemsError;
       }
 
-      // Link documents to the tender
-      for (const doc of formData.documents) {
-        if (doc.document_id) {
-          const { error: docUpdateError } = await supabase
-            .from("documents")
-            .update({
-              entity_id: tenderData.id,
-              entity_type: "tender",
-            })
-            .eq("id", doc.document_id);
+      // 4. Tratar itens sem grupo (criar um grupo padrão)
+      if (itemsToSubmit.length > 0) {
+        // Criar um grupo padrão para itens avulsos
+        const groupEstimatedValue = itemsToSubmit.reduce((sum: number, item: TenderItem) => {
+          const quantity = parseFloat(item.quantity.replace(",", ".")) || 0;
+          const unitPrice = parseFloat(item.unitPrice.replace(",", ".")) || 0;
+          return sum + quantity * unitPrice;
+        }, 0);
 
-          if (docUpdateError) throw docUpdateError;
-        }
-        console.log("Document data:", doc);
+        const { data: defaultGroupData, error: groupError } = await supabase
+          .from("tender_lots")
+          .insert({
+            tender_id: tenderData.id,
+            number: 1,
+            description: "Itens Avulsos",
+            type: "products",
+            require_brand: false,
+            allow_description_change: true,
+            estimated_value: groupEstimatedValue,
+            status: "active",
+          })
+          .select()
+          .single();
+
+        if (groupError) throw groupError;
+
+        // Adicionar itens ao grupo padrão
+        const itemsToInsert = itemsToSubmit.map((item) => {
+          const quantity = parseFloat(item.quantity.replace(",", ".")) || 0;
+          const unitPrice = parseFloat(item.unitPrice.replace(",", ".")) || 0;
+
+          return {
+            tender_id: tenderData.id,
+            lot_id: defaultGroupData.id,
+            item_number: item.id,
+            description: item.description,
+            quantity: quantity,
+            unit: item.unit,
+            estimated_unit_price: unitPrice,
+            benefit_type: item.benefitType,
+          };
+        });
+
+        const { error: itemsError } = await supabase.from("tender_items").insert(itemsToInsert);
+        if (itemsError) throw itemsError;
+      }
+
+      // 5. Upload de documentos
+      for (const doc of formData.documents) {
+        if (!doc.file) continue;
+
+        const fileExt = doc.file.name.split(".").pop();
+        const fileName = `${doc.name.replace(/\s+/g, "_")}_${Date.now()}.${fileExt}`;
+        const filePath = `tender-documents/${tenderData.id}/${fileName}`;
+
+        // Upload do arquivo
+        const { error: uploadError } = await supabase.storage
+          .from("tender-documents")
+          .upload(filePath, doc.file);
+
+        if (uploadError) throw uploadError;
+
+        // Registrar documento no banco
+        const { error: docError } = await supabase.from("tender_documents").insert({
+          tender_id: tenderData.id,
+          user_id: user.id,
+          name: doc.name,
+          file_path: filePath,
+          file_type: doc.file.type,
+          file_size: doc.file.size,
+        });
+
+        if (docError) throw docError;
+      }
+
+      // 6. Criar registro de resultados inicial
+      const { error: resultError } = await supabase.from("tender_results").insert({
+        tender_id: tenderData.id,
+        total_value: totalEstimatedValue,
+        estimated_value: totalEstimatedValue,
+        saved_value: 0,
+        saved_percentage: 0,
+        total_lots: groupsToSubmit.length + (itemsToSubmit.length > 0 ? 1 : 0),
+        completed_lots: 0,
+        total_items:
+          itemsToSubmit.length + groupsToSubmit.reduce((sum, group) => sum + group.items.length, 0),
+        total_proposals: 0,
+        total_suppliers: 0,
+        status: "pending",
+      });
+
+      if (resultError) {
+        console.error("Failed to create tender results:", resultError);
+        throw new Error("Failed to create tender results record");
       }
 
       toast({
         title: "Licitação criada com sucesso",
-        description: "A licitação foi criada e está em modo de rascunho.",
+        description: `A licitação foi publicada com valor estimado de ${totalEstimatedValue.toLocaleString(
+          "pt-BR",
+          {
+            style: "currency",
+            currency: "BRL",
+          }
+        )}`,
       });
 
-      // Redirect to the active tenders page
-      setTimeout(() => {
-        router.push("/dashboard/agency/active-tenders");
-      }, 2000);
+      router.push(`/dashboard/tenders/${tenderData.id}`);
     } catch (error: any) {
       console.error("Error creating tender:", error);
       toast({
@@ -423,6 +641,510 @@ export default function CreateTenderPage() {
 
   const nextStep = () => {
     setCurrentStep((prev) => Math.min(prev + 1, 4));
+  };
+
+  const renderStep3Content = () => {
+    switch (formData.itemStructure) {
+      case "single":
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Item Único</h3>
+            <div className="border rounded-md p-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Descrição</Label>
+                  <Input
+                    value={formData.items[0].description}
+                    onChange={(e) => handleItemChange(0, "description", e.target.value)}
+                    placeholder="Descrição do item"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tipo de Benefício</Label>
+                  <Select
+                    value={formData.items[0].benefitType}
+                    onValueChange={(value) => handleItemChange(0, "benefitType", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="exclusive_for_me_epp">Exclusivo ME/EPP</SelectItem>
+                      <SelectItem value="open_competition_with_benefit_for_me_epp">
+                        Ampla concorrência com benefício para ME/EPP
+                      </SelectItem>
+                      <SelectItem value="open_competition_without_benefit">
+                        Ampla concorrência sem benefício
+                      </SelectItem>
+                      <SelectItem value="regional">Regional</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid gap-4 md:grid-cols-3 mt-4">
+                <div className="space-y-2">
+                  <Label>Quantidade</Label>
+                  <Input
+                    value={formData.items[0].quantity}
+                    onChange={(e) => handleItemChange(0, "quantity", e.target.value)}
+                    placeholder="Quantidade"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Unidade de Medida</Label>
+                  <Input
+                    value={formData.items[0].unit}
+                    onChange={(e) => handleItemChange(0, "unit", e.target.value)}
+                    placeholder="Ex: UN, KG, CX"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Valor Unitário</Label>
+                  <Input
+                    value={formData.items[0].unitPrice}
+                    onChange={(e) => handleItemChange(0, "unitPrice", e.target.value)}
+                    placeholder="R$ 0,00"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case "multiple":
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Itens Individuais</h3>
+              <Button type="button" variant="outline" size="sm" onClick={addItem}>
+                <Plus className="mr-2 h-4 w-4" /> Adicionar Item
+              </Button>
+            </div>
+            {formData.items.map((item, index) => (
+              <div key={item.id} className="border rounded-md p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-medium">Item {index + 1}</h4>
+                  {formData.items.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeItem(index)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Descrição</Label>
+                    <Input
+                      value={item.description}
+                      onChange={(e) => handleItemChange(index, "description", e.target.value)}
+                      placeholder="Descrição do item"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Tipo de Benefício</Label>
+                    <Select
+                      value={item.benefitType}
+                      onValueChange={(value) => handleItemChange(index, "benefitType", value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="exclusive_for_me_epp">Exclusivo ME/EPP</SelectItem>
+                        <SelectItem value="open_competition_with_benefit_for_me_epp">
+                          Ampla concorrência com benefício para ME/EPP
+                        </SelectItem>
+                        <SelectItem value="open_competition_without_benefit">
+                          Ampla concorrência sem benefício
+                        </SelectItem>
+                        <SelectItem value="regional">Regional</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-3 mt-4">
+                  <div className="space-y-2">
+                    <Label>Quantidade</Label>
+                    <Input
+                      value={item.quantity}
+                      onChange={(e) => handleItemChange(index, "quantity", e.target.value)}
+                      placeholder="Quantidade"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Unidade de Medida</Label>
+                    <Input
+                      value={item.unit}
+                      onChange={(e) => handleItemChange(index, "unit", e.target.value)}
+                      placeholder="Ex: UN, KG, CX"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Valor Unitário</Label>
+                    <Input
+                      value={item.unitPrice}
+                      onChange={(e) => handleItemChange(index, "unitPrice", e.target.value)}
+                      placeholder="R$ 0,00"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+
+      case "group":
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Grupo Único</h3>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle>Grupo 1</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Tipo de Itens</Label>
+                    <Select
+                      value={formData.groups[0].type}
+                      onValueChange={(value) => handleGroupChange(0, "type", value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="products">Produtos</SelectItem>
+                        <SelectItem value="services">Serviços</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Descrição do Grupo</Label>
+                    <Input
+                      value={formData.groups[0].description}
+                      onChange={(e) => handleGroupChange(0, "description", e.target.value)}
+                      placeholder="Descrição"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-4 mt-4">
+                  {formData.groups[0].type === "products" && (
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="requireBrand"
+                        checked={formData.groups[0].requireBrand}
+                        onCheckedChange={(checked) => handleGroupChange(0, "requireBrand", checked)}
+                      />
+                      <Label htmlFor="requireBrand">Requer Marca, Modelo e Fabricante</Label>
+                    </div>
+                  )}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="allowDescriptionChange"
+                      checked={formData.groups[0].allowDescriptionChange}
+                      onCheckedChange={(checked) =>
+                        handleGroupChange(0, "allowDescriptionChange", checked)
+                      }
+                    />
+                    <Label htmlFor="allowDescriptionChange">Permitir Alterar a Descrição</Label>
+                  </div>
+                </div>
+                <div className="mt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-medium">Itens do Grupo</h4>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => addItemToGroup(0)}>
+                      <Plus className="mr-2 h-4 w-4" /> Adicionar Item
+                    </Button>
+                  </div>
+                  {formData.groups[0].items.map((item, itemIndex) => (
+                    <div key={item.id} className="border rounded-md p-4 mb-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h5 className="font-medium">Item {itemIndex + 1}</h5>
+                        {formData.groups[0].items.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeItemFromGroup(0, itemIndex)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label>Descrição</Label>
+                          <Input
+                            value={item.description}
+                            onChange={(e) =>
+                              handleGroupItemChange(0, itemIndex, "description", e.target.value)
+                            }
+                            placeholder="Descrição do item"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Tipo de Benefício</Label>
+                          <Select
+                            value={item.benefitType}
+                            onValueChange={(value) =>
+                              handleGroupItemChange(0, itemIndex, "benefitType", value)
+                            }>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="exclusive_for_me_epp">Exclusivo ME/EPP</SelectItem>
+                              <SelectItem value="open_competition_with_benefit_for_me_epp">
+                                Ampla concorrência com benefício para ME/EPP
+                              </SelectItem>
+                              <SelectItem value="open_competition_without_benefit">
+                                Ampla concorrência sem benefício
+                              </SelectItem>
+                              <SelectItem value="regional">Regional</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-3 mt-4">
+                        <div className="space-y-2">
+                          <Label>Quantidade</Label>
+                          <Input
+                            value={item.quantity}
+                            onChange={(e) =>
+                              handleGroupItemChange(0, itemIndex, "quantity", e.target.value)
+                            }
+                            placeholder="Quantidade"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Unidade de Medida</Label>
+                          <Input
+                            value={item.unit}
+                            onChange={(e) =>
+                              handleGroupItemChange(0, itemIndex, "unit", e.target.value)
+                            }
+                            placeholder="Ex: UN, KG, CX"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Valor Unitário</Label>
+                          <Input
+                            value={item.unitPrice}
+                            onChange={(e) =>
+                              handleGroupItemChange(0, itemIndex, "unitPrice", e.target.value)
+                            }
+                            placeholder="R$ 0,00"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case "multiple-groups":
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Grupos de Itens</h3>
+              <Button type="button" variant="outline" size="sm" onClick={addGroup}>
+                <Plus className="mr-2 h-4 w-4" /> Adicionar Grupo
+              </Button>
+            </div>
+            {formData.groups.map((group, groupIndex) => (
+              <Card key={group.id} className="overflow-hidden">
+                <CardHeader className="bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">Grupo {groupIndex + 1}</CardTitle>
+                    {formData.groups.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeGroup(groupIndex)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Tipo de Itens</Label>
+                      <Select
+                        value={group.type}
+                        onValueChange={(value) => handleGroupChange(groupIndex, "type", value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="products">Produtos</SelectItem>
+                          <SelectItem value="services">Serviços</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Descrição do Grupo</Label>
+                      <Input
+                        value={group.description}
+                        onChange={(e) =>
+                          handleGroupChange(groupIndex, "description", e.target.value)
+                        }
+                        placeholder="Descrição"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-4">
+                    {group.type === "products" && (
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`requireBrand-${groupIndex}`}
+                          checked={group.requireBrand}
+                          onCheckedChange={(checked) =>
+                            handleGroupChange(groupIndex, "requireBrand", checked)
+                          }
+                        />
+                        <Label htmlFor={`requireBrand-${groupIndex}`}>
+                          Requer Marca, Modelo e Fabricante
+                        </Label>
+                      </div>
+                    )}
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`allowDescriptionChange-${groupIndex}`}
+                        checked={group.allowDescriptionChange}
+                        onCheckedChange={(checked) =>
+                          handleGroupChange(groupIndex, "allowDescriptionChange", checked)
+                        }
+                      />
+                      <Label htmlFor={`allowDescriptionChange-${groupIndex}`}>
+                        Permitir Alterar a Descrição
+                      </Label>
+                    </div>
+                  </div>
+                  <div className="mt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-medium">Itens do Grupo</h4>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addItemToGroup(groupIndex)}>
+                        <Plus className="mr-2 h-4 w-4" /> Adicionar Item
+                      </Button>
+                    </div>
+                    {group.items.map((item, itemIndex) => (
+                      <div key={item.id} className="border rounded-md p-4 mb-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <h5 className="font-medium">Item {itemIndex + 1}</h5>
+                          {group.items.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeItemFromGroup(groupIndex, itemIndex)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label>Descrição</Label>
+                            <Input
+                              value={item.description}
+                              onChange={(e) =>
+                                handleGroupItemChange(
+                                  groupIndex,
+                                  itemIndex,
+                                  "description",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="Descrição do item"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Tipo de Benefício</Label>
+                            <Select
+                              value={item.benefitType}
+                              onValueChange={(value) =>
+                                handleGroupItemChange(groupIndex, itemIndex, "benefitType", value)
+                              }>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="exclusive_for_me_epp">
+                                  Exclusivo ME/EPP
+                                </SelectItem>
+                                <SelectItem value="open_competition_with_benefit_for_me_epp">
+                                  Ampla concorrência com benefício para ME/EPP
+                                </SelectItem>
+                                <SelectItem value="open_competition_without_benefit">
+                                  Ampla concorrência sem benefício
+                                </SelectItem>
+                                <SelectItem value="regional">Regional</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-3 mt-4">
+                          <div className="space-y-2">
+                            <Label>Quantidade</Label>
+                            <Input
+                              value={item.quantity}
+                              onChange={(e) =>
+                                handleGroupItemChange(
+                                  groupIndex,
+                                  itemIndex,
+                                  "quantity",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="Quantidade"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Unidade de Medida</Label>
+                            <Input
+                              value={item.unit}
+                              onChange={(e) =>
+                                handleGroupItemChange(groupIndex, itemIndex, "unit", e.target.value)
+                              }
+                              placeholder="Ex: UN, KG, CX"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Valor Unitário</Label>
+                            <Input
+                              value={item.unitPrice}
+                              onChange={(e) =>
+                                handleGroupItemChange(
+                                  groupIndex,
+                                  itemIndex,
+                                  "unitPrice",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="R$ 0,00"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        );
+    }
   };
 
   if (isLoading) {
@@ -448,21 +1170,20 @@ export default function CreateTenderPage() {
           <CardDescription>
             {currentStep === 1 && "Informações básicas da licitação"}
             {currentStep === 2 && "Equipe responsável pelo processo"}
-            {currentStep === 3 && "Grupos e itens da licitação"}
+            {currentStep === 3 && "Itens e grupos da licitação"}
             {currentStep === 4 && "Documentos e publicação"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="mb-8">
             <StepProgress
-              steps={["Informações Básicas", "Equipe", "Grupos e Itens", "Documentos"]}
+              steps={["Informações Básicas", "Equipe", "Itens e Grupos", "Documentos"]}
               currentStep={currentStep}
             />
           </div>
           <form onSubmit={handleSubmit}>
             {currentStep === 1 && (
               <div className="space-y-6">
-                {/* ÓRGÃO EM EVIDÊNCIA - MOVIDO PARA O TOPO */}
                 <Card className="border-2 border-primary/20 bg-primary/5">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg text-primary">Órgão Responsável</CardTitle>
@@ -685,7 +1406,6 @@ export default function CreateTenderPage() {
                   <Label htmlFor="secretValue">Valor Sigiloso</Label>
                 </div>
 
-                {/* DATAS E HORÁRIOS COM DESTAQUE */}
                 <Card className="border-orange-200 bg-orange-50">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg text-orange-800 flex items-center gap-2">
@@ -933,235 +1653,24 @@ export default function CreateTenderPage() {
 
             {currentStep === 3 && (
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium">
-                    {formData.judgmentCriteria === "menor-preco-item" ? "Itens" : "Grupos de Itens"}
-                  </h3>
-                  <Button type="button" variant="outline" onClick={addGroup}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Adicionar {formData.judgmentCriteria === "menor-preco-item" ? "Item" : "Grupo"}
-                  </Button>
+                <div className="space-y-2">
+                  <Label>Como deseja organizar os itens?</Label>
+                  <Select
+                    value={formData.itemStructure}
+                    onValueChange={(value) => handleChange("itemStructure", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a estrutura" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="single">Um item sem grupo</SelectItem>
+                      <SelectItem value="multiple">Vários itens sem grupo</SelectItem>
+                      <SelectItem value="group">Um grupo com itens</SelectItem>
+                      <SelectItem value="multiple-groups">Vários grupos com itens</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="space-y-8">
-                  {formData.groups.map((group, groupIndex) => (
-                    <Card key={group.id} className="overflow-hidden">
-                      <CardHeader className="bg-gray-50">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-base">
-                            {formData.judgmentCriteria === "menor-preco-item"
-                              ? `Item ${String(groupIndex + 1).padStart(2, "0")}`
-                              : `Grupo ${String(groupIndex + 1).padStart(2, "0")}`}
-                          </CardTitle>
-                          {formData.groups.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeGroup(groupIndex)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="p-4 space-y-4">
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <div className="space-y-2">
-                            <Label>Tipo de Itens</Label>
-                            <Select
-                              value={group.type}
-                              onValueChange={(value) =>
-                                handleGroupChange(groupIndex, "type", value)
-                              }>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="products">Produtos</SelectItem>
-                                <SelectItem value="services">Serviços</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label>
-                              Descrição do{" "}
-                              {formData.judgmentCriteria === "menor-preco-item" ? "Item" : "Grupo"}
-                            </Label>
-                            <Input
-                              value={group.description}
-                              onChange={(e) =>
-                                handleGroupChange(groupIndex, "description", e.target.value)
-                              }
-                              placeholder="Descrição"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-4">
-                          {group.type === "products" && (
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`requireBrand-${groupIndex}`}
-                                checked={group.requireBrand}
-                                onCheckedChange={(checked) =>
-                                  handleGroupChange(groupIndex, "requireBrand", checked)
-                                }
-                              />
-                              <Label htmlFor={`requireBrand-${groupIndex}`}>
-                                Requer Marca, Modelo e Fabricante
-                              </Label>
-                            </div>
-                          )}
-
-                          <div className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`allowDescriptionChange-${groupIndex}`}
-                              checked={group.allowDescriptionChange}
-                              onCheckedChange={(checked) =>
-                                handleGroupChange(groupIndex, "allowDescriptionChange", checked)
-                              }
-                            />
-                            <Label htmlFor={`allowDescriptionChange-${groupIndex}`}>
-                              Permitir Alterar a Descrição
-                            </Label>
-                          </div>
-                        </div>
-
-                        {formData.judgmentCriteria === "menor-preco-lote" && (
-                          <>
-                            <div className="flex items-center justify-between mt-4">
-                              <h4 className="font-medium">Itens do Grupo</h4>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => addItem(groupIndex)}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Adicionar Item
-                              </Button>
-                            </div>
-                          </>
-                        )}
-
-                        <div className="space-y-4">
-                          {group.items.map((item, itemIndex) => (
-                            <div key={item.id} className="border rounded-md p-4">
-                              <div className="flex items-center justify-between mb-4">
-                                <h5 className="font-medium">
-                                  Item {String(itemIndex + 1).padStart(2, "0")}
-                                </h5>
-                                {group.items.length > 1 &&
-                                  formData.judgmentCriteria === "menor-preco-lote" && (
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => removeItem(groupIndex, itemIndex)}>
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  )}
-                              </div>
-
-                              <div className="grid gap-4 md:grid-cols-2">
-                                <div className="space-y-2">
-                                  <Label>Descrição</Label>
-                                  <Input
-                                    value={item.description}
-                                    onChange={(e) =>
-                                      handleItemChange(
-                                        groupIndex,
-                                        itemIndex,
-                                        "description",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Descrição do item"
-                                  />
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label>Tipo de Benefício</Label>
-                                  <Select
-                                    value={item.benefitType}
-                                    onValueChange={(value) =>
-                                      handleItemChange(groupIndex, itemIndex, "benefitType", value)
-                                    }>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Selecione" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="exclusive_for_me_epp">
-                                        Exclusivo ME/EPP
-                                      </SelectItem>
-                                      <SelectItem value="open_competition_with_benefit_for_me_epp">
-                                        Ampla concorrência com benefício para ME/EPP
-                                      </SelectItem>
-                                      <SelectItem value="open_competition_without_benefit">
-                                        Ampla concorrência sem benefício
-                                      </SelectItem>
-                                      <SelectItem value="regional">Regional</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-
-                              <div className="grid gap-4 md:grid-cols-3 mt-4">
-                                <div className="space-y-2">
-                                  <Label>Quantidade</Label>
-                                  <Input
-                                    value={item.quantity}
-                                    onChange={(e) =>
-                                      handleItemChange(
-                                        groupIndex,
-                                        itemIndex,
-                                        "quantity",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Quantidade"
-                                  />
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label>Unidade de Medida</Label>
-                                  <Input
-                                    value={item.unit}
-                                    onChange={(e) =>
-                                      handleItemChange(
-                                        groupIndex,
-                                        itemIndex,
-                                        "unit",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Ex: UN, KG, CX"
-                                  />
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label>Valor Unitário</Label>
-                                  <Input
-                                    value={item.unitPrice}
-                                    onChange={(e) =>
-                                      handleItemChange(
-                                        groupIndex,
-                                        itemIndex,
-                                        "unitPrice",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="R$ 0,00"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                {renderStep3Content()}
               </div>
             )}
 

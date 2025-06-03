@@ -60,7 +60,7 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
 
   // Determine if proposals tab should be shown
   const showProposals = (isAgencyUser && isOwner) || isAdminUser
-
+console.log(tender)
   return (
     <div className="container py-6 space-y-6">
       <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
@@ -125,7 +125,7 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
 
               <div>
                 <h2 className="text-lg font-medium">Prazo para Propostas</h2>
-                <p>{new Date(tender.proposal_deadline).toLocaleString("pt-BR")}</p>
+                <p>{new Date(tender.closing_date).toLocaleString("pt-BR")}</p>
               </div>
 
               <div>
@@ -138,7 +138,9 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
                 <p>
                   {tender.is_value_secret
                     ? "Sigiloso"
-                    : new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(tender.value || 0)}
+                    : new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+                        tender.estimated_value || 0
+                      )}
                 </p>
               </div>
 
@@ -177,11 +179,15 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
         {showProposals && (
           <TabsContent value="proposals">
             <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-              <TenderProposals tenderId={tender.id} lots={tender.lots || []} isAgencyUser={isAgencyUser} />
+              <TenderProposals
+                tenderId={tender.id}
+                lots={tender.lots || []}
+                isAgencyUser={isAgencyUser}
+              />
             </Suspense>
           </TabsContent>
         )}
       </Tabs>
     </div>
-  )
+  );
 }

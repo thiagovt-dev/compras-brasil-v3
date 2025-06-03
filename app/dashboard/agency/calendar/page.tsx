@@ -289,21 +289,25 @@ export default function AgencyCalendarPage() {
             <CardTitle>Calendário</CardTitle>
             <CardDescription>Gerencie os eventos de licitações</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="!p-1">
             <Calendar
               mode="single"
               selected={selectedDate || undefined}
-              onSelect={setSelectedDate}
-              className="rounded-md border"
+              onSelect={(date) => setSelectedDate(date || null)}
+              className="w-full rounded-md border" /* Adicione w-full */
               components={{
-                DayContent: ({ day }) => (
-                  <div className="relative">
-                    <div>{day.day}</div>
-                    {hasEvents(day.date) && (
-                      <div className="absolute bottom-0 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary"></div>
-                    )}
-                  </div>
-                ),
+                DayContent: (props) => {
+                  const date = props.date;
+                  const day = date.getDate();
+                  return (
+                    <div className="relative">
+                      <div>{day}</div>
+                      {hasEvents(date) && (
+                        <div className="absolute bottom-0 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary"></div>
+                      )}
+                    </div>
+                  );
+                },
               }}
             />
           </CardContent>
