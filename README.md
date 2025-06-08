@@ -50,6 +50,14 @@ O Compras Brasil v3 é uma plataforma web que facilita a gestão de processos de
 - Experiência de usuário otimizada
 - Dashboard intuitivo
 
+### 💬 Sala de Disputa (Sessão Pública)
+- **Acesso Diferenciado**: Pregoeiros/Administradores são redirecionados para a sala de gestão no dashboard, enquanto Fornecedores e Cidadãos acessam uma visualização pública.
+- **Controle de Abertura de Propostas**: Pregoeiros podem "Abrir Propostas" para iniciar a fase de análise, tornando-as visíveis para todos os participantes.
+- **Classificação e Desclassificação**: Pregoeiros podem classificar e desclassificar propostas por lote/item, com justificativa obrigatória para desclassificação.
+- **Anonimização de Fornecedores**: Nomes de fornecedores são anonimizados (ex: FOR001) durante a fase de propostas e disputa para garantir o sigilo.
+- **Chat da Sessão**: Chat em tempo real com controle de habilitação/desabilitação pelo pregoeiro.
+- **Visualização de Propostas**: Fornecedores e Cidadãos podem visualizar as propostas (anonimizadas) após a abertura pelo pregoeiro.
+
 ## 🔧 Configuração e Instalação
 
 \`\`\`bash
@@ -94,100 +102,74 @@ compras-brasil-v3/
 
 ### 🔨 Funcionalidades Pendentes
 
-1. **Sistema de Notificações**
-   - Alertas em tempo real
-   - Notificações por email
-   - Dashboard de notificações
+1.  **Sistema de Notificações**
+    - Alertas em tempo real
+    - Notificações por email
+    - Dashboard de notificações
 
-2. **Gestão de Documentos**
-   - Upload de arquivos
-   - Validação de documentos
-   - Histórico de versões
+2.  **Gestão de Documentos**
+    - Upload de arquivos
+    - Validação de documentos
+    - Histórico de versões
 
-3. **Sistema de Propostas**
-   - Envio de propostas pelos fornecedores
-   - Comparativo de propostas
-   - Ranking automático
+3.  **Sistema de Propostas**
+    - Envio de propostas pelos fornecedores
+    - Comparativo de propostas
+    - Ranking automático
 
-4. **Relatórios e Analytics**
-   - Relatórios gerenciais
-   - Dashboards analíticos
-   - Exportação de dados
+4.  **Relatórios e Analytics**
+    - Relatórios gerenciais
+    - Dashboards analíticos
+    - Exportação de dados
 
-5. **Sistema de Mensagens**
-   - Chat entre fornecedores e órgãos
-   - Histórico de comunicações
-   - Anexos em mensagens
+5.  **Sistema de Mensagens**
+    - Chat entre fornecedores e órgãos
+    - Histórico de comunicações
+    - Anexos em mensagens
 
 ### 🛠️ Melhorias Técnicas
 
-1. **Testes**
-   - Implementar testes unitários
-   - Testes de integração
-   - Testes E2E com Cypress/Playwright
+1.  **Testes**
+    - Implementar testes unitários
+    - Testes de integração
+    - Testes E2E com Cypress/Playwright
 
-2. **Performance**
-   - Otimização de queries do banco
-   - Cache de dados
-   - Lazy loading de componentes
+2.  **Performance**
+    - Otimização de queries do banco
+    - Cache de dados
+    - Lazy loading de componentes
 
-3. **Segurança**
-   - Validação de dados no backend
-   - Rate limiting
-   - Auditoria de ações
+3.  **Segurança**
+    - Validação de dados no backend
+    - Rate limiting
+    - Auditoria de ações
 
-4. **Monitoramento**
-   - Logs estruturados
-   - Monitoramento de erros
-   - Métricas de performance
+4.  **Monitoramento**
+    - Logs estruturados
+    - Monitoramento de erros
+    - Métricas de performance
 
-5. **Configuração do Matcher**
-   - O middleware atual tem `matcher: []` vazio
-   - Implementar configuração adequada das rotas
+5.  **Configuração do Matcher**
+    - O middleware atual tem `matcher: []` vazio
+    - Implementar configuração adequada das rotas
 
 ### 🎨 Melhorias de UX/UI
 
-1. **Responsividade**
-   - Otimização para dispositivos móveis
-   - Progressive Web App (PWA)
+1.  **Responsividade**
+    - Otimização para dispositivos móveis
+    - Progressive Web App (PWA)
 
-2. **Acessibilidade**
-   - Compliance com WCAG
-   - Navegação por teclado
-   - Screen reader support
+2.  **Acessibilidade**
+    - Compliance com WCAG
+    - Navegação por teclado
+    - Screen reader support
 
-3. **Feedback Visual**
-   - Loading states
-   - Estados de erro mais informativos
-   - Animações e transições
+3.  **Feedback Visual**
+    - Loading states
+    - Estados de erro mais informativos
+    - Animações e transições
 
-## 📈 Roadmap
 
-### Fase 1 - Consolidação (Próximos 30 dias)
-- [ ] Corrigir configuração do middleware
-- [ ] Implementar validação de dados
-- [ ] Adicionar testes básicos
-- [ ] Melhorar tratamento de erros
-
-### Fase 2 - Expansão (60 dias)
-- [ ] Sistema de propostas
-- [ ] Upload de documentos
-- [ ] Notificações básicas
-- [ ] Relatórios simples
-
-### Fase 3 - Otimização (90 dias)
-- [ ] Sistema de mensagens
-- [ ] Analytics avançado
-- [ ] PWA
-- [ ] Otimizações de performance
-
-## 🤝 Contribuição
-
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
 
 ## 📝 Licença
 
