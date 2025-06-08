@@ -8,8 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { formatFileSize } from "@/lib/utils";
 
 export default async function TenderDocumentsPage({ params }: { params: { id: string } }) {
-  const cookieStore = cookies();
-  const supabase = createServerClient(cookieStore);
+  const supabase = createServerClient();
 
   // Verificar se o ID da licitação é válido
   if (!params.id || !/^[0-9a-fA-F-]+$/.test(params.id)) {
