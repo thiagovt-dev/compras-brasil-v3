@@ -1,5 +1,7 @@
-import { Suspense } from "react";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import { SessionChat } from "@/components/session-chat";
 import { TenderSessionInfo } from "@/components/tender-session-info";
 import { TenderSessionParticipants } from "@/components/tender-session-participants";
@@ -8,38 +10,109 @@ import { TenderHeader } from "@/components/tender-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
 
-export default async function TenderSessionPage({ params }: { params: { id: string } }) {
-  const supabase = createServerSupabaseClient();
+interface Agency {
+  name: string;
+}
 
-  // Buscar informações da licitação
-  const { data: tender } = await supabase
-    .from("tenders")
-    .select(
-      `
-      id,
-      title,
-      number,
-      status,
-      opening_date,
-      agencies!inner (
-        name
-      )
-    `
-    )
-    .eq("id", params.id)
-    .single();
+interface Tender {
+  id: string;
+  title: string;
+  tender_number: string;
+  status: string;
+  opening_date: string;
+  agencies: Agency[];
+}
 
-  // Verificar se a sessão está ativa
+export default function TenderSessionPage() {
+  const [tender, setTender] = useState<Tender | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const supabase = createClientSupabaseClient();
+  const router = useRouter();
+  const params = useParams(); // Obter params usando useParams()
+
+  useEffect(() => {
+    const fetchTenderData = async () => {
+      try {
+        setLoading(true);
+
+        // Verificar se params está disponível
+        if (!params?.id) {
+          throw new Error("ID da licitação não encontrado");
+        }
+
+        const { data, error } = await supabase
+          .from("tenders")
+          .select(
+            `
+            id,
+            title,
+            tender_number,
+            status,
+            opening_date,
+            agencies!inner (
+              name
+            )
+          `
+          )
+          .eq("id", params.id.toString()) // Converter para string se necessário
+          .single();
+
+        if (error) throw error;
+        if (!data) {
+          router.push("/404");
+          return;
+        }
+
+        setTender(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao carregar dados da licitação");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTenderData();
+  }, [params?.id, supabase, router]); // Adicionar params.id como dependência
+
+  if (loading) {
+    return (
+      <div className="container mx-auto py-6 flex items-center justify-center h-[calc(100vh-200px)]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-6 flex flex-col items-center justify-center h-[calc(100vh-200px)]">
+        <div className="text-red-500 text-center max-w-md p-4 rounded-lg bg-red-50">
+          <p className="font-medium">Erro ao carregar sessão</p>
+          <p className="mt-2 text-sm">{error}</p>
+          <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+            Tentar novamente
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const isSessionActive = tender?.status === "active" || tender?.status === "in_progress";
 
   return (
     <div className="container mx-auto py-6 space-y-6">
       <TenderHeader
         title={tender?.title || "Sessão Pública"}
-        number={tender?.number || ""}
-        agency={tender?.agencies?.name || ""}
-        id={params.id}
+        number={tender?.tender_number || ""}
+        agency={tender?.agencies[0]?.name || ""}
+        id={params?.id?.toString() || ""}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -54,18 +127,13 @@ export default async function TenderSessionPage({ params }: { params: { id: stri
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Suspense fallback={<div>Carregando informações da sessão...</div>}>
-                <TenderSessionInfo tenderId={params.id} />
-              </Suspense>
+              <TenderSessionInfo tenderId={params?.id?.toString() || ""} />
 
-              {!isSessionActive && (
+              {!isSessionActive && tender?.opening_date && (
                 <div className="mt-4 p-4 bg-muted rounded-md">
                   <p className="text-[1rem] text-muted-foreground">
                     A sessão pública será iniciada em{" "}
-                    {tender?.opening_date
-                      ? new Date(tender.opening_date).toLocaleString("pt-BR")
-                      : "data a ser definida"}
-                    .
+                    {new Date(tender.opening_date).toLocaleString("pt-BR")}.
                   </p>
                 </div>
               )}
@@ -78,12 +146,10 @@ export default async function TenderSessionPage({ params }: { params: { id: stri
               <TabsTrigger value="participants">Participantes</TabsTrigger>
             </TabsList>
             <TabsContent value="chat" className="h-[500px]">
-              <SessionChat />
+              <SessionChat tenderId={params?.id?.toString() || ""} />
             </TabsContent>
             <TabsContent value="participants">
-              <Suspense fallback={<div>Carregando participantes...</div>}>
-                <TenderSessionParticipants tenderId={params.id} />
-              </Suspense>
+              <TenderSessionParticipants tenderId={params?.id?.toString() || ""} />
             </TabsContent>
           </Tabs>
         </div>
@@ -94,28 +160,28 @@ export default async function TenderSessionPage({ params }: { params: { id: stri
               <CardTitle>Ações</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <RegisterParticipationButton tenderId={params.id} />
+              <RegisterParticipationButton tenderId={params?.id?.toString() || ""} />
 
               <Separator />
 
               <div className="space-y-2">
                 <h3 className="text-[1rem] font-medium">Links Rápidos</h3>
                 <div className="grid gap-2">
-                  <a
-                    href={`/tenders/${params.id}`}
+                  <Link
+                    href={`/tenders/${params?.id}`}
                     className="text-[1rem] text-blue-600 hover:underline">
                     Detalhes da Licitação
-                  </a>
-                  <a
-                    href={`/tenders/${params.id}/documents`}
+                  </Link>
+                  <Link
+                    href={`/tenders/${params?.id}/documents`}
                     className="text-[1rem] text-blue-600 hover:underline">
                     Documentos
-                  </a>
-                  <a
-                    href={`/tenders/${params.id}/clarifications`}
+                  </Link>
+                  <Link
+                    href={`/tenders/${params?.id}/clarifications`}
                     className="text-[1rem] text-blue-600 hover:underline">
                     Esclarecimentos
-                  </a>
+                  </Link>
                 </div>
               </div>
             </CardContent>

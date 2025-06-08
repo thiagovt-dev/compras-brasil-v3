@@ -1,9 +1,16 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 interface TenderLotsProps {
-  tender: any
+  tender: any;
 }
 
 export function TenderLots({ tender }: TenderLotsProps) {
@@ -11,30 +18,33 @@ export function TenderLots({ tender }: TenderLotsProps) {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
-    }).format(value)
-  }
+    }).format(value);
+  };
 
   const getBenefitTypeLabel = (type: string) => {
     const typeMap: Record<string, string> = {
-      exclusive: "Exclusivo ME/EPP",
-      benefit: "Ampla com benefício ME/EPP",
-      open: "Ampla concorrência",
+      exclusive_for_me_epp: "Exclusivo ME/EPP",
+      open_competition_with_benefit_for_me_epp: "Ampla com benefício ME/EPP",
+      open_competition_without_benefit: "Ampla concorrência",
       regional: "Regional",
-    }
-    return typeMap[type] || type
-  }
+    };
+    return typeMap[type] || type;
+  };
 
   const getBenefitTypeBadge = (type: string) => {
-    const typeConfig: Record<string, { label: string; variant: "default" | "outline" | "secondary" }> = {
-      exclusive: {
+    const typeConfig: Record<
+      string,
+      { label: string; variant: "default" | "outline" | "secondary" }
+    > = {
+      exclusive_for_me_epp: {
         label: "Exclusivo ME/EPP",
         variant: "default",
       },
-      benefit: {
+      open_competition_with_benefit_for_me_epp: {
         label: "Ampla com benefício ME/EPP",
         variant: "secondary",
       },
-      open: {
+      open_competition_without_benefit: {
         label: "Ampla concorrência",
         variant: "outline",
       },
@@ -42,12 +52,12 @@ export function TenderLots({ tender }: TenderLotsProps) {
         label: "Regional",
         variant: "outline",
       },
-    }
+    };
 
-    const config = typeConfig[type] || { label: type, variant: "outline" }
+    const config = typeConfig[type] || { label: type, variant: "outline" };
 
-    return <Badge variant={config.variant}>{config.label}</Badge>
-  }
+    return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
 
   return (
     <div className="space-y-6">
@@ -82,7 +92,9 @@ export function TenderLots({ tender }: TenderLotsProps) {
                         <TableCell>{item.quantity}</TableCell>
                         <TableCell>{item.unit}</TableCell>
                         <TableCell>
-                          {tender.is_value_secret ? "Sigiloso" : formatCurrency(item.unit_price || 0)}
+                          {tender.is_value_secret
+                            ? "Sigiloso"
+                            : formatCurrency(item.unit_price || 0)}
                         </TableCell>
                         <TableCell>
                           {tender.is_value_secret
@@ -110,5 +122,5 @@ export function TenderLots({ tender }: TenderLotsProps) {
         </div>
       )}
     </div>
-  )
+  );
 }

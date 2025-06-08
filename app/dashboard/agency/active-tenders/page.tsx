@@ -9,13 +9,13 @@ export const dynamic = "force-dynamic"
 export default async function AgencyActiveTendersPage() {
   const supabase = await createServerClientWithAuth();
 
-  // Get current user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // // Get current user
+  // const {
+  //   data: { user },
+  // } = await supabase.auth.getUser()
 
-  // Fetch user profile to get agency_id
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user?.id).single()
+  // // Fetch user profile to get agency_id
+  // const { data: profile } = await supabase.from("profiles").select("*").eq("id", user?.id).single()
 
   // Fetch initial tenders for SSR
   const { data: initialTenders } = await supabase

@@ -40,7 +40,7 @@ export function TenderSort({ onSortChange, currentSort }: TenderSortProps) {
       <Select
         value={currentSort.field}
         onValueChange={(value) => onSortChange({ field: value, direction: currentSort.direction })}>
-        <SelectTrigger className="w-[180px]">
+        <SelectTrigger className="w-[200px]">
           <SelectValue placeholder="Selecione" />
         </SelectTrigger>
         <SelectContent>

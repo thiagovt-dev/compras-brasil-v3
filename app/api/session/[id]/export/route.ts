@@ -1,10 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createServerClient } from "@/lib/supabase/server"
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib"
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const supabase = createServerSupabaseClient()
+    const supabase = createServerClient()
     const { format, options, title } = await request.json()
 
     // Verificar se o usuário está autenticado
