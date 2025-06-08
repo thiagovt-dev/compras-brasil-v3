@@ -1,7 +1,6 @@
 import { Suspense } from "react"
 import { redirect } from "next/navigation"
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+import { createServerClient } from "@/lib/supabase/server"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TenderActions } from "@/components/tender-actions"
 import { TenderLots } from "@/components/tender-lots"
@@ -21,7 +20,7 @@ interface TenderDetailPageProps {
 }
 
 export default async function TenderDetailPage({ params }: TenderDetailPageProps) {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = createServerClient()
 
   // Check if user is authenticated
   const {

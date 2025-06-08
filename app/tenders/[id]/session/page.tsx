@@ -1,6 +1,4 @@
 import { Suspense } from "react"
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
 import { SessionChat } from "@/components/session-chat"
 import { TenderSessionInfo } from "@/components/tender-session-info"
 import { TenderSessionParticipants } from "@/components/tender-session-participants"
@@ -9,9 +7,10 @@ import { TenderHeader } from "@/components/tender-header"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { createServerClient } from "@/lib/supabase/server"
 
 export default async function TenderSessionPage({ params }: { params: { id: string } }) {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = createServerClient()
 
   // Buscar informações da licitação
   const { data: tender } = await supabase

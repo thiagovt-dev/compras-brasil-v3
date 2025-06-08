@@ -1,12 +1,11 @@
 import { DashboardHeader } from "@/components/dashboard-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { getLiveSessionsForSupplier } from "@/lib/supabase/server"
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+import { createServerClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 
 export default async function SupplierLiveSessionsPage() {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = createServerClient()
   const {
     data: { session },
   } = await supabase.auth.getSession()

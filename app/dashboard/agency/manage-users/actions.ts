@@ -1,12 +1,11 @@
 "use server"
 
-import { createServerActionClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+import { createServerClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
 export async function getAgencyUsers(agencyId: string) {
-  const supabase = createServerActionClient({ cookies })
+  const supabase = createServerClient()
 
   const {
     data: { session },
@@ -45,7 +44,7 @@ export async function getAgencyUsers(agencyId: string) {
 }
 
 export async function createUser(formData: FormData) {
-  const supabase = createServerActionClient({ cookies })
+  const supabase = createServerClient()
 
   const {
     data: { session },
@@ -111,7 +110,7 @@ export async function createUser(formData: FormData) {
 }
 
 export async function updateUser(formData: FormData) {
-  const supabase = createServerActionClient({ cookies })
+  const supabase = createServerClient()
 
   const {
     data: { session },
@@ -162,7 +161,7 @@ export async function updateUser(formData: FormData) {
 }
 
 export async function deleteUser(userId: string) {
-  const supabase = createServerActionClient({ cookies })
+  const supabase = createServerClient()
 
   const {
     data: { session },

@@ -1,13 +1,12 @@
 "use server"
 
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+import { createServerClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import type { Profile } from "@/types" // Declare the Profile variable
 
 export async function getAgencyUsers(agencyId: string) {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = createServerClient()
 
   const {
     data: { session },
@@ -47,7 +46,7 @@ export async function getAgencyUsers(agencyId: string) {
 }
 
 export async function updateTenderTeam(tenderId: string, pregoeiroId: string | null, teamMembers: string[]) {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = createServerClient()
 
   const {
     data: { session },
