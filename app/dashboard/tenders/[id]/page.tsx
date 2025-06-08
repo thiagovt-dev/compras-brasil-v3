@@ -11,7 +11,6 @@ import { TenderProposals } from "@/components/tender-proposals"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TenderTeamManagement } from "@/components/tender-team-management"
 import { getAgencyUsers } from "@/app/dashboard/tenders/[id]/team-actions"
-import type { Profile } from "@/types" // Declare the Profile variable
 
 interface TenderDetailPageProps {
   params: {
@@ -54,17 +53,17 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
     profile = data
   }
 
-  let agencyUsers: Profile[] = []
+  let agencyUsers: any[] = []
   if (profile?.role === "agency" && profile.agency_id) {
     const { users, error: usersFetchError } = await getAgencyUsers(profile.agency_id)
     if (!usersFetchError) {
-      agencyUsers = users
+      agencyUsers = users ?? []
     }
   } else if (profile?.role === "admin" && tender.agency_id) {
     // Admins can see all agency users
     const { users, error: usersFetchError } = await getAgencyUsers(tender.agency_id)
     if (!usersFetchError) {
-      agencyUsers = users
+      agencyUsers = users ?? []
     }
   }
 

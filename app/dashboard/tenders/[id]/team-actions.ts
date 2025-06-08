@@ -3,7 +3,6 @@
 import { createServerClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import type { Profile } from "@/types" // Declare the Profile variable
 
 export async function getAgencyUsers(agencyId: string) {
   const supabase = createServerClient()
@@ -42,7 +41,7 @@ export async function getAgencyUsers(agencyId: string) {
     return { users: null, error: error.message }
   }
 
-  return { users: users as Profile[], error: null } // Cast to Profile[]
+  return { users: users as any[], error: null }
 }
 
 export async function updateTenderTeam(tenderId: string, pregoeiroId: string | null, teamMembers: string[]) {

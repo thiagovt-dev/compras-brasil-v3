@@ -8,11 +8,10 @@ import { MultiSelect } from "@/components/ui/multi-select" // Assuming you have 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { updateTenderTeam } from "@/app/dashboard/tenders/[id]/team-actions"
-import type { Profile, Tender } from "@/types/supabase" // Assuming these types exist
 
 interface TenderTeamManagementProps {
-  tender: Tender
-  agencyUsers: Profile[]
+  tender: any
+  agencyUsers: any[]
   currentProfileId: string
 }
 
