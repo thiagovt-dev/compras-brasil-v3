@@ -52,7 +52,7 @@ O Compras Brasil v3 é uma plataforma web que facilita a gestão de processos de
 
 ## 🔧 Configuração e Instalação
 
-```bash
+\`\`\`bash
 # Clone o repositório
 git clone [url-do-repositorio]
 
@@ -67,18 +67,18 @@ cp .env.example .env.local
 
 # Execute o projeto em modo de desenvolvimento
 npm run dev
-```
+\`\`\`
 
 ### Variáveis de Ambiente Necessárias
 
-```env
+\`\`\`env
 NEXT_PUBLIC_SUPABASE_URL=sua_url_do_supabase
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
-```
+\`\`\`
 
 ## 📚 Estrutura do Projeto
 
-```
+\`\`\`
 compras-brasil-v3/
 ├── app/                    # Páginas e layouts (App Router)
 │   ├── dashboard/         # Área protegida do sistema
@@ -88,7 +88,7 @@ compras-brasil-v3/
 ├── lib/                 # Utilitários e configurações
 ├── middleware.ts        # Middleware de autenticação
 └── ...
-```
+\`\`\`
 
 ## 🔄 Melhorias Necessárias
 
