@@ -10,6 +10,9 @@ import { TenderClarifications } from "@/components/tender-clarifications"
 import { TenderImpugnations } from "@/components/tender-impugnations"
 import { TenderProposals } from "@/components/tender-proposals"
 import { Skeleton } from "@/components/ui/skeleton"
+import { TenderTeamManagement } from "@/components/tender-team-management"
+import { getAgencyUsers } from "@/app/dashboard/tenders/[id]/team-actions"
+import type { Profile } from "@/types" // Declare the Profile variable
 
 interface TenderDetailPageProps {
   params: {
@@ -25,16 +28,8 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
     data: { session },
   } = await supabase.auth.getSession()
 
-  // Get user profile if authenticated
-  let profile = null
-  if (session) {
-    const { data } = await supabase.from("profiles").select("*").eq("id", session.user.id).single()
-
-    profile = data
-  }
-
   // Get tender details
-  const { data: tender, error } = await supabase
+  const { data: tenderData, error } = await supabase
     .from("tenders")
     .select(`
       *,
@@ -47,8 +42,31 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
     .eq("id", params.id)
     .single()
 
-  if (error || !tender) {
+  if (error || !tenderData) {
     redirect("/dashboard/tenders")
+  }
+
+  const tender = tenderData // Assign tenderData to tender variable
+
+  let profile = null
+  if (session) {
+    const { data } = await supabase.from("profiles").select("*").eq("id", session.user.id).single()
+
+    profile = data
+  }
+
+  let agencyUsers: Profile[] = []
+  if (profile?.role === "agency" && profile.agency_id) {
+    const { users, error: usersFetchError } = await getAgencyUsers(profile.agency_id)
+    if (!usersFetchError) {
+      agencyUsers = users
+    }
+  } else if (profile?.role === "admin" && tender.agency_id) {
+    // Admins can see all agency users
+    const { users, error: usersFetchError } = await getAgencyUsers(tender.agency_id)
+    if (!usersFetchError) {
+      agencyUsers = users
+    }
   }
 
   const isAgencyUser = profile?.role === "agency"
@@ -80,6 +98,7 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
           <TabsTrigger value="clarifications">Esclarecimentos</TabsTrigger>
           <TabsTrigger value="impugnations">Impugnações</TabsTrigger>
           {showProposals && <TabsTrigger value="proposals">Propostas</TabsTrigger>}
+          {isAgencyUser && <TabsTrigger value="team">Equipe</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="details" className="space-y-6">
@@ -178,6 +197,17 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
           <TabsContent value="proposals">
             <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
               <TenderProposals tenderId={tender.id} lots={tender.lots || []} isAgencyUser={isAgencyUser} />
+            </Suspense>
+          </TabsContent>
+        )}
+        {isAgencyUser && (
+          <TabsContent value="team">
+            <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
+              <TenderTeamManagement
+                tender={tender}
+                agencyUsers={agencyUsers}
+                currentProfileId={session?.user.id || ""}
+              />
             </Suspense>
           </TabsContent>
         )}

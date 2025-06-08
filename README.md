@@ -4,7 +4,7 @@ Um sistema completo de gestão de compras públicas e fornecedores desenvolvido 
 
 ## 📋 Sobre o Projeto
 
-O Compras Brasil v3 é uma plataforma web que facilita a gestão de processos de compras públicas, conectando fornecedores e compradores através de uma interface moderna e intuitiva. O sistema permite o cadastro de fornecedores, gestão de produtos/serviços e acompanhamento de processos licitatórios.
+O Compras Brasil v3 é uma plataforma web que facilita a gestão de processos de compras públicas, conectando fornecedores e compradores através de uma interface moderna e intuitiva. O sistema permite o cadastro de fornecedores, gestão de produtos/serviços e acompanhamento de processos licitatórias.
 
 ## 🚀 Tecnologias Utilizadas
 
@@ -38,11 +38,13 @@ O Compras Brasil v3 é uma plataforma web que facilita a gestão de processos de
 - Cadastro de órgãos compradores
 - Gestão de informações institucionais
 - Relacionamento com processos de compra
+- **Gestão de Usuários do Órgão**: Administradores de órgão podem cadastrar e gerenciar usuários (membros da equipe) vinculados ao seu próprio órgão.
 
 ### 📄 Processos Licitatórios
 - Criação e gestão de processos de compra
 - Acompanhamento de status
 - Relacionamento entre órgãos e fornecedores
+- **Gestão do Time da Licitação**: Pregoeiros e administradores de órgão podem definir o pregoeiro responsável e os membros da equipe de apoio para cada licitação, selecionando entre os usuários cadastrados no órgão. As informações do pregoeiro e da equipe são exibidas no cabeçalho da licitação.
 
 ### 🎨 Interface do Usuário
 - Design responsivo e moderno
@@ -55,7 +57,7 @@ O Compras Brasil v3 é uma plataforma web que facilita a gestão de processos de
 - **Controle de Abertura de Propostas**: Pregoeiros podem "Abrir Propostas" para iniciar a fase de análise, tornando-as visíveis para todos os participantes.
 - **Classificação e Desclassificação**: Pregoeiros podem classificar e desclassificar propostas por lote/item, com justificativa obrigatória para desclassificação.
 - **Anonimização de Fornecedores**: Nomes de fornecedores são anonimizados (ex: FOR001) durante a fase de propostas e disputa para garantir o sigilo.
-- **Chat da Sessão**: Chat em tempo real com controle de habilitação/desabilitação pelo pregoeiro.
+- **Chat da Sessão**: Chat em tempo real com controle de habilitação/desabilitação pelo pregoeiro. Apenas pregoeiros e fornecedores podem interagir no chat; cidadãos têm acesso somente leitura.
 - **Visualização de Propostas**: Fornecedores e Cidadãos podem visualizar as propostas (anonimizadas) após a abertura pelo pregoeiro.
 
 ## 🔧 Configuração e Instalação
