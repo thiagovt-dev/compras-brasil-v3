@@ -1,7 +1,6 @@
 import { Suspense } from "react"
 import { redirect } from "next/navigation"
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+import { createServerClient } from "@/lib/supabase/server" // Refactored import
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TenderActions } from "@/components/tender-actions"
 import { TenderLots } from "@/components/tender-lots"
@@ -12,7 +11,7 @@ import { TenderProposals } from "@/components/tender-proposals"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TenderTeamManagement } from "@/components/tender-team-management"
 import { getAgencyUsers } from "@/app/dashboard/tenders/[id]/team-actions"
-import type { Profile } from "@/types" // Declare the Profile variable
+import type { Profile, Tender } from "@/types/supabase" // Imported Profile and Tender types
 
 interface TenderDetailPageProps {
   params: {
@@ -21,7 +20,7 @@ interface TenderDetailPageProps {
 }
 
 export default async function TenderDetailPage({ params }: TenderDetailPageProps) {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = createServerClient() // Refactored client initialization
 
   // Check if user is authenticated
   const {
@@ -46,9 +45,9 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
     redirect("/dashboard/tenders")
   }
 
-  const tender = tenderData // Assign tenderData to tender variable
+  const tender: Tender = tenderData // Explicitly type tender
 
-  let profile = null
+  let profile: Profile | null = null // Explicitly type profile
   if (session) {
     const { data } = await supabase.from("profiles").select("*").eq("id", session.user.id).single()
 
@@ -58,13 +57,15 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
   let agencyUsers: Profile[] = []
   if (profile?.role === "agency" && profile.agency_id) {
     const { users, error: usersFetchError } = await getAgencyUsers(profile.agency_id)
-    if (!usersFetchError) {
+    if (!usersFetchError && users) {
+      // Check if users is not null
       agencyUsers = users
     }
   } else if (profile?.role === "admin" && tender.agency_id) {
     // Admins can see all agency users
     const { users, error: usersFetchError } = await getAgencyUsers(tender.agency_id)
-    if (!usersFetchError) {
+    if (!usersFetchError && users) {
+      // Check if users is not null
       agencyUsers = users
     }
   }

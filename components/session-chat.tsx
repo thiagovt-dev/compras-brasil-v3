@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { createClientSupabaseClient } from "@/lib/supabase/client" // Using client-side singleton
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,26 +10,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { UserIcon } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import type { Database } from "@/types/supabase" // Assuming your Supabase database types
+import type { Profile, SessionMessage } from "@/types/supabase" // Imported Database, Profile, SessionMessage types
 
 interface SessionChatProps {
   canInteract: boolean // New prop to control interactivity
 }
 
-interface Message {
-  id: string
-  content: string
-  created_at: string
-  sender_id: string
+interface FormattedMessage extends SessionMessage {
   sender_name: string
   sender_role: string
 }
 
 export function SessionChat({ canInteract }: SessionChatProps) {
-  const supabase = createClientComponentClient<Database>()
-  const [messages, setMessages] = useState<Message[]>([])
+  const supabase = createClientSupabaseClient() // Using client-side singleton
+  const [messages, setMessages] = useState<FormattedMessage[]>([])
   const [newMessage, setNewMessage] = useState("")
-  const [userProfile, setUserProfile] = useState<any>(null)
+  const [userProfile, setUserProfile] = useState<Profile | null>(null) // Explicitly type userProfile
   const scrollAreaRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -60,11 +56,13 @@ export function SessionChat({ canInteract }: SessionChatProps) {
         setMessages(
           data.map((msg) => ({
             id: msg.id,
-            content: msg.content,
+            content: msg.content || "", // Ensure content is not null
             created_at: msg.created_at,
-            sender_id: msg.sender_id,
+            sender_id: msg.sender_id || "", // Ensure sender_id is not null
             sender_name: msg.profiles?.full_name || "Usuário Desconhecido",
             sender_role: msg.profiles?.role || "unknown",
+            tender_id: msg.tender_id || "", // Add tender_id
+            type: msg.type || "chat", // Add type
           })),
         )
       }
@@ -75,17 +73,26 @@ export function SessionChat({ canInteract }: SessionChatProps) {
 
     const channel = supabase
       .channel("session_chat")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "session_messages" }, (payload) => {
-        const newMsg = payload.new as any
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "session_messages" }, async (payload) => {
+        const newMsg = payload.new as SessionMessage // Type the new message
+        // Fetch profile data for the new message sender if not already available
+        const { data: senderProfile } = await supabase
+          .from("profiles")
+          .select("full_name, role")
+          .eq("id", newMsg.sender_id)
+          .single()
+
         setMessages((prev) => [
           ...prev,
           {
             id: newMsg.id,
-            content: newMsg.content,
+            content: newMsg.content || "",
             created_at: newMsg.created_at,
-            sender_id: newMsg.sender_id,
-            sender_name: newMsg.profiles?.full_name || "Usuário Desconhecido", // This might not be available directly on payload.new
-            sender_role: newMsg.profiles?.role || "unknown",
+            sender_id: newMsg.sender_id || "",
+            sender_name: senderProfile?.full_name || "Usuário Desconhecido",
+            sender_role: senderProfile?.role || "unknown",
+            tender_id: newMsg.tender_id || "",
+            type: newMsg.type || "chat",
           },
         ])
         scrollToBottom()
@@ -116,6 +123,8 @@ export function SessionChat({ canInteract }: SessionChatProps) {
     const { error } = await supabase.from("session_messages").insert({
       content: newMessage,
       sender_id: userProfile.id,
+      // tender_id needs to be passed from props or context if this chat is specific to a tender
+      // For now, assuming it's handled elsewhere or not strictly required for this component's insert
     })
 
     if (error) {

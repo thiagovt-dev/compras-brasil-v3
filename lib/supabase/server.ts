@@ -1,9 +1,12 @@
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
+import type { Database } from "@/types/supabase" // Import the Database type
+import type { Tables } from "@/types/supabase" // Declare the Tables variable
 
 export function createServerClient() {
   const cookieStore = cookies()
-  return createServerComponentClient(
+  return createServerComponentClient<Database>(
+    // Apply Database type here
     {
       cookies: () => cookieStore,
     },
@@ -16,7 +19,8 @@ export function createServerClient() {
 
 export function createServerClientWithAuth() {
   const cookieStore = cookies()
-  return createServerComponentClient(
+  return createServerComponentClient<Database>(
+    // Apply Database type here
     { cookies: () => cookieStore },
     {
       supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,7 +31,7 @@ export function createServerClientWithAuth() {
 
 // Add these new functions for fetching live sessions
 export async function getLiveSessionsForAgency(agencyId: string | null) {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = createServerClient() // Refactored client initialization
 
   if (!agencyId) {
     return { data: [], error: null }
@@ -40,13 +44,13 @@ export async function getLiveSessionsForAgency(agencyId: string | null) {
     .select("*")
     .eq("agency_id", agencyId)
     .in("status", ["active", "in_progress", "live"]) // Adjust statuses as per your application
-    .order("start_date", { ascending: false })
+    .order("opening_date", { ascending: false }) // Changed to opening_date as start_date might not exist
 
   return { data, error }
 }
 
 export async function getLiveSessionsForSupplier(userId: string) {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = createServerClient() // Refactored client initialization
 
   // Fetch tenders where the supplier (user) is a participant and status is 'active' or 'in_progress'
   // This assumes you have a way to link users to tender participations.
@@ -62,11 +66,11 @@ export async function getLiveSessionsForSupplier(userId: string) {
     .select("tenders(*)") // Select all columns from the joined tenders table
     .eq("user_id", userId)
     .in("tenders.status", ["active", "in_progress", "live"]) // Adjust statuses as per your application
-    .order("tenders.start_date", { ascending: false })
+    .order("tenders.opening_date", { ascending: false }) // Changed to opening_date
 
   // The data will be an array of objects like { tenders: { ...tender_data } }
   // We need to map it to get just the tender objects.
-  const tenders = data?.map((item) => item.tenders) || []
+  const tenders = (data?.map((item) => item.tenders).filter(Boolean) as Tables<"tenders">[]) || [] // Filter out nulls and cast
 
   return { data: tenders, error }
 }
