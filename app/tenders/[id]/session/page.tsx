@@ -1,5 +1,6 @@
 import { Suspense } from "react"
-import { createServerClient } from "@/lib/supabase/server" // Refactored import
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
 import { SessionChat } from "@/components/session-chat"
 import { TenderSessionInfo } from "@/components/tender-session-info"
 import { TenderSessionParticipants } from "@/components/tender-session-participants"
@@ -8,22 +9,20 @@ import { TenderHeader } from "@/components/tender-header"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import type { Profile, Tender } from "@/types/supabase" // Imported Profile and Tender types
 
 export default async function TenderSessionPage({ params }: { params: { id: string } }) {
-  const supabase = createServerClient() // Refactored client initialization
+  const supabase = createServerComponentClient({ cookies })
 
   // Buscar informações da licitação
-  const { data: tenderData, error: tenderError } = await supabase
+  const { data: tender } = await supabase
     .from("tenders")
     .select(
       `
       id,
       title,
-      tender_number,
+      number,
       status,
       opening_date,
-      pregoeiro_id,
       agencies!inner (
         name
       )
@@ -32,25 +31,33 @@ export default async function TenderSessionPage({ params }: { params: { id: stri
     .eq("id", params.id)
     .single()
 
-  if (tenderError || !tenderData) {
-    // Handle error or not found tender, maybe redirect or show a message
-    console.error("Error fetching tender for session:", tenderError)
-    // For now, return null or a basic error page
-    return <div>Erro ao carregar sessão da licitação.</div>
-  }
-
-  const tender: Tender = tenderData // Explicitly type tender
-
   const {
     data: { session },
   } = await supabase.auth.getSession()
-  let profile: Profile | null = null // Explicitly type profile
+  let profile = null
   if (session) {
     const { data } = await supabase.from("profiles").select("*").eq("id", session.user.id).single()
     profile = data
   }
 
-  const isPregoeiro = session?.user.id === tender.pregoeiro_id
+  // Buscar informações do pregoeiro da licitação
+  const { data: tenderWithPregoeiro } = await supabase
+    .from("tenders")
+    .select(`
+          id,
+          title,
+          number,
+          status,
+          opening_date,
+          pregoeiro_id,
+          agencies!inner (
+            name
+          )
+        `)
+    .eq("id", params.id)
+    .single()
+
+  const isPregoeiro = session?.user.id === tenderWithPregoeiro?.pregoeiro_id
   const isSupplier = profile?.role === "supplier"
   const isCitizen = profile?.role === "citizen"
 
@@ -58,14 +65,14 @@ export default async function TenderSessionPage({ params }: { params: { id: stri
   const canInteractInChat = isPregoeiro || isSupplier
 
   // Verificar se a sessão está ativa
-  const isSessionActive = tender.status === "active" || tender.status === "in_progress"
+  const isSessionActive = tender?.status === "active" || tender?.status === "in_progress"
 
   return (
     <div className="container mx-auto py-6 space-y-6">
       <TenderHeader
-        title={tender.title || "Sessão Pública"}
-        number={tender.tender_number || ""}
-        agency={tender.agencies?.name || ""}
+        title={tenderWithPregoeiro?.title || "Sessão Pública"}
+        number={tenderWithPregoeiro?.number || ""}
+        agency={tenderWithPregoeiro?.agencies?.name || ""}
         id={params.id}
       />
 
@@ -89,7 +96,7 @@ export default async function TenderSessionPage({ params }: { params: { id: stri
                 <div className="mt-4 p-4 bg-muted rounded-md">
                   <p className="text-[1rem] text-muted-foreground">
                     A sessão pública será iniciada em{" "}
-                    {tender.opening_date
+                    {tender?.opening_date
                       ? new Date(tender.opening_date).toLocaleString("pt-BR")
                       : "data a ser definida"}
                     .

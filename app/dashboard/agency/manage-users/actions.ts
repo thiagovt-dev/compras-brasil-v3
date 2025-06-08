@@ -1,12 +1,12 @@
 "use server"
 
-import { createServerClient } from "@/lib/supabase/server" // Refactored import
+import { createServerActionClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import type { Profile } from "@/types/supabase" // Imported Profile type
 
 export async function getAgencyUsers(agencyId: string) {
-  const supabase = createServerClient() // Refactored client initialization
+  const supabase = createServerActionClient({ cookies })
 
   const {
     data: { session },
@@ -41,11 +41,11 @@ export async function getAgencyUsers(agencyId: string) {
     return { users: null, error: error.message }
   }
 
-  return { users: users as Profile[], error: null } // Cast to Profile[]
+  return { users: users as any[], error: null } // Cast to any[]
 }
 
 export async function createUser(formData: FormData) {
-  const supabase = createServerClient() // Refactored client initialization
+  const supabase = createServerActionClient({ cookies })
 
   const {
     data: { session },
@@ -111,7 +111,7 @@ export async function createUser(formData: FormData) {
 }
 
 export async function updateUser(formData: FormData) {
-  const supabase = createServerClient() // Refactored client initialization
+  const supabase = createServerActionClient({ cookies })
 
   const {
     data: { session },
@@ -162,7 +162,7 @@ export async function updateUser(formData: FormData) {
 }
 
 export async function deleteUser(userId: string) {
-  const supabase = createServerClient() // Refactored client initialization
+  const supabase = createServerActionClient({ cookies })
 
   const {
     data: { session },

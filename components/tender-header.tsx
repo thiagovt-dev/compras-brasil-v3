@@ -1,9 +1,10 @@
-import { createServerClient } from "@/lib/supabase/server" // Refactored import
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { UserIcon } from "lucide-react"
+import { UserIcon } from "lucide-react" // Assuming Lucide React is available
 
 interface TenderHeaderProps {
   title: string
@@ -13,7 +14,7 @@ interface TenderHeaderProps {
 }
 
 export async function TenderHeader({ title, number, agency, id }: TenderHeaderProps) {
-  const supabase = createServerClient() // Refactored client initialization
+  const supabase = createServerComponentClient({ cookies })
 
   // Fetch tender details including pregoeiro_id and team_members
   const { data: tenderDetails, error: tenderError } = await supabase

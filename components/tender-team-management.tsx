@@ -4,11 +4,11 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { MultiSelect } from "@/components/ui/multi-select" // Assuming you have a MultiSelect component
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { updateTenderTeam } from "@/app/dashboard/tenders/[id]/team-actions"
-import { MultiSelect } from "@/components/ui/multi-select"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { Profile, Tender } from "@/types/supabase" // Imported Profile and Tender types
+import type { Profile, Tender } from "@/types/supabase" // Assuming these types exist
 
 interface TenderTeamManagementProps {
   tender: Tender
