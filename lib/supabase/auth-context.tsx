@@ -1,88 +1,81 @@
-"use client";
+"use client"
 
-import type React from "react";
-import { createContext, useContext, useEffect, useState } from "react";
-import type { User, Session } from "@supabase/supabase-js";
-import { useRouter } from "next/navigation";
-import { getSupabaseClient } from "./client-singleton";
-import { createClientSupabaseClient } from "./client";
-import { getSession } from "@/lib/supabase/auth-utils";
-
+import type React from "react"
+import { createContext, useContext, useEffect, useState } from "react"
+import type { User, Session } from "@supabase/supabase-js"
+import { useRouter } from "next/navigation"
+import { createClientSupabaseClient } from "./client"
+import { getSession } from "@/lib/supabase/auth-utils"
 
 type AuthContextType = {
-  user: User | null;
-  session: Session | null;
-  profile: any | null;
-  isLoading: boolean;
-  signUp: (email: string, password: string, userData: any) => Promise<any>;
-  signIn: (email: string, password: string) => Promise<any>;
-  signInWithEmailOrDocument: (
-    emailOrDocument: string,
-    password: string,
-    inputType: string
-  ) => Promise<any>;
-  signOut: () => Promise<void>;
-};
+  user: User | null
+  session: Session | null
+  profile: any | null
+  isLoading: boolean
+  signUp: (email: string, password: string, userData: any) => Promise<any>
+  signIn: (email: string, password: string) => Promise<any>
+  signInWithEmailOrDocument: (emailOrDocument: string, password: string, inputType: string) => Promise<any>
+  signOut: () => Promise<void>
+}
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const supabase = createClientSupabaseClient();
-  const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<any | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const supabase = createClientSupabaseClient()
+  const router = useRouter()
+  const [user, setUser] = useState<User | null>(null)
+  const [session, setSession] = useState<Session | null>(null)
+  const [profile, setProfile] = useState<any | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const getInitialSession = async () => {
-      setIsLoading(true);
+      setIsLoading(true)
       try {
-        const session = await getSession();;
-        setSession(session);
-        setUser(session?.user ?? null);
+        const session = await getSession()
+        setSession(session)
+        setUser(session?.user ?? null)
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          await fetchProfile(session.user.id)
         }
       } catch (error) {
-        console.error("Error getting initial session:", error);
+        console.error("Error getting initial session:", error)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
-    getInitialSession();
+    getInitialSession()
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+      setSession(session)
+      setUser(session?.user ?? null)
       if (session?.user) {
-        await fetchProfile(session.user.id);
+        await fetchProfile(session.user.id)
       } else {
-        setProfile(null);
+        setProfile(null)
       }
-      setIsLoading(false);
-    });
+      setIsLoading(false)
+    })
 
-    return () => subscription.unsubscribe();
-  }, [supabase]);
+    return () => subscription.unsubscribe()
+  }, [supabase])
 
   const fetchProfile = async (userId: string) => {
-
     try {
-      const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
+      const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
 
       if (error) {
-        console.error("Error fetching profile:", error);
+        console.error("Error fetching profile:", error)
       } else {
-        setProfile(data);
+        setProfile(data)
       }
     } catch (error) {
-      console.error("Error fetching profile:", error);
+      console.error("Error fetching profile:", error)
     }
-  };
+  }
 
   const signUp = async (email: string, password: string, userData: any) => {
     try {
@@ -98,10 +91,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           },
           emailRedirectTo: `${window.location.origin}/api/auth`,
         },
-      });
+      })
 
       if (error) {
-        throw error;
+        throw error
       }
 
       if (data.user) {
@@ -115,109 +108,121 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             userId: data.user.id,
             userData: userData,
           }),
-        });
+        })
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Failed to create profile");
+          const errorData = await response.json()
+          throw new Error(errorData.message || "Failed to create profile")
         }
       }
 
-      return data;
+      return data
     } catch (error) {
-      console.error("Error signing up:", error);
-      throw error;
+      console.error("Error signing up:", error)
+      throw error
     }
-  };
+  }
 
   const signIn = async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
-      });
+      })
 
       if (error) {
-        throw error;
+        throw error
       }
 
-      return data;
-    } catch (error) {
-      console.error("Error signing in:", error);
-      throw error;
-    }
-  };
+      // Fetch profile after sign in
+      if (data.user) {
+        await fetchProfile(data.user.id)
+      }
 
-  const signInWithEmailOrDocument = async (
-    emailOrDocument: string,
-    password: string,
-    inputType: string
-  ) => {
+      // Redirect based on profile type and agency_id/supplier_id
+      if (profile) {
+        if (profile.profile_type === "agency" && profile.agency_id) {
+          router.push("/dashboard/agency")
+        } else if (profile.profile_type === "supplier" && profile.supplier_id) {
+          router.push("/dashboard/supplier")
+        } else {
+          router.push("/dashboard/citizen")
+        }
+      }
+
+      return data
+    } catch (error) {
+      console.error("Error signing in:", error)
+      throw error
+    }
+  }
+
+  const signInWithEmailOrDocument = async (emailOrDocument: string, password: string, inputType: string) => {
     try {
-      let email = emailOrDocument;
+      let email = emailOrDocument
 
       // Se não é email, buscar o email pelo documento
       if (inputType !== "email") {
-        const documentField = inputType === "cpf" ? "cpf" : "cnpj";
-        const cleanDocument = emailOrDocument.replace(/[^\d]/g, "");
+        const documentField = inputType === "cpf" ? "cpf" : "cnpj"
+        const cleanDocument = emailOrDocument.replace(/[^\d]/g, "")
 
-        console.log(`Buscando email para ${documentField}:`, cleanDocument);
+        console.log(`Buscando email para ${documentField}:`, cleanDocument)
 
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("email")
           .eq(documentField, cleanDocument)
-          .single();
+          .single()
 
         if (profileError) {
-          console.error("Erro ao buscar perfil:", profileError);
-          throw new Error("Documento não encontrado. Verifique se está cadastrado.");
+          console.error("Erro ao buscar perfil:", profileError)
+          throw new Error("Documento não encontrado. Verifique se está cadastrado.")
         }
 
         if (!profile || !profile.email) {
-          throw new Error("Email não encontrado para este documento.");
+          throw new Error("Email não encontrado para este documento.")
         }
 
-        email = profile.email;
-        console.log("Email encontrado:", email);
+        email = profile.email
+        console.log("Email encontrado:", email)
       }
 
       // Fazer login com o email encontrado
-      console.log("Tentando login com email:", email);
+      console.log("Tentando login com email:", email)
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
-      });
+      })
 
       if (error) {
-        console.error("Erro no login:", error);
-        throw error;
+        console.error("Erro no login:", error)
+        throw error
       }
 
-      return data;
+      return data
     } catch (error) {
-      console.error("Error signing in with email or document:", error);
-      throw error;
+      console.error("Error signing in with email or document:", error)
+      throw error
     }
-  };
+  }
   const signOut = async () => {
     try {
-      console.log("Signing out user:", user?.id);
+      console.log("Signing out user:", user?.id)
 
       document.cookie.split(";").forEach((cookie) => {
-        const eqPos = cookie.indexOf("=");
-        const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${window.location.pathname}`;
-      });
+        const eqPos = cookie.indexOf("=")
+        const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim()
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${window.location.pathname}`
+      })
 
-      localStorage.removeItem("sb-jfbuistvgwkfpnujygwx-auth-token");
+      localStorage.removeItem("sb-jfbuistvgwkfpnujygwx-auth-token")
 
-      window.location.href = "/login";
+      window.location.href = "/login"
     } catch (error) {
-      console.error("Error signing out:", error);
+      console.error("Error signing out:", error)
     }
-  };
+  }
 
   const value = {
     user,
@@ -228,15 +233,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signInWithEmailOrDocument,
     signOut,
-  };
+  }
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const context = useContext(AuthContext)
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error("useAuth must be used within an AuthProvider")
   }
-  return context;
+  return context
 }
