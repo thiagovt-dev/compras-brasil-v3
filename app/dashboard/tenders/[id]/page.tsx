@@ -1,78 +1,48 @@
-import { redirect } from "next/navigation";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
-import TenderDetails from "@/components/tender-details";
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
-interface TenderDetailPageProps {
+interface Tender {
+  id: string
+  status: string
+  // Add other properties as needed
+}
+
+interface Props {
   params: {
-    id: string;
-  };
+    id: string
+  }
+  searchParams: {
+    [key: string]: string | string[] | undefined
+  }
 }
 
-export default async function TenderDetailPage({ params }: TenderDetailPageProps) {
-  const supabase = createServerComponentClient({ cookies });
+const TenderDetailPage = async ({ params, searchParams }: Props) => {
+  const tenderId = params.id
 
-  // Check if user is authenticated
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  // Get user profile if authenticated
-  let profile = null;
-  if (session) {
-    const { data } = await supabase.from("profiles").select("*").eq("id", session.user.id).single();
-
-    profile = data;
+  // Mock tender data (replace with actual data fetching)
+  const tender: Tender = {
+    id: tenderId,
+    status: "active", // Or "inactive", "completed", etc.
   }
 
-  // Get tender details
-  const { data: tender, error } = await supabase
-    .from("tenders")
-    .select(
-      `
-      *,
-      agency:agencies(*),
-      lots:tender_lots(
-        *,
-        items:tender_items(*)
-      )
-    `
-    )
-    .eq("id", params.id)
-    .single();
-
-  if (error || !tender) {
-    redirect("/dashboard/tenders");
-  }
-
-  const { data: tenderTeam } = await supabase
-    .from("tender_team")
-    .select("user_id, role")
-    .eq("tender_id", params.id);
-
-  // Check if current user is auctioneer
-  const isAuctioneer = tenderTeam?.some(
-    (member) =>
-      member.user_id === session?.user.id &&
-      (member.role === "auctioneer" || member.role === "contracting_agent")
-  );
-
-  const isAgencyUser = profile?.role === "agency";
-  const isSupplierUser = profile?.role === "supplier";
-  const isAdminUser = profile?.role === "admin";
-
-  // Check if user is the owner of the tender
-  const isOwner = session?.user.id === tender.created_by;
-
-  // Determine if proposals tab should be shown
-  const showProposals = (isAgencyUser && isOwner) || isAdminUser;
   return (
-    <TenderDetails
-      tender={tender}
-      isAgencyUser={isAgencyUser}
-      showProposals={showProposals}
-      isAuctioneer={isAuctioneer as boolean}
-      isAdmin={isAdminUser}
-    />
-  );
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Tender Details</h1>
+      <p>Tender ID: {tender.id}</p>
+      <p>Status: {tender.status}</p>
+
+      {/* Link para Sala de Disputa */}
+      {tender.status === "active" && (
+        <div className="mt-6">
+          <Link href={`/tenders/${tender.id}/session/dispute`}>
+            <Button className="w-full" size="lg">
+              Acessar Sala de Disputa
+            </Button>
+          </Link>
+        </div>
+      )}
+    </div>
+  )
 }
+
+export default TenderDetailPage
