@@ -28,25 +28,35 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Função para redirecionar baseado no perfil
-  const redirectToDashboard = (profileType: string) => {
-    const dashboardRoutes = {
-      citizen: "/dashboard/citizen",
-      supplier: "/dashboard/supplier",
-      agency: "/dashboard/agency",
-      admin: "/dashboard/admin",
-      support: "/dashboard/support",
-      registration: "/dashboard/registration",
-    };
+  const redirectToDashboard = (profile: any) => {
+    let route = "/dashboard/citizen"; // default
 
-    const route =
-      dashboardRoutes[profileType as keyof typeof dashboardRoutes] || "/dashboard/citizen";
+    if (profile?.agency_id) {
+      route = "/dashboard/agency";
+    } else if (profile?.supplier_id) {
+      route = "/dashboard/supplier";
+    } else {
+      const dashboardRoutes = {
+        citizen: "/dashboard/citizen",
+        supplier: "/dashboard/supplier",
+        agency: "/dashboard/agency",
+        admin: "/dashboard/admin",
+        support: "/dashboard/support",
+        registration: "/dashboard/registration",
+      };
+      route =
+        dashboardRoutes[profile?.profile_type as keyof typeof dashboardRoutes] ||
+        "/dashboard/citizen";
+    }
+
+    console.log(`🔄 Redirecionando para: ${route}`);
     router.replace(route);
   };
 
   // Redirecionar se já estiver logado
   useEffect(() => {
     if (!isLoading && session && profile) {
-      redirectToDashboard(profile.profile_type);
+      redirectToDashboard(profile);
     }
   }, [session, profile, isLoading]);
 
@@ -82,15 +92,15 @@ export default function LoginPage() {
         // Fetch user profile to determine dashboard
         const { data: profile } = await supabase
           .from("profiles")
-          .select("profile_type")
+          .select("profile_type, agency_id, supplier_id")
           .eq("id", user.id)
           .single();
 
         // Redirect to appropriate dashboard based on user role
-        if (profile && profile.profile_type) {
-          redirectToDashboard(profile.profile_type);
+        if (profile) {
+          redirectToDashboard(profile);
         } else {
-          redirectToDashboard("citizen"); // Default dashboard
+          redirectToDashboard({ profile_type: "citizen" }); // Default dashboard
         }
       }
     } catch (error: any) {
