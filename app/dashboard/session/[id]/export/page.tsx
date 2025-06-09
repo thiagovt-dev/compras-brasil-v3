@@ -124,7 +124,7 @@ export default function ExportSessionPage() {
             profiles (
               id,
               company_name,
-              full_name
+              name
             )
           `
           )
@@ -422,7 +422,7 @@ export default function ExportSessionPage() {
                                       <tr key={index}>
                                         <td className="px-4 py-2">
                                           {participant.profiles?.company_name ||
-                                            participant.profiles?.full_name ||
+                                            participant.profiles?.name ||
                                             "Participante"}
                                         </td>
                                         <td className="px-4 py-2">
@@ -579,7 +579,7 @@ export default function ExportSessionPage() {
                               <tr key={index}>
                                 <td className="px-4 py-2">
                                   {participant.profiles?.company_name ||
-                                    participant.profiles?.full_name ||
+                                    participant.profiles?.name ||
                                     "Participante"}
                                 </td>
                                 <td className="px-4 py-2">

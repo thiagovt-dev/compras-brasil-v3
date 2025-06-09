@@ -1,36 +1,43 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
-import { createServerClient } from "@/lib/supabase/server"
-import { createNotification } from "@/lib/utils/notifications"
+import { type NextRequest, NextResponse } from "next/server";
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import { createServerClient } from "@/lib/supabase/server";
+import { createNotification } from "@/lib/utils/notifications";
 
-export async function POST(request: NextRequest, { params }: { params: { id: string; impugnationId: string } }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string; impugnationId: string } }
+) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
-    const serverClient = createServerClient()
+    const supabase = createRouteHandlerClient({ cookies });
+    const serverClient = createServerClient();
 
     // Verificar autenticação
     const {
       data: { session },
-    } = await supabase.auth.getSession()
+    } = await supabase.auth.getSession();
     if (!session) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     // Verificar se o usuário é pregoeiro ou autoridade superior
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", session.user.id).single()
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("profile_type")
+      .eq("id", session.user.id)
+      .single();
 
-    if (!profile || (profile.role !== "agency" && profile.role !== "admin")) {
+    if (!profile || (profile.profile_type !== "agency" && profile.profile_type !== "admin")) {
       return NextResponse.json(
         { error: "Apenas pregoeiros e autoridades superiores podem responder impugnações" },
-        { status: 403 },
-      )
+        { status: 403 }
+      );
     }
 
-    const { response } = await request.json()
+    const { response } = await request.json();
 
     if (!response || response.trim() === "") {
-      return NextResponse.json({ error: "A resposta é obrigatória" }, { status: 400 })
+      return NextResponse.json({ error: "A resposta é obrigatória" }, { status: 400 });
     }
 
     // Verificar se a impugnação existe
@@ -39,10 +46,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       .select("id, user_id, tender_id")
       .eq("id", params.impugnationId)
       .eq("tender_id", params.id)
-      .single()
+      .single();
 
     if (impugnationError || !impugnation) {
-      return NextResponse.json({ error: "Impugnação não encontrada" }, { status: 404 })
+      return NextResponse.json({ error: "Impugnação não encontrada" }, { status: 404 });
     }
 
     // Atualizar a impugnação com a resposta
@@ -56,15 +63,19 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       })
       .eq("id", params.impugnationId)
       .select()
-      .single()
+      .single();
 
     if (error) {
-      console.error("Erro ao responder impugnação:", error)
-      return NextResponse.json({ error: "Erro ao responder impugnação" }, { status: 500 })
+      console.error("Erro ao responder impugnação:", error);
+      return NextResponse.json({ error: "Erro ao responder impugnação" }, { status: 500 });
     }
 
     // Buscar informações da licitação
-    const { data: tender } = await supabase.from("tenders").select("title").eq("id", params.id).single()
+    const { data: tender } = await supabase
+      .from("tenders")
+      .select("title")
+      .eq("id", params.id)
+      .single();
 
     // Notificar o usuário que fez a impugnação
     await createNotification({
@@ -74,18 +85,18 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       type: "tender",
       entityId: params.id,
       entityType: "tender",
-    })
+    });
 
     // Buscar fornecedores que cadastraram proposta
     const { data: suppliers } = await supabase
       .from("proposals")
       .select("supplier_id")
       .eq("tender_id", params.id)
-      .is("deleted_at", null)
+      .is("deleted_at", null);
 
     // Notificar fornecedores que cadastraram proposta
     if (suppliers && suppliers.length > 0) {
-      const uniqueSuppliers = [...new Set(suppliers.map((s) => s.supplier_id))]
+      const uniqueSuppliers = [...new Set(suppliers.map((s) => s.supplier_id))];
 
       for (const supplierId of uniqueSuppliers) {
         if (supplierId !== impugnation.user_id) {
@@ -97,7 +108,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
             type: "tender",
             entityId: params.id,
             entityType: "tender",
-          })
+          });
         }
       }
     }
@@ -108,11 +119,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       user_id: null, // Mensagem do sistema
       content: `Uma impugnação foi respondida. Verifique a aba de impugnações para mais detalhes.`,
       type: "system",
-    })
+    });
 
-    return NextResponse.json({ success: true, data })
+    return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error("Erro ao responder impugnação:", error)
-    return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })
+    console.error("Erro ao responder impugnação:", error);
+    return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
   }
 }

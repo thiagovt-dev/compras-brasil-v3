@@ -33,7 +33,7 @@ export default async function ProposalDetailPage({ params }: ProposalDetailPageP
     .eq("id", session.user.id)
     .single();
 
-  if (!profile || profile.role !== "supplier") {
+  if (!profile || profile.profile_type !== "supplier") {
     redirect("/dashboard");
   }
 

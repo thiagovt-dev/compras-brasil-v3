@@ -1,25 +1,29 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
-import { BrasilApiService } from "@/lib/services/brasil-api"
+import { type NextRequest, NextResponse } from "next/server";
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import { BrasilApiService } from "@/lib/services/brasil-api";
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = createRouteHandlerClient({ cookies });
 
     // Verifica autenticação
     const {
       data: { session },
-    } = await supabase.auth.getSession()
+    } = await supabase.auth.getSession();
     if (!session) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     // Verifica permissões (apenas administradores e agências podem acessar)
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", session.user.id).single()
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("profile_type")
+      .eq("id", session.user.id)
+      .single();
 
-    if (!profile || (profile.role !== "admin" && profile.role !== "agency")) {
-      return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
+    if (!profile || (profile.profile_type !== "admin" && profile.profile_type !== "agency")) {
+      return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
     // Obtém configurações da integração
@@ -27,54 +31,61 @@ export async function GET(request: NextRequest) {
       .from("integration_configs")
       .select("*")
       .eq("integration", "brasil")
-      .single()
+      .single();
 
     if (configError && configError.code !== "PGRST116") {
-      throw configError
+      throw configError;
     }
 
     // Obtém histórico de sincronização
     const brasilApi = new BrasilApiService({
       apiKey: config?.api_key || "",
-    })
+    });
 
-    const syncHistory = await brasilApi.getSyncHistory()
+    const syncHistory = await brasilApi.getSyncHistory();
 
     return NextResponse.json({
       config: config || { integration: "brasil", enabled: false },
       syncHistory,
-    })
+    });
   } catch (error: any) {
-    console.error("Erro ao obter configurações da integração +Brasil:", error)
-    return NextResponse.json({ error: error.message || "Erro interno do servidor" }, { status: 500 })
+    console.error("Erro ao obter configurações da integração +Brasil:", error);
+    return NextResponse.json(
+      { error: error.message || "Erro interno do servidor" },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = createRouteHandlerClient({ cookies });
 
     // Verifica autenticação
     const {
       data: { session },
-    } = await supabase.auth.getSession()
+    } = await supabase.auth.getSession();
     if (!session) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     // Verifica permissões (apenas administradores e agências podem modificar)
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", session.user.id).single()
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("profile_type")
+      .eq("id", session.user.id)
+      .single();
 
-    if (!profile || (profile.role !== "admin" && profile.role !== "agency")) {
-      return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
+    if (!profile || (profile.profile_type !== "admin" && profile.profile_type !== "agency")) {
+      return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
     // Obtém dados da requisição
-    const body = await request.json()
+    const body = await request.json();
 
     // Valida dados
     if (!body.config) {
-      return NextResponse.json({ error: "Configuração inválida" }, { status: 400 })
+      return NextResponse.json({ error: "Configuração inválida" }, { status: 400 });
     }
 
     // Salva configurações
@@ -90,16 +101,19 @@ export async function POST(request: NextRequest) {
       notify_changes: body.config.notify_changes,
       updated_at: new Date().toISOString(),
       updated_by: session.user.id,
-    })
+    });
 
-    if (upsertError) throw upsertError
+    if (upsertError) throw upsertError;
 
     return NextResponse.json({
       success: true,
       message: "Configurações salvas com sucesso",
-    })
+    });
   } catch (error: any) {
-    console.error("Erro ao salvar configurações da integração +Brasil:", error)
-    return NextResponse.json({ error: error.message || "Erro interno do servidor" }, { status: 500 })
+    console.error("Erro ao salvar configurações da integração +Brasil:", error);
+    return NextResponse.json(
+      { error: error.message || "Erro interno do servidor" },
+      { status: 500 }
+    );
   }
 }

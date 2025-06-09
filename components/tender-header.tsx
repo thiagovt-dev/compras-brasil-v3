@@ -1,44 +1,46 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { UserIcon } from "lucide-react" // Assuming Lucide React is available
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { UserIcon } from "lucide-react"; // Assuming Lucide React is available
 
 interface TenderHeaderProps {
-  title: string
-  number: string
-  agency: string
-  id: string
+  title: string;
+  number: string;
+  agency: string;
+  id: string;
 }
 
 export async function TenderHeader({ title, number, agency, id }: TenderHeaderProps) {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = createServerComponentClient({ cookies });
 
   // Fetch tender details including pregoeiro_id and team_members
   const { data: tenderDetails, error: tenderError } = await supabase
     .from("tenders")
-    .select(`
+    .select(
+      `
       pregoeiro_id,
       team_members
-    `)
+    `
+    )
     .eq("id", id)
-    .single()
+    .single();
 
-  let pregoeiroName: string | null = null
-  let teamMemberNames: string[] = []
+  let pregoeiroName: string | null = null;
+  let teamMemberNames: string[] = [];
 
   if (tenderDetails) {
     // Fetch pregoeiro's name
     if (tenderDetails.pregoeiro_id) {
       const { data: pregoeiroProfile, error: pregoeiroError } = await supabase
         .from("profiles")
-        .select("full_name")
+        .select("name")
         .eq("id", tenderDetails.pregoeiro_id)
-        .single()
+        .single();
       if (pregoeiroProfile) {
-        pregoeiroName = pregoeiroProfile.full_name
+        pregoeiroName = pregoeiroProfile.name;
       }
     }
 
@@ -46,10 +48,10 @@ export async function TenderHeader({ title, number, agency, id }: TenderHeaderPr
     if (tenderDetails.team_members && tenderDetails.team_members.length > 0) {
       const { data: teamProfiles, error: teamError } = await supabase
         .from("profiles")
-        .select("full_name")
-        .in("id", tenderDetails.team_members)
+        .select("name")
+        .in("id", tenderDetails.team_members);
       if (teamProfiles) {
-        teamMemberNames = teamProfiles.map((p) => p.full_name).filter(Boolean) as string[]
+        teamMemberNames = teamProfiles.map((p) => p.name).filter(Boolean) as string[];
       }
     }
   }
@@ -100,5 +102,5 @@ export async function TenderHeader({ title, number, agency, id }: TenderHeaderPr
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

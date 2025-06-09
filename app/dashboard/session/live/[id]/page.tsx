@@ -67,12 +67,12 @@ export default function LiveSessionPage() {
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("role")
+          .select("profile_type")
           .eq("id", user.id)
           .single();
 
         if (profile) {
-          setUserRole(profile.role);
+          setUserRole(profile.profile_type);
         }
       }
 

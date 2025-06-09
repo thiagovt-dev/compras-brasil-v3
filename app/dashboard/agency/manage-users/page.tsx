@@ -1,15 +1,22 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { DashboardHeader } from "@/components/dashboard-header"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { getSupabaseClient } from "@/lib/supabase/client-singleton"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { PlusCircle, Edit, Trash2 } from "lucide-react"
+import { DashboardHeader } from "@/components/dashboard-header";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { getSupabaseClient } from "@/lib/supabase/client-singleton";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { PlusCircle, Edit, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,35 +24,41 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { toast } from "sonner" // Assumindo que você tem sonner instalado
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner"; // Assumindo que você tem sonner instalado
 
 interface UserProfile {
-  id: string
-  full_name: string
-  email: string
-  profile_type: string
+  id: string;
+  name: string;
+  email: string;
+  profile_type: string;
 }
 
 interface Profile {
-  profile_type: string
-  agency_id: string
+  profile_type: string;
+  agency_id: string;
 }
 
 export default function ManageAgencyUsersPage() {
-  const [agencyUsers, setAgencyUsers] = useState<UserProfile[]>([])
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [editDialogOpen, setEditDialogOpen] = useState<string | null>(null)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null)
+  const [agencyUsers, setAgencyUsers] = useState<UserProfile[]>([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null);
 
-  const router = useRouter()
-  const supabase = getSupabaseClient()
+  const router = useRouter();
+  const supabase = getSupabaseClient();
 
   useEffect(() => {
     async function fetchData() {
@@ -53,11 +66,11 @@ export default function ManageAgencyUsersPage() {
         // Get current session
         const {
           data: { session },
-        } = await supabase.auth.getSession()
+        } = await supabase.auth.getSession();
 
         if (!session) {
-          router.push("/login")
-          return
+          router.push("/login");
+          return;
         }
 
         // Get user profile
@@ -65,124 +78,129 @@ export default function ManageAgencyUsersPage() {
           .from("profiles")
           .select("profile_type, agency_id")
           .eq("id", session.user.id)
-          .single()
+          .single();
 
-        if (profileError || (userProfile?.profile_type !== "agency" && userProfile?.profile_type !== "admin")) {
-          router.push("/dashboard")
-          return
+        if (
+          profileError ||
+          (userProfile?.profile_type !== "agency" && userProfile?.profile_type !== "admin")
+        ) {
+          router.push("/dashboard");
+          return;
         }
 
-        setProfile(userProfile)
+        setProfile(userProfile);
 
         // Get agency users
         const { data: users, error: usersError } = await supabase
           .from("profiles")
-          .select("id, full_name, email, profile_type")
+          .select("id, name, email, profile_type")
           .eq("agency_id", userProfile.agency_id)
-          .neq("id", session.user.id) // Exclude the current user from the list
-        console.log("Fetched users:", users)
+          .neq("id", session.user.id); // Exclude the current user from the list
+        console.log("Fetched users:", users);
         if (usersError) {
-          setError(usersError.message)
+          setError(usersError.message);
         } else {
-          setAgencyUsers(users || [])
+          setAgencyUsers(users || []);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro desconhecido")
+        setError(err instanceof Error ? err.message : "Erro desconhecido");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    fetchData()
-  }, [supabase, router])
+    fetchData();
+  }, [supabase, router]);
 
   const handleCreateUser = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const formData = new FormData(event.currentTarget)
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
 
     try {
-      const fullName = formData.get("fullName") as string
-      const email = formData.get("email") as string
-      const password = formData.get("password") as string
-      const profile_type = formData.get("profile_type") as string
+      const fullName = formData.get("fullName") as string;
+      const email = formData.get("email") as string;
+      const password = formData.get("password") as string;
+      const profile_type = formData.get("profile_type") as string;
 
       if (!fullName || !email || !password || !profile_type || !profile) {
-        toast.error("Todos os campos são obrigatórios")
-        return
+        toast.error("Todos os campos são obrigatórios");
+        return;
       }
 
       // Create user via Supabase Auth (this would need to be a server action or API route)
       // For now, let's show a toast indicating the limitation
-      toast.error("Criação de usuários deve ser implementada via API route para segurança")
+      toast.error("Criação de usuários deve ser implementada via API route para segurança");
 
       // Reset form and close dialog
-      event.currentTarget.reset()
-      setDialogOpen(false)
+      event.currentTarget.reset();
+      setDialogOpen(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao criar usuário")
+      toast.error(err instanceof Error ? err.message : "Erro ao criar usuário");
     }
-  }
+  };
 
   const handleUpdateUser = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const formData = new FormData(event.currentTarget)
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
 
     try {
-      const userId = formData.get("userId") as string
-      const fullName = formData.get("fullName") as string
-      const email = formData.get("email") as string
-      const profile_type = formData.get("profile_type") as string
+      const userId = formData.get("userId") as string;
+      const fullName = formData.get("fullName") as string;
+      const email = formData.get("email") as string;
+      const profile_type = formData.get("profile_type") as string;
 
       if (!userId || !fullName || !email || !profile_type) {
-        toast.error("Todos os campos são obrigatórios")
-        return
+        toast.error("Todos os campos são obrigatórios");
+        return;
       }
 
       const { error } = await supabase
         .from("profiles")
         .update({
-          full_name: fullName,
+          name: fullName,
           email: email,
           profile_type: profile_type,
         })
-        .eq("id", userId)
+        .eq("id", userId);
 
       if (error) {
-        toast.error(error.message)
-        return
+        toast.error(error.message);
+        return;
       }
 
       // Update local state
       setAgencyUsers((prev) =>
         prev.map((user) =>
-          user.id === userId ? { ...user, full_name: fullName, email: email, profile_type: profile_type } : user,
-        ),
-      )
+          user.id === userId
+            ? { ...user, name: fullName, email: email, profile_type: profile_type }
+            : user
+        )
+      );
 
-      toast.success("Usuário atualizado com sucesso")
-      setEditDialogOpen(null)
+      toast.success("Usuário atualizado com sucesso");
+      setEditDialogOpen(null);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao atualizar usuário")
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar usuário");
     }
-  }
+  };
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      const { error } = await supabase.from("profiles").delete().eq("id", userId)
+      const { error } = await supabase.from("profiles").delete().eq("id", userId);
 
       if (error) {
-        toast.error(error.message)
-        return
+        toast.error(error.message);
+        return;
       }
 
       // Update local state
-      setAgencyUsers((prev) => prev.filter((user) => user.id !== userId))
-      toast.success("Usuário removido com sucesso")
-      setDeleteDialogOpen(null)
+      setAgencyUsers((prev) => prev.filter((user) => user.id !== userId));
+      toast.success("Usuário removido com sucesso");
+      setDeleteDialogOpen(null);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao remover usuário")
+      toast.error(err instanceof Error ? err.message : "Erro ao remover usuário");
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -198,15 +216,14 @@ export default function ManageAgencyUsersPage() {
           </CardHeader>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
     <div className="flex flex-col gap-4 p-4 md:gap-8 md:p-6">
       <DashboardHeader
         title="Gerenciar Usuários do Órgão"
-        description="Adicione, edite ou remova usuários vinculados ao seu órgão."
-      >
+        description="Adicione, edite ou remova usuários vinculados ao seu órgão.">
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -216,7 +233,9 @@ export default function ManageAgencyUsersPage() {
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Adicionar Novo Usuário</DialogTitle>
-              <DialogDescription>Preencha os dados para adicionar um novo usuário ao seu órgão.</DialogDescription>
+              <DialogDescription>
+                Preencha os dados para adicionar um novo usuário ao seu órgão.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreateUser} className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
@@ -235,7 +254,13 @@ export default function ManageAgencyUsersPage() {
                 <Label htmlFor="password" className="text-right">
                   Senha
                 </Label>
-                <Input id="password" name="password" type="password" className="col-span-3" required />
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  className="col-span-3"
+                  required
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="profile_type" className="text-right">
@@ -281,14 +306,13 @@ export default function ManageAgencyUsersPage() {
               <TableBody>
                 {agencyUsers.map((user: UserProfile) => (
                   <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.full_name}</TableCell>
+                    <TableCell className="font-medium">{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>{user.profile_type}</TableCell>
                     <TableCell className="text-right">
                       <Dialog
                         open={editDialogOpen === user.id}
-                        onOpenChange={(open) => setEditDialogOpen(open ? user.id : null)}
-                      >
+                        onOpenChange={(open) => setEditDialogOpen(open ? user.id : null)}>
                         <DialogTrigger asChild>
                           <Button variant="ghost" size="icon" className="mr-2">
                             <Edit className="h-4 w-4" />
@@ -309,7 +333,7 @@ export default function ManageAgencyUsersPage() {
                               <Input
                                 id="editFullName"
                                 name="fullName"
-                                defaultValue={user.full_name}
+                                defaultValue={user.name}
                                 className="col-span-3"
                                 required
                               />
@@ -349,8 +373,7 @@ export default function ManageAgencyUsersPage() {
                       </Dialog>
                       <Dialog
                         open={deleteDialogOpen === user.id}
-                        onOpenChange={(open) => setDeleteDialogOpen(open ? user.id : null)}
-                      >
+                        onOpenChange={(open) => setDeleteDialogOpen(open ? user.id : null)}>
                         <DialogTrigger asChild>
                           <Button variant="ghost" size="icon">
                             <Trash2 className="h-4 w-4" />
@@ -361,15 +384,21 @@ export default function ManageAgencyUsersPage() {
                           <DialogHeader>
                             <DialogTitle>Confirmar Remoção</DialogTitle>
                             <DialogDescription>
-                              Tem certeza que deseja remover o usuário {user.full_name}? Esta ação não pode ser
-                              desfeita.
+                              Tem certeza que deseja remover o usuário {user.name}? Esta ação não
+                              pode ser desfeita.
                             </DialogDescription>
                           </DialogHeader>
                           <div className="flex gap-2 pt-4">
-                            <Button variant="outline" className="flex-1" onClick={() => setDeleteDialogOpen(null)}>
+                            <Button
+                              variant="outline"
+                              className="flex-1"
+                              onClick={() => setDeleteDialogOpen(null)}>
                               Cancelar
                             </Button>
-                            <Button variant="destructive" className="flex-1" onClick={() => handleDeleteUser(user.id)}>
+                            <Button
+                              variant="destructive"
+                              className="flex-1"
+                              onClick={() => handleDeleteUser(user.id)}>
                               Remover Usuário
                             </Button>
                           </div>
@@ -384,5 +413,5 @@ export default function ManageAgencyUsersPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -1,26 +1,30 @@
-import { DashboardHeader } from "@/components/dashboard-header"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { getLiveSessionsForSupplier } from "@/lib/supabase/server"
-import { createServerClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { DashboardHeader } from "@/components/dashboard-header";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getLiveSessionsForSupplier } from "@/lib/supabase/server";
+import { createServerClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
 export default async function SupplierLiveSessionsPage() {
-  const supabase = createServerClient()
+  const supabase = createServerClient();
   const {
     data: { session },
-  } = await supabase.auth.getSession()
+  } = await supabase.auth.getSession();
 
   if (!session) {
-    redirect("/login")
+    redirect("/login");
   }
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", session.user.id).single()
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("profile_type")
+    .eq("id", session.user.id)
+    .single();
 
   if (profile?.role !== "supplier") {
-    redirect("/dashboard") // Or a more appropriate redirect for unauthorized roles
+    redirect("/dashboard"); // Or a more appropriate redirect for unauthorized roles
   }
 
-  const { data: liveSessions, error } = await getLiveSessionsForSupplier(session.user.id)
+  const { data: liveSessions, error } = await getLiveSessionsForSupplier(session.user.id);
 
   return (
     <div className="flex flex-col gap-4 p-4 md:gap-8 md:p-6">
@@ -33,7 +37,9 @@ export default async function SupplierLiveSessionsPage() {
           <Card className="col-span-full">
             <CardHeader>
               <CardTitle>Erro ao carregar sessões</CardTitle>
-              <CardDescription>Ocorreu um erro ao buscar as sessões ao vivo: {error.message}</CardDescription>
+              <CardDescription>
+                Ocorreu um erro ao buscar as sessões ao vivo: {error.message}
+              </CardDescription>
             </CardHeader>
           </Card>
         )}
@@ -41,7 +47,9 @@ export default async function SupplierLiveSessionsPage() {
           <Card className="col-span-full">
             <CardHeader>
               <CardTitle>Nenhuma sessão ao vivo encontrada</CardTitle>
-              <CardDescription>Não há licitações em andamento que você esteja participando no momento.</CardDescription>
+              <CardDescription>
+                Não há licitações em andamento que você esteja participando no momento.
+              </CardDescription>
             </CardHeader>
           </Card>
         ) : (
@@ -55,7 +63,9 @@ export default async function SupplierLiveSessionsPage() {
                 <p>Status: {session.status}</p>
                 <p>Início: {new Date(session.start_date).toLocaleString()}</p>
                 {/* Adicione mais detalhes da sessão conforme necessário */}
-                <a href={`/dashboard/session/live/${session.id}`} className="text-blue-600 hover:underline mt-2 block">
+                <a
+                  href={`/dashboard/session/live/${session.id}`}
+                  className="text-blue-600 hover:underline mt-2 block">
                   Acessar Sala de Disputa
                 </a>
               </CardContent>
@@ -64,5 +74,5 @@ export default async function SupplierLiveSessionsPage() {
         )}
       </div>
     </div>
-  )
+  );
 }
