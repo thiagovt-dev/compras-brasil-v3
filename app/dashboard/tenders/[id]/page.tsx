@@ -54,12 +54,12 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
   }
 
   let agencyUsers: any[] = []
-  if (profile?.role === "agency" && profile.agency_id) {
+  if (profile?.profile_type === "agency" && profile.agency_id) {
     const { users, error: usersFetchError } = await getAgencyUsers(profile.agency_id)
     if (!usersFetchError) {
       agencyUsers = users ?? []
     }
-  } else if (profile?.role === "admin" && tender.agency_id) {
+  } else if (profile?.profile_type === "admin" && tender.agency_id) {
     // Admins can see all agency users
     const { users, error: usersFetchError } = await getAgencyUsers(tender.agency_id)
     if (!usersFetchError) {
@@ -67,9 +67,9 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
     }
   }
 
-  const isAgencyUser = profile?.role === "agency"
-  const isSupplierUser = profile?.role === "supplier"
-  const isAdminUser = profile?.role === "admin"
+  const isAgencyUser = profile?.profile_type === "agency"
+  const isSupplierUser = profile?.profile_type === "supplier"
+  const isAdminUser = profile?.profile_type === "admin"
 
   // Check if user is the owner of the tender
   const isOwner = session?.user.id === tender.created_by

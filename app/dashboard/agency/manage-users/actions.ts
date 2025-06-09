@@ -17,21 +17,21 @@ export async function getAgencyUsers(agencyId: string) {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("role, agency_id")
+    .select("profile_type, agency_id")
     .eq("id", session.user.id)
     .single()
 
-  if (profileError || !profile || (profile.role !== "agency" && profile.role !== "admin")) {
+  if (profileError || !profile || (profile.profile_type !== "agency" && profile.profile_type !== "admin")) {
     return { users: null, error: "Unauthorized" }
   }
 
-  if (profile.role === "agency" && profile.agency_id !== agencyId) {
+  if (profile.profile_type === "agency" && profile.agency_id !== agencyId) {
     return { users: null, error: "Unauthorized: Not your agency's users" }
   }
 
   const { data: users, error } = await supabase
     .from("profiles")
-    .select("id, full_name, email, role")
+    .select("id, full_name, email, profile_type")
     .eq("agency_id", agencyId)
     .order("full_name", { ascending: true })
 
@@ -40,7 +40,7 @@ export async function getAgencyUsers(agencyId: string) {
     return { users: null, error: error.message }
   }
 
-  return { users: users as any[], error: null } // Cast to any[]
+  return { users: users as any[], error: null }
 }
 
 export async function createUser(formData: FormData) {
@@ -56,20 +56,20 @@ export async function createUser(formData: FormData) {
 
   const { data: currentProfile, error: profileError } = await supabase
     .from("profiles")
-    .select("role, agency_id")
+    .select("profile_type, agency_id")
     .eq("id", session.user.id)
     .single()
 
-  if (profileError || !currentProfile || currentProfile.role !== "agency") {
+  if (profileError || !currentProfile || currentProfile.profile_type !== "agency") {
     return { success: false, message: "Unauthorized" }
   }
 
   const fullName = formData.get("fullName") as string
   const email = formData.get("email") as string
   const password = formData.get("password") as string
-  const role = formData.get("role") as string // Should be 'agency' or 'admin' for agency users
+  const profile_type = formData.get("profile_type") as string // Should be 'agency' or 'admin' for agency users
 
-  if (!fullName || !email || !password || !role) {
+  if (!fullName || !email || !password || !profile_type) {
     return { success: false, message: "Missing required fields." }
   }
 
@@ -94,7 +94,7 @@ export async function createUser(formData: FormData) {
     id: authUser.user.id,
     full_name: fullName,
     email: email, // Store email in profile for easier access
-    role: role,
+    profile_type: profile_type,
     agency_id: currentProfile.agency_id, // Link to the current agency's ID
   })
 
@@ -122,19 +122,19 @@ export async function updateUser(formData: FormData) {
 
   const { data: currentProfile, error: profileError } = await supabase
     .from("profiles")
-    .select("role, agency_id")
+    .select("profile_type, agency_id")
     .eq("id", session.user.id)
     .single()
 
-  if (profileError || !currentProfile || currentProfile.role !== "agency") {
+  if (profileError || !currentProfile || currentProfile.profile_type !== "agency") {
     return { success: false, message: "Unauthorized" }
   }
 
   const userId = formData.get("id") as string
   const fullName = formData.get("fullName") as string
-  const role = formData.get("role") as string
+  const profile_type = formData.get("profile_type") as string
 
-  if (!userId || !fullName || !role) {
+  if (!userId || !fullName || !profile_type) {
     return { success: false, message: "Missing required fields." }
   }
 
@@ -149,7 +149,10 @@ export async function updateUser(formData: FormData) {
     return { success: false, message: "Unauthorized: Cannot update user from another agency." }
   }
 
-  const { error } = await supabase.from("profiles").update({ full_name: fullName, role: role }).eq("id", userId)
+  const { error } = await supabase
+    .from("profiles")
+    .update({ full_name: fullName, profile_type: profile_type })
+    .eq("id", userId)
 
   if (error) {
     console.error("Error updating user:", error)
@@ -173,11 +176,11 @@ export async function deleteUser(userId: string) {
 
   const { data: currentProfile, error: profileError } = await supabase
     .from("profiles")
-    .select("role, agency_id")
+    .select("profile_type, agency_id")
     .eq("id", session.user.id)
     .single()
 
-  if (profileError || !currentProfile || currentProfile.role !== "agency") {
+  if (profileError || !currentProfile || currentProfile.profile_type !== "agency") {
     return { success: false, message: "Unauthorized" }
   }
 
