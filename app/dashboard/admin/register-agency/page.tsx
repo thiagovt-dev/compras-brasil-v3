@@ -253,44 +253,197 @@ export default function RegisterAgencyPage() {
         return true;
     }
   };
-
+    
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
+  
     try {
-      // In a real app, we would upload the documents to storage
-      // and create an agency registration request in the database
-
-      // Example of uploading a file to Supabase Storage
+      console.log("🚀 Iniciando cadastro do órgão...");
+  
+      // Primeiro, criar o órgão
+      const { data: agencyData, error: agencyError } = await supabase
+        .from("agencies")
+        .insert({
+          name: formData.agencyName,
+          cnpj: formData.cnpj.replace(/\D/g, ""), // Remove formatação
+          agency_type: formData.agencyType,
+          sphere: formData.sphere,
+          address: formData.address,
+          email: formData.email,
+          phone: formData.phone.replace(/\D/g, ""), // Remove formatação
+          website: formData.website || null,
+          description: formData.description || null,
+          status: "pending", // Inicialmente pendente
+          created_by: user?.id, // Quem criou o órgão
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+  
+      console.log("🏢 Órgão criado:", agencyData);
+      if (agencyError) throw agencyError;
+  
+      const agencyId = agencyData.id;
+  
+      // ✨ NOVA ETAPA: Atualizar profile do usuário atual se for citizen
+      let userProfileUpdated = false;
+      if (profile?.profile_type === "citizen") {
+        console.log("👤 Atualizando profile do usuário de citizen para agency...");
+        
+        const { error: updateProfileError } = await supabase
+          .from("profiles")
+          .update({
+            profile_type: "agency",
+            agency_id: agencyId,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", user?.id);
+  
+        if (updateProfileError) {
+          console.error("❌ Erro ao atualizar profile do usuário:", updateProfileError);
+          // Não falha o processo, mas avisa
+        } else {
+          console.log("✅ Profile do usuário atualizado para agency");
+          userProfileUpdated = true;
+        }
+      }
+  
+      // Agora criar os usuários do órgão
+      const userCreationPromises = users
+        .filter(userInfo => userInfo.name && userInfo.email && userInfo.cpf) // Só processa usuários com dados completos
+        .map(async (userInfo, index) => {
+          try {
+            console.log(`👤 Criando usuário ${index + 1}: ${userInfo.email}`);
+  
+            // Primeiro criar o usuário no auth
+            const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+              email: userInfo.email,
+              password: `TempPass${Math.random().toString(36).substring(2, 15)}!`, // Senha temporária aleatória
+              email_confirm: true,
+            });
+  
+            if (authError) {
+              console.error(`❌ Erro ao criar usuário ${userInfo.email}:`, authError);
+              return { success: false, email: userInfo.email, error: authError.message };
+            }
+  
+            if (!authUser.user) {
+              console.error(`❌ Usuário ${userInfo.email} não foi criado`);
+              return { success: false, email: userInfo.email, error: "Usuário não foi criado" };
+            }
+  
+            console.log(`✅ Auth user criado para ${userInfo.email}: ${authUser.user.id}`);
+  
+            // Depois criar o perfil
+            const { error: profileError } = await supabase.from("profiles").insert({
+              id: authUser.user.id,
+              name: userInfo.name,
+              email: userInfo.email,
+              cpf: userInfo.cpf.replace(/\D/g, ""), // Remove formatação
+              profile_type: userInfo.role, // Mantém as roles: "auctioneer", "authority", "support"
+              agency_id: agencyId, // Vincula ao órgão criado
+              status: "pending", // Usuário pendente até órgão ser aprovado
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+  
+            if (profileError) {
+              console.error(`❌ Erro ao criar perfil para ${userInfo.email}:`, profileError);
+              // Cleanup: remover usuário do auth se perfil falhou
+              await supabase.auth.admin.deleteUser(authUser.user.id);
+              return { success: false, email: userInfo.email, error: profileError.message };
+            }
+  
+            console.log(`✅ Perfil criado para ${userInfo.email}`);
+            return { success: true, email: userInfo.email, userId: authUser.user.id };
+  
+          } catch (error) {
+            console.error(`💥 Erro geral ao criar usuário ${userInfo.email}:`, error);
+            return { 
+              success: false, 
+              email: userInfo.email, 
+              error: error instanceof Error ? error.message : "Erro desconhecido" 
+            };
+          }
+        });
+  
+      // Aguardar criação de todos os usuários
+      const userResults = await Promise.all(userCreationPromises);
+      
+      // Contar sucessos e falhas
+      const successfulUsers = userResults.filter(result => result.success);
+      const failedUsers = userResults.filter(result => !result.success);
+  
+      console.log(`✅ Usuários criados com sucesso: ${successfulUsers.length}`);
+      console.log(`❌ Usuários que falharam: ${failedUsers.length}`);
+  
+      if (failedUsers.length > 0) {
+        console.warn("⚠️ Alguns usuários não foram criados:", failedUsers);
+      }
+  
+      // TODO: Em uma aplicação real, você faria upload dos documentos aqui
       // const { data: fileData, error: fileError } = await supabase.storage
       //   .from('agency-documents')
-      //   .upload(`${user?.id}/normative-act.pdf`, documents.normativeAct);
-
-      // Example of creating an agency registration request
-      const { data, error } = await supabase.from("agencies").insert({
-        name: formData.agencyName,
-        cnpj: formData.cnpj,
-        agency_type: formData.agencyType,
-        sphere: formData.sphere,
-        address: formData.address,
-        email: formData.email,
-        phone: formData.phone,
-        website: formData.website || null,
-        status: "pending",
-      });
-      console.log("Agency registration data:", data);
-      if (error) throw error;
-
-      toast({
-        title: "Cadastro enviado com sucesso",
-        description:
-          "Seu cadastro foi enviado para análise. Você receberá uma notificação quando for aprovado ou se forem necessárias correções.",
-      });
-
-      // Redirect to dashboard
-      router.push("/dashboard/citizen");
+      //   .upload(`${agencyId}/normative-act.pdf`, documents.normativeAct);
+      // 
+      // const { data: fileData2, error: fileError2 } = await supabase.storage
+      //   .from('agency-documents')
+      //   .upload(`${agencyId}/terms-agreement.pdf`, documents.termsOfAgreement);
+  
+      // ✨ Mostrar toast de sucesso com informação sobre logout
+      if (failedUsers.length === 0) {
+        if (userProfileUpdated) {
+          toast({
+            title: "Cadastro enviado com sucesso! 🎉",
+            description: `Órgão cadastrado e ${successfulUsers.length} usuários criados. SEU PERFIL FOI ATUALIZADO PARA ÓRGÃO! Você precisa sair e entrar novamente para acessar o painel do órgão.`,
+            duration: 8000, // Toast mais longo para dar tempo de ler
+          });
+        } else {
+          toast({
+            title: "Cadastro enviado com sucesso",
+            description: `Órgão cadastrado e ${successfulUsers.length} usuários criados. O cadastro foi enviado para análise.`,
+          });
+        }
+      } else {
+        if (userProfileUpdated) {
+          toast({
+            title: "Cadastro parcialmente concluído",
+            description: `Órgão cadastrado com ${successfulUsers.length} usuários. ${failedUsers.length} usuários falharam. SEU PERFIL FOI ATUALIZADO! Saia e entre novamente para ver o painel do órgão.`,
+            variant: "destructive",
+            duration: 8000,
+          });
+        } else {
+          toast({
+            title: "Cadastro parcialmente concluído",
+            description: `Órgão cadastrado com ${successfulUsers.length} usuários. ${failedUsers.length} usuários falharam na criação. Verifique os dados e tente novamente.`,
+            variant: "destructive",
+          });
+        }
+      }
+  
+      console.log("🎉 Processo de cadastro concluído!");
+  
+      // ✨ Se o profile foi atualizado, redirecionar para logout
+      if (userProfileUpdated) {
+        setTimeout(() => {
+          toast({
+            title: "Redirecionando para logout...",
+            description: "Você será deslogado automaticamente para aplicar as mudanças.",
+          });
+          // Fazer logout após 3 segundos
+          setTimeout(() => {
+            window.location.href = "/login?message=profile-updated";
+          }, 3000);
+        }, 2000);
+      } else {
+        // Redirect normal to dashboard
+        router.push("/dashboard/citizen");
+      }
+  
     } catch (error: any) {
+      console.error("💥 Erro geral no cadastro:", error);
       toast({
         title: "Erro ao enviar cadastro",
         description: error.message || "Ocorreu um erro ao processar seu cadastro",
@@ -300,7 +453,7 @@ export default function RegisterAgencyPage() {
       setIsSubmitting(false);
     }
   };
-
+    
   return (
     <div className="space-y-6">
       <div>
