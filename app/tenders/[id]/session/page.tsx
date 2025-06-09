@@ -71,7 +71,7 @@ export default async function TenderSessionPage({ params }: { params: { id: stri
       <TenderHeader
         title={tenderWithPregoeiro?.title || "Sessão Pública"}
         number={tenderWithPregoeiro?.number || ""}
-        agency={tenderWithPregoeiro?.agencies?.name || ""}
+        agency={tenderWithPregoeiro?.agencies?.[0]?.name || ""}
         id={params.id}
       />
 
