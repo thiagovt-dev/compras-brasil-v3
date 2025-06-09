@@ -19,6 +19,7 @@ export function useCepLookup() {
     setData(null);
     try {
       const res = await fetch(`https://viacep.com.br/ws/${cep.replace(/\D/g, "")}/json/`);
+      console.log("Fetching CEP:", cep, "Response status:", res.status);
       const json = await res.json();
       if (json.erro) {
         setError("CEP não encontrado");

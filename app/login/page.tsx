@@ -95,9 +95,16 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       console.error("Erro no login:", error);
+      let errorMessage = "Verifique suas credenciais e tente novamente";
+      if (
+        typeof error?.message === "string" &&
+        error.message.toLowerCase().includes("email not confirmed")
+      ) {
+        errorMessage = "Email não confirmado, por favor verifique sua caixa de emails.";
+      }
       toast({
         title: "Erro ao fazer login",
-        description: "Verifique suas credenciais e tente novamente",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

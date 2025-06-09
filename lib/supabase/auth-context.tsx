@@ -79,6 +79,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, userData: any) => {
     try {
+      console.log("🚀 Iniciando signUp:", { email, userData })
+  
       // First, create the user in Auth
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -87,18 +89,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             name: userData.name,
             profile_type: userData.profile_type,
-            // Include other metadata as needed
           },
           emailRedirectTo: `${window.location.origin}/api/auth`,
         },
       })
-
+  
       if (error) {
+        console.error("❌ Erro no auth signUp:", error)
         throw error
       }
-
+  
+      console.log("✅ Auth user criado:", data.user?.id)
+  
       if (data.user) {
-        // Call our API route to create the profile using the service role key
+        console.log("📝 Criando profile via API...")
+  
+        // Call our API route to create the profile
         const response = await fetch("/api/create-profile", {
           method: "POST",
           headers: {
@@ -109,16 +115,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             userData: userData,
           }),
         })
-
+  
+        console.log("📤 Response status:", response.status)
+        
+        const responseText = await response.text()
+        console.log("📄 Response text:", responseText)
+  
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.message || "Failed to create profile")
+          let errorMessage = "Failed to create profile"
+          try {
+            const errorData = JSON.parse(responseText)
+            errorMessage = errorData.error || errorMessage
+          } catch {
+            errorMessage = responseText || errorMessage
+          }
+          throw new Error(errorMessage)
+        }
+  
+        try {
+          const responseData = JSON.parse(responseText)
+          console.log("✅ Profile criado via API:", responseData)
+        } catch {
+          console.warn("⚠️ Response não é JSON válido, mas status OK")
         }
       }
-
+  
       return data
     } catch (error) {
-      console.error("Error signing up:", error)
+      console.error("💥 Error signing up:", error)
       throw error
     }
   }

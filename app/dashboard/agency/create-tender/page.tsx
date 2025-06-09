@@ -75,8 +75,18 @@ export default function CreateTenderPage() {
       authority: "",
       supportTeam: [""],
     },
+    itemStructure: "multiple-groups", // Novo campo: 'single', 'multiple', 'group', 'multiple-groups'
+    items: [ // Novo array para itens sem grupo
+      {
+        id: 1,
+        description: "",
+        quantity: "",
+        unit: "",
+        unitPrice: "",
+        benefitType: "open",
+      },
+    ],
     groups: [
-      // Renomeado de 'lots' para 'groups'
       {
         id: 1,
         description: "",
@@ -116,15 +126,30 @@ export default function CreateTenderPage() {
 
         setAgencies(agenciesData || []);
 
-        // Fetch users (for team selection)
-        const { data: usersData, error: usersError } = await supabase
-          .from("profiles")
-          .select("*")
-          .in("profile_type", ["agency", "admin"]);
+        // Se o usuário tem agency_id definido no perfil, buscar usuários desse órgão
+        if (profile?.agency_id) {
+          const { data: usersData, error: usersError } = await supabase
+            .from("profiles")
+            .select("id, name, email, profile_type")
+            .eq("agency_id", profile.agency_id)
+            .in("profile_type", [
+              "agency",
+              "admin",
+              "support",
+              "authority",
+              "auctioneer",
+              "agency_support",
+            ]);
 
-        if (usersError) throw usersError;
+          if (usersError) throw usersError;
+          setUsers(usersData || []);
 
-        setUsers(usersData || []);
+          // Pré-selecionar o órgão do usuário
+          setFormData((prev) => ({
+            ...prev,
+            agency_id: profile.agency_id,
+          }));
+        }
       } catch (error: any) {
         console.error("Error fetching data:", error);
         toast({
@@ -138,7 +163,54 @@ export default function CreateTenderPage() {
     };
 
     fetchData();
-  }, [supabase]);
+  }, [supabase, profile]);
+
+  // Novo useEffect para buscar usuários quando agency_id for alterado no formulário
+  useEffect(() => {
+    const fetchUsersForSelectedAgency = async () => {
+      if (!formData.agency_id) {
+        setUsers([]);
+        return;
+      }
+
+      try {
+        const { data: usersData, error: usersError } = await supabase
+          .from("profiles")
+          .select("id, name, email, profile_type")
+          .eq("agency_id", formData.agency_id)
+          .in("profile_type", [
+            "agency",
+            "admin",
+            "support",
+            "authority",
+            "auctioneer",
+            "agency_support",
+          ]);
+        console.log("Fetched users for agency:", usersData);
+        if (usersError) throw usersError;
+        setUsers(usersData || []);
+
+        // Limpar seleções de equipe quando o órgão mudar
+        setFormData((prev) => ({
+          ...prev,
+          team: {
+            auctioneer: "",
+            authority: "",
+            supportTeam: [""],
+          },
+        }));
+      } catch (error: any) {
+        console.error("Error fetching users for agency:", error);
+        toast({
+          title: "Erro ao carregar usuários",
+          description: error.message || "Ocorreu um erro ao carregar os usuários do órgão.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchUsersForSelectedAgency();
+  }, [formData.agency_id, supabase]);
 
   const handleChange = (field: string, value: any) => {
     setFormData({ ...formData, [field]: value });
@@ -179,6 +251,37 @@ export default function CreateTenderPage() {
     });
   };
 
+  const handleSingleItemChange = (index: number, field: string, value: any) => {
+    const newItems = [...formData.items];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setFormData({ ...formData, items: newItems });
+  };
+  
+  const addSingleItem = () => {
+    const newId =
+      formData.items.length > 0 ? Math.max(...formData.items.map((item) => item.id)) + 1 : 1;
+    setFormData({
+      ...formData,
+      items: [
+        ...formData.items,
+        {
+          id: newId,
+          description: "",
+          quantity: "",
+          unit: "",
+          unitPrice: "",
+          benefitType: "open",
+        },
+      ],
+    });
+  };
+  
+  const removeSingleItem = (index: number) => {
+    const newItems = [...formData.items];
+    newItems.splice(index, 1);
+    setFormData({ ...formData, items: newItems });
+  };
+  
   const handleGroupChange = (groupIndex: number, field: string, value: any) => {
     const newGroups = [...formData.groups];
     newGroups[groupIndex] = { ...newGroups[groupIndex], [field]: value };
@@ -259,6 +362,492 @@ export default function CreateTenderPage() {
     newDocuments[index] = { ...newDocuments[index], name };
     setFormData({ ...formData, documents: newDocuments });
   };
+  
+  const renderStep3Content = () => {
+    switch (formData.itemStructure) {
+      case "single":
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Item Único</h3>
+            <div className="border rounded-md p-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Descrição</Label>
+                  <Input
+                    value={formData.items[0].description}
+                    onChange={(e) => handleSingleItemChange(0, "description", e.target.value)}
+                    placeholder="Descrição do item"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tipo de Benefício</Label>
+                  <Select
+                    value={formData.items[0].benefitType}
+                    onValueChange={(value) => handleSingleItemChange(0, "benefitType", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="exclusive_for_me_epp">Exclusivo ME/EPP</SelectItem>
+                      <SelectItem value="open_competition_with_benefit_for_me_epp">
+                        Ampla concorrência com benefício para ME/EPP
+                      </SelectItem>
+                      <SelectItem value="open_competition_without_benefit">
+                        Ampla concorrência sem benefício
+                      </SelectItem>
+                      <SelectItem value="regional">Regional</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid gap-4 md:grid-cols-3 mt-4">
+                <div className="space-y-2">
+                  <Label>Quantidade</Label>
+                  <Input
+                    value={formData.items[0].quantity}
+                    onChange={(e) => handleSingleItemChange(0, "quantity", e.target.value)}
+                    placeholder="Quantidade"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Unidade de Medida</Label>
+                  <Input
+                    value={formData.items[0].unit}
+                    onChange={(e) => handleSingleItemChange(0, "unit", e.target.value)}
+                    placeholder="Ex: UN, KG, CX"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Valor Unitário</Label>
+                  <Input
+                    value={formData.items[0].unitPrice}
+                    onChange={(e) => handleSingleItemChange(0, "unitPrice", e.target.value)}
+                    placeholder="R$ 0,00"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+  
+      case "multiple":
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Itens Individuais</h3>
+              <Button type="button" variant="outline" size="sm" onClick={addSingleItem}>
+                <Plus className="mr-2 h-4 w-4" /> Adicionar Item
+              </Button>
+            </div>
+            {formData.items.map((item, index) => (
+              <div key={item.id} className="border rounded-md p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-medium">Item {index + 1}</h4>
+                  {formData.items.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeSingleItem(index)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Descrição</Label>
+                    <Input
+                      value={item.description}
+                      onChange={(e) => handleSingleItemChange(index, "description", e.target.value)}
+                      placeholder="Descrição do item"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Tipo de Benefício</Label>
+                    <Select
+                      value={item.benefitType}
+                      onValueChange={(value) => handleSingleItemChange(index, "benefitType", value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="exclusive_for_me_epp">Exclusivo ME/EPP</SelectItem>
+                        <SelectItem value="open_competition_with_benefit_for_me_epp">
+                          Ampla concorrência com benefício para ME/EPP
+                        </SelectItem>
+                        <SelectItem value="open_competition_without_benefit">
+                          Ampla concorrência sem benefício
+                        </SelectItem>
+                        <SelectItem value="regional">Regional</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-3 mt-4">
+                  <div className="space-y-2">
+                    <Label>Quantidade</Label>
+                    <Input
+                      value={item.quantity}
+                      onChange={(e) => handleSingleItemChange(index, "quantity", e.target.value)}
+                      placeholder="Quantidade"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Unidade de Medida</Label>
+                    <Input
+                      value={item.unit}
+                      onChange={(e) => handleSingleItemChange(index, "unit", e.target.value)}
+                      placeholder="Ex: UN, KG, CX"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Valor Unitário</Label>
+                    <Input
+                      value={item.unitPrice}
+                      onChange={(e) => handleSingleItemChange(index, "unitPrice", e.target.value)}
+                      placeholder="R$ 0,00"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+  
+      case "group":
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Grupo Único</h3>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle>Grupo 1</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Tipo de Itens</Label>
+                    <Select
+                      value={formData.groups[0].type}
+                      onValueChange={(value) => handleGroupChange(0, "type", value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="products">Produtos</SelectItem>
+                        <SelectItem value="services">Serviços</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Descrição do Grupo</Label>
+                    <Input
+                      value={formData.groups[0].description}
+                      onChange={(e) => handleGroupChange(0, "description", e.target.value)}
+                      placeholder="Descrição"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-4 mt-4">
+                  {formData.groups[0].type === "products" && (
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="requireBrand"
+                        checked={formData.groups[0].requireBrand}
+                        onCheckedChange={(checked) => handleGroupChange(0, "requireBrand", checked)}
+                      />
+                      <Label htmlFor="requireBrand">Requer Marca, Modelo e Fabricante</Label>
+                    </div>
+                  )}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="allowDescriptionChange"
+                      checked={formData.groups[0].allowDescriptionChange}
+                      onCheckedChange={(checked) =>
+                        handleGroupChange(0, "allowDescriptionChange", checked)
+                      }
+                    />
+                    <Label htmlFor="allowDescriptionChange">Permitir Alterar a Descrição</Label>
+                  </div>
+                </div>
+                <div className="mt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-medium">Itens do Grupo</h4>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => addItem(0)}>
+                      <Plus className="mr-2 h-4 w-4" /> Adicionar Item
+                    </Button>
+                  </div>
+                  {formData.groups[0].items.map((item, itemIndex) => (
+                    <div key={item.id} className="border rounded-md p-4 mb-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h5 className="font-medium">Item {itemIndex + 1}</h5>
+                        {formData.groups[0].items.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeItem(0, itemIndex)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label>Descrição</Label>
+                          <Input
+                            value={item.description}
+                            onChange={(e) =>
+                              handleItemChange(0, itemIndex, "description", e.target.value)
+                            }
+                            placeholder="Descrição do item"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Tipo de Benefício</Label>
+                          <Select
+                            value={item.benefitType}
+                            onValueChange={(value) =>
+                              handleItemChange(0, itemIndex, "benefitType", value)
+                            }>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="exclusive_for_me_epp">Exclusivo ME/EPP</SelectItem>
+                              <SelectItem value="open_competition_with_benefit_for_me_epp">
+                                Ampla concorrência com benefício para ME/EPP
+                              </SelectItem>
+                              <SelectItem value="open_competition_without_benefit">
+                                Ampla concorrência sem benefício
+                              </SelectItem>
+                              <SelectItem value="regional">Regional</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-3 mt-4">
+                        <div className="space-y-2">
+                          <Label>Quantidade</Label>
+                          <Input
+                            value={item.quantity}
+                            onChange={(e) =>
+                              handleItemChange(0, itemIndex, "quantity", e.target.value)
+                            }
+                            placeholder="Quantidade"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Unidade de Medida</Label>
+                          <Input
+                            value={item.unit}
+                            onChange={(e) =>
+                              handleItemChange(0, itemIndex, "unit", e.target.value)
+                            }
+                            placeholder="Ex: UN, KG, CX"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Valor Unitário</Label>
+                          <Input
+                            value={item.unitPrice}
+                            onChange={(e) =>
+                              handleItemChange(0, itemIndex, "unitPrice", e.target.value)
+                            }
+                            placeholder="R$ 0,00"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+  
+      case "multiple-groups":
+      default:
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Grupos de Itens</h3>
+              <Button type="button" variant="outline" size="sm" onClick={addGroup}>
+                <Plus className="mr-2 h-4 w-4" /> Adicionar Grupo
+              </Button>
+            </div>
+            {formData.groups.map((group, groupIndex) => (
+              <Card key={group.id} className="overflow-hidden">
+                <CardHeader className="bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">Grupo {groupIndex + 1}</CardTitle>
+                    {formData.groups.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeGroup(groupIndex)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Tipo de Itens</Label>
+                      <Select
+                        value={group.type}
+                        onValueChange={(value) => handleGroupChange(groupIndex, "type", value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="products">Produtos</SelectItem>
+                          <SelectItem value="services">Serviços</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Descrição do Grupo</Label>
+                      <Input
+                        value={group.description}
+                        onChange={(e) => handleGroupChange(groupIndex, "description", e.target.value)}
+                        placeholder="Descrição"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-4">
+                    {group.type === "products" && (
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`requireBrand-${groupIndex}`}
+                          checked={group.requireBrand}
+                          onCheckedChange={(checked) =>
+                            handleGroupChange(groupIndex, "requireBrand", checked)
+                          }
+                        />
+                        <Label htmlFor={`requireBrand-${groupIndex}`}>
+                          Requer Marca, Modelo e Fabricante
+                        </Label>
+                      </div>
+                    )}
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`allowDescriptionChange-${groupIndex}`}
+                        checked={group.allowDescriptionChange}
+                        onCheckedChange={(checked) =>
+                          handleGroupChange(groupIndex, "allowDescriptionChange", checked)
+                        }
+                      />
+                      <Label htmlFor={`allowDescriptionChange-${groupIndex}`}>
+                        Permitir Alterar a Descrição
+                      </Label>
+                    </div>
+                  </div>
+                  <div className="mt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-medium">Itens do Grupo</h4>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addItem(groupIndex)}>
+                        <Plus className="mr-2 h-4 w-4" /> Adicionar Item
+                      </Button>
+                    </div>
+                    {group.items.map((item, itemIndex) => (
+                      <div key={item.id} className="border rounded-md p-4 mb-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <h5 className="font-medium">Item {itemIndex + 1}</h5>
+                          {group.items.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeItem(groupIndex, itemIndex)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label>Descrição</Label>
+                            <Input
+                              value={item.description}
+                              onChange={(e) =>
+                                handleItemChange(groupIndex, itemIndex, "description", e.target.value)
+                              }
+                              placeholder="Descrição do item"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Tipo de Benefício</Label>
+                            <Select
+                              value={item.benefitType}
+                              onValueChange={(value) =>
+                                handleItemChange(groupIndex, itemIndex, "benefitType", value)
+                              }>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="exclusive_for_me_epp">Exclusivo ME/EPP</SelectItem>
+                                <SelectItem value="open_competition_with_benefit_for_me_epp">
+                                  Ampla concorrência com benefício para ME/EPP
+                                </SelectItem>
+                                <SelectItem value="open_competition_without_benefit">
+                                  Ampla concorrência sem benefício
+                                </SelectItem>
+                                <SelectItem value="regional">Regional</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-3 mt-4">
+                          <div className="space-y-2">
+                            <Label>Quantidade</Label>
+                            <Input
+                              value={item.quantity}
+                              onChange={(e) =>
+                                handleItemChange(groupIndex, itemIndex, "quantity", e.target.value)
+                              }
+                              placeholder="Quantidade"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Unidade de Medida</Label>
+                            <Input
+                              value={item.unit}
+                              onChange={(e) =>
+                                handleItemChange(groupIndex, itemIndex, "unit", e.target.value)
+                              }
+                              placeholder="Ex: UN, KG, CX"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Valor Unitário</Label>
+                            <Input
+                              value={item.unitPrice}
+                              onChange={(e) =>
+                                handleItemChange(groupIndex, itemIndex, "unitPrice", e.target.value)
+                              }
+                              placeholder="R$ 0,00"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        );
+    }
+  };
 
   const addDocument = () => {
     setFormData({
@@ -287,13 +876,14 @@ export default function CreateTenderPage() {
     console.log("Submitting form data:", formData);
     e.preventDefault();
     setIsSubmitting(true);
-
+  
     try {
       if (!user) {
         router.push("/login");
         return;
       }
       console.log("User ID:", user.id);
+      
       // Combinar data e horário para criar datetime completo
       const impugnationDateTime =
         formData.impugnationDate && formData.impugnationTime
@@ -301,49 +891,135 @@ export default function CreateTenderPage() {
               `${format(formData.impugnationDate, "yyyy-MM-dd")}T${formData.impugnationTime}:00`
             )
           : null;
-
+  
       const proposalDateTime =
         formData.proposalDate && formData.proposalTime
           ? new Date(`${format(formData.proposalDate, "yyyy-MM-dd")}T${formData.proposalTime}:00`)
           : null;
-
+  
       const openingDateTime =
         formData.openingDate && formData.openingTime
           ? new Date(`${format(formData.openingDate, "yyyy-MM-dd")}T${formData.openingTime}:00`)
           : null;
-
-      // Create tender in Supabase
+  
       // Mapear o valor de formData.modality para o valor aceito na coluna tender_type
       const tenderTypeMap: { [key: string]: string } = {
         "pregao-eletronico": "pregao_eletronico",
         "concorrencia-eletronica": "concorrencia",
         "dispensa-eletronica": "tomada_de_precos",
       };
-
+  
       console.log("Opening date and time:", openingDateTime);
-
+  
+      // Determinar itens e grupos para submissão baseado na estrutura escolhida
+      const itemsToSubmit =
+        formData.itemStructure === "single" || formData.itemStructure === "multiple"
+          ? formData.items
+          : [];
+  
+      const groupsToSubmit =
+        formData.itemStructure === "group" || formData.itemStructure === "multiple-groups"
+          ? formData.groups
+          : [];
+  
+      // Calcular valor estimado total
+      let totalEstimatedValue = 0;
+  
+      // Calcular para itens sem grupo
+      for (const item of itemsToSubmit) {
+        const quantity = parseFloat(item.quantity.replace(",", ".")) || 0;
+        const unitPrice = parseFloat(item.unitPrice.replace(",", ".")) || 0;
+        totalEstimatedValue += quantity * unitPrice;
+      }
+  
+      // Calcular para grupos e seus itens
+      for (const group of groupsToSubmit) {
+        for (const item of group.items) {
+          const quantity = parseFloat(item.quantity.replace(",", ".")) || 0;
+          const unitPrice = parseFloat(item.unitPrice.replace(",", ".")) || 0;
+          totalEstimatedValue += quantity * unitPrice;
+        }
+      }
+  
+      // 1. Criar a licitação principal
       const { data: tenderData, error: tenderError } = await supabase
         .from("tenders")
         .insert({
           title: formData.editalTitle,
           description: formData.object,
           tender_number: formData.editalNumber,
+          process_number: formData.processNumber,
           tender_type: tenderTypeMap[formData.modality] || formData.modality,
+          category: formData.category,
           agency_id: formData.agency_id,
           opening_date: openingDateTime,
           closing_date: proposalDateTime,
+          impugnation_deadline: impugnationDateTime,
+          judgment_criteria: formData.judgmentCriteria,
+          dispute_mode: formData.disputeMode,
+          price_decimals: parseInt(formData.priceDecimals),
+          bid_increment: formData.valueBetweenBids,
+          secret_value: formData.secretValue,
+          documentation_mode: formData.documentationMode,
+          phase_inversion: formData.phaseInversion,
+          estimated_value: totalEstimatedValue,
           status: "published",
           created_by: user.id,
         })
         .select()
         .single();
-
+  
       console.log("Tender data:", tenderData);
-      if (tenderError) console.log("Error creating tender:", tenderError);
-      if (tenderError) throw tenderError;
-
-      // Create groups (anteriormente lots)
-      for (const group of formData.groups) {
+      if (tenderError) {
+        console.log("Error creating tender:", tenderError);
+        throw tenderError;
+      }
+  
+      // 2. Adicionar membros da equipe
+      if (formData.team.auctioneer) {
+        const { error: auctioneerError } = await supabase.from("tender_team").insert({
+          tender_id: tenderData.id,
+          user_id: formData.team.auctioneer,
+          role: formData.modality === "pregao-eletronico" ? "auctioneer" : "contracting_agent",
+        });
+        
+        if (auctioneerError) {
+          console.log("Error adding auctioneer:", auctioneerError);
+          throw auctioneerError;
+        }
+      }
+  
+      if (formData.team.authority) {
+        const { error: authorityError } = await supabase.from("tender_team").insert({
+          tender_id: tenderData.id,
+          user_id: formData.team.authority,
+          role: "authority",
+        });
+        
+        if (authorityError) {
+          console.log("Error adding authority:", authorityError);
+          throw authorityError;
+        }
+      }
+  
+      // Adicionar equipe de apoio
+      for (const memberId of formData.team.supportTeam) {
+        if (memberId) {
+          const { error: supportError } = await supabase.from("tender_team").insert({
+            tender_id: tenderData.id,
+            user_id: memberId,
+            role: "support",
+          });
+          
+          if (supportError) {
+            console.log("Error adding support team member:", supportError);
+            throw supportError;
+          }
+        }
+      }
+  
+      // 3. Criar grupos para submissão
+      for (const group of groupsToSubmit) {
         const { data: groupData, error: groupError } = await supabase
           .from("tender_lots")
           .insert({
@@ -357,12 +1033,15 @@ export default function CreateTenderPage() {
           })
           .select()
           .single();
-
-        if (groupError) throw groupError;
-
+  
+        if (groupError) {
+          console.log("Error creating group:", groupError);
+          throw groupError;
+        }
+  
         console.log("Group data:", groupData);
-
-        // Create items for this group
+  
+        // Criar itens para este grupo
         for (const item of group.items) {
           const { error: itemError } = await supabase.from("tender_items").insert({
             lot_id: groupData.id,
@@ -374,33 +1053,115 @@ export default function CreateTenderPage() {
             estimated_unit_price: Number.parseFloat(item.unitPrice) || 0,
             benefit_type: item.benefitType,
           });
-
+  
           console.log("Item data:", item);
-          if (itemError) throw itemError;
+          if (itemError) {
+            console.log("Error creating item:", itemError);
+            throw itemError;
+          }
         }
       }
-
-      // Link documents to the tender
+  
+      // 4. Tratar itens sem grupo (criar um grupo padrão)
+      if (itemsToSubmit.length > 0) {
+        // Criar um grupo padrão para itens avulsos
+        const { data: defaultGroupData, error: groupError } = await supabase
+          .from("tender_lots")
+          .insert({
+            tender_id: tenderData.id,
+            number: 1,
+            description: "Itens Avulsos",
+            type: "products",
+            require_brand: false,
+            allow_description_change: true,
+            status: "active",
+          })
+          .select()
+          .single();
+  
+        if (groupError) {
+          console.log("Error creating default group:", groupError);
+          throw groupError;
+        }
+  
+        // Adicionar itens ao grupo padrão
+        for (const item of itemsToSubmit) {
+          const { error: itemError } = await supabase.from("tender_items").insert({
+            lot_id: defaultGroupData.id,
+            tender_id: tenderData.id,
+            item_number: item.id,
+            description: item.description,
+            quantity: Number.parseFloat(item.quantity) || 0,
+            unit: item.unit,
+            estimated_unit_price: Number.parseFloat(item.unitPrice) || 0,
+            benefit_type: item.benefitType,
+          });
+  
+          console.log("Single Item data:", item);
+          if (itemError) {
+            console.log("Error creating single item:", itemError);
+            throw itemError;
+          }
+        }
+      }
+  
+      // 5. Link documents to the tender
       for (const doc of formData.documents) {
-        if (doc.document_id) {
-          const { error: docUpdateError } = await supabase
-            .from("documents")
-            .update({
-              entity_id: tenderData.id,
-              entity_type: "tender",
-            })
-            .eq("id", doc.document_id);
-
-          if (docUpdateError) throw docUpdateError;
+        if (doc.file_path) {  
+          try {
+            const { error: docInsertError } = await supabase
+              .from("documents")
+              .insert({
+                name: doc.name,
+                file_path: doc.file_path,
+                file_type: doc.file?.type || "application/octet-stream",
+                file_size: doc.file?.size || 0,
+                entity_id: tenderData.id,  // Já fornece o ID da licitação
+                entity_type: "tender",
+              });
+            
+            if (docInsertError) {
+              console.log("Error inserting document:", docInsertError);
+            }
+          } catch (docError) {
+            console.error("Failed to insert document record:", docError);
+          }
         }
         console.log("Document data:", doc);
       }
-
+  
+      // 6. Criar registro de resultados inicial
+      const { error: resultError } = await supabase.from("tender_results").insert({
+        tender_id: tenderData.id,
+        total_value: totalEstimatedValue,
+        estimated_value: totalEstimatedValue,
+        saved_value: 0,
+        saved_percentage: 0,
+        total_lots: groupsToSubmit.length + (itemsToSubmit.length > 0 ? 1 : 0),
+        completed_lots: 0,
+        total_items:
+          itemsToSubmit.length + groupsToSubmit.reduce((sum, group) => sum + group.items.length, 0),
+        total_proposals: 0,
+        total_suppliers: 0,
+        status: "pending",
+      });
+  
+      if (resultError) {
+        console.error("Failed to create tender results:", resultError);
+        throw new Error("Failed to create tender results record");
+      }
+  
       toast({
         title: "Licitação criada com sucesso",
-        description: "A licitação foi criada e está em modo de rascunho.",
+        description: `A licitação foi publicada com valor estimado de ${totalEstimatedValue.toLocaleString(
+          "pt-BR",
+          {
+            style: "currency",
+            currency: "BRL",
+          }
+        )}`,
       });
-
+  
       // Redirect to the active tenders page
       setTimeout(() => {
         router.push("/dashboard/agency/active-tenders");
@@ -846,6 +1607,15 @@ export default function CreateTenderPage() {
 
             {currentStep === 2 && (
               <div className="space-y-6">
+                {!formData.agency_id && (
+                  <div className="p-4 border border-yellow-200 bg-yellow-50 rounded-md">
+                    <p className="text-yellow-800">
+                      Selecione um órgão na primeira etapa para visualizar os usuários disponíveis
+                      para a equipe.
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="auctioneer">
                     {formData.modality === "pregao-eletronico"
@@ -854,16 +1624,32 @@ export default function CreateTenderPage() {
                   </Label>
                   <Select
                     value={formData.team.auctioneer}
-                    onValueChange={(value) => handleTeamChange("auctioneer", value)}>
+                    onValueChange={(value) => handleTeamChange("auctioneer", value)}
+                    disabled={!formData.agency_id || users.length === 0}>
                     <SelectTrigger id="auctioneer">
-                      <SelectValue placeholder="Selecione" />
+                      <SelectValue
+                        placeholder={
+                          !formData.agency_id
+                            ? "Selecione um órgão primeiro"
+                            : users.length === 0
+                            ? "Nenhum usuário disponível"
+                            : "Selecione"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      {users.map((user) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          {user.name}
-                        </SelectItem>
-                      ))}
+                      {users
+                        .filter(
+                          (user) =>
+                            user.profile_type === "agency" ||
+                            user.profile_type === "admin" ||
+                            user.profile_type === "auctioneer"
+                        )
+                        .map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name} ({user.email})
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -872,16 +1658,32 @@ export default function CreateTenderPage() {
                   <Label htmlFor="authority">Autoridade Superior</Label>
                   <Select
                     value={formData.team.authority}
-                    onValueChange={(value) => handleTeamChange("authority", value)}>
+                    onValueChange={(value) => handleTeamChange("authority", value)}
+                    disabled={!formData.agency_id || users.length === 0}>
                     <SelectTrigger id="authority">
-                      <SelectValue placeholder="Selecione" />
+                      <SelectValue
+                        placeholder={
+                          !formData.agency_id
+                            ? "Selecione um órgão primeiro"
+                            : users.length === 0
+                            ? "Nenhum usuário disponível"
+                            : "Selecione"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      {users.map((user) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          {user.name}
-                        </SelectItem>
-                      ))}
+                      {users
+                        .filter(
+                          (user) =>
+                            user.profile_type === "admin" ||
+                            user.profile_type === "agency" ||
+                            user.profile_type === "authority"
+                        )
+                        .map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name} ({user.email})
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -893,7 +1695,8 @@ export default function CreateTenderPage() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={addSupportTeamMember}>
+                      onClick={addSupportTeamMember}
+                      disabled={!formData.agency_id || users.length === 0}>
                       <Plus className="mr-2 h-4 w-4" />
                       Adicionar
                     </Button>
@@ -903,16 +1706,31 @@ export default function CreateTenderPage() {
                     <div key={index} className="flex items-center gap-2">
                       <Select
                         value={member}
-                        onValueChange={(value) => handleSupportTeamChange(index, value)}>
+                        onValueChange={(value) => handleSupportTeamChange(index, value)}
+                        disabled={!formData.agency_id || users.length === 0}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
+                          <SelectValue
+                            placeholder={
+                              !formData.agency_id
+                                ? "Selecione um órgão primeiro"
+                                : users.length === 0
+                                ? "Nenhum usuário disponível"
+                                : "Selecione"
+                            }
+                          />
                         </SelectTrigger>
                         <SelectContent>
-                          {users.map((user) => (
-                            <SelectItem key={user.id} value={user.id}>
-                              {user.name}
-                            </SelectItem>
-                          ))}
+                          {users
+                            .filter((user) =>
+                              ["agency", "admin", "support", "agency_support"].includes(
+                                user.profile_type
+                              )
+                            )
+                            .map((user) => (
+                              <SelectItem key={user.id} value={user.id}>
+                                {user.name} ({user.email})
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
 
@@ -933,235 +1751,24 @@ export default function CreateTenderPage() {
 
             {currentStep === 3 && (
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium">
-                    {formData.judgmentCriteria === "menor-preco-item" ? "Itens" : "Grupos de Itens"}
-                  </h3>
-                  <Button type="button" variant="outline" onClick={addGroup}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Adicionar {formData.judgmentCriteria === "menor-preco-item" ? "Item" : "Grupo"}
-                  </Button>
+                <div className="space-y-2">
+                  <Label>Como deseja organizar os itens?</Label>
+                  <Select
+                    value={formData.itemStructure}
+                    onValueChange={(value) => handleChange("itemStructure", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a estrutura" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="single">Um item sem grupo</SelectItem>
+                      <SelectItem value="multiple">Vários itens sem grupo</SelectItem>
+                      <SelectItem value="group">Um grupo com itens</SelectItem>
+                      <SelectItem value="multiple-groups">Vários grupos com itens</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="space-y-8">
-                  {formData.groups.map((group, groupIndex) => (
-                    <Card key={group.id} className="overflow-hidden">
-                      <CardHeader className="bg-gray-50">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-base">
-                            {formData.judgmentCriteria === "menor-preco-item"
-                              ? `Item ${String(groupIndex + 1).padStart(2, "0")}`
-                              : `Grupo ${String(groupIndex + 1).padStart(2, "0")}`}
-                          </CardTitle>
-                          {formData.groups.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeGroup(groupIndex)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="p-4 space-y-4">
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <div className="space-y-2">
-                            <Label>Tipo de Itens</Label>
-                            <Select
-                              value={group.type}
-                              onValueChange={(value) =>
-                                handleGroupChange(groupIndex, "type", value)
-                              }>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="products">Produtos</SelectItem>
-                                <SelectItem value="services">Serviços</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label>
-                              Descrição do{" "}
-                              {formData.judgmentCriteria === "menor-preco-item" ? "Item" : "Grupo"}
-                            </Label>
-                            <Input
-                              value={group.description}
-                              onChange={(e) =>
-                                handleGroupChange(groupIndex, "description", e.target.value)
-                              }
-                              placeholder="Descrição"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-4">
-                          {group.type === "products" && (
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`requireBrand-${groupIndex}`}
-                                checked={group.requireBrand}
-                                onCheckedChange={(checked) =>
-                                  handleGroupChange(groupIndex, "requireBrand", checked)
-                                }
-                              />
-                              <Label htmlFor={`requireBrand-${groupIndex}`}>
-                                Requer Marca, Modelo e Fabricante
-                              </Label>
-                            </div>
-                          )}
-
-                          <div className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`allowDescriptionChange-${groupIndex}`}
-                              checked={group.allowDescriptionChange}
-                              onCheckedChange={(checked) =>
-                                handleGroupChange(groupIndex, "allowDescriptionChange", checked)
-                              }
-                            />
-                            <Label htmlFor={`allowDescriptionChange-${groupIndex}`}>
-                              Permitir Alterar a Descrição
-                            </Label>
-                          </div>
-                        </div>
-
-                        {formData.judgmentCriteria === "menor-preco-lote" && (
-                          <>
-                            <div className="flex items-center justify-between mt-4">
-                              <h4 className="font-medium">Itens do Grupo</h4>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => addItem(groupIndex)}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Adicionar Item
-                              </Button>
-                            </div>
-                          </>
-                        )}
-
-                        <div className="space-y-4">
-                          {group.items.map((item, itemIndex) => (
-                            <div key={item.id} className="border rounded-md p-4">
-                              <div className="flex items-center justify-between mb-4">
-                                <h5 className="font-medium">
-                                  Item {String(itemIndex + 1).padStart(2, "0")}
-                                </h5>
-                                {group.items.length > 1 &&
-                                  formData.judgmentCriteria === "menor-preco-lote" && (
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => removeItem(groupIndex, itemIndex)}>
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  )}
-                              </div>
-
-                              <div className="grid gap-4 md:grid-cols-2">
-                                <div className="space-y-2">
-                                  <Label>Descrição</Label>
-                                  <Input
-                                    value={item.description}
-                                    onChange={(e) =>
-                                      handleItemChange(
-                                        groupIndex,
-                                        itemIndex,
-                                        "description",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Descrição do item"
-                                  />
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label>Tipo de Benefício</Label>
-                                  <Select
-                                    value={item.benefitType}
-                                    onValueChange={(value) =>
-                                      handleItemChange(groupIndex, itemIndex, "benefitType", value)
-                                    }>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Selecione" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="exclusive_for_me_epp">
-                                        Exclusivo ME/EPP
-                                      </SelectItem>
-                                      <SelectItem value="open_competition_with_benefit_for_me_epp">
-                                        Ampla concorrência com benefício para ME/EPP
-                                      </SelectItem>
-                                      <SelectItem value="open_competition_without_benefit">
-                                        Ampla concorrência sem benefício
-                                      </SelectItem>
-                                      <SelectItem value="regional">Regional</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-
-                              <div className="grid gap-4 md:grid-cols-3 mt-4">
-                                <div className="space-y-2">
-                                  <Label>Quantidade</Label>
-                                  <Input
-                                    value={item.quantity}
-                                    onChange={(e) =>
-                                      handleItemChange(
-                                        groupIndex,
-                                        itemIndex,
-                                        "quantity",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Quantidade"
-                                  />
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label>Unidade de Medida</Label>
-                                  <Input
-                                    value={item.unit}
-                                    onChange={(e) =>
-                                      handleItemChange(
-                                        groupIndex,
-                                        itemIndex,
-                                        "unit",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Ex: UN, KG, CX"
-                                  />
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label>Valor Unitário</Label>
-                                  <Input
-                                    value={item.unitPrice}
-                                    onChange={(e) =>
-                                      handleItemChange(
-                                        groupIndex,
-                                        itemIndex,
-                                        "unitPrice",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="R$ 0,00"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                {renderStep3Content()}
               </div>
             )}
 

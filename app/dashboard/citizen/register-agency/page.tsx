@@ -40,6 +40,7 @@ export default function RegisterAgencyPage() {
   const { data: cepData, loading: cepLoading, error: cepError, fetchCep } = useCepLookup()
 
   useEffect(() => {
+    console.log(cepData)
     if (cepData && cepData.logradouro) {
       setFormData((prev) => ({
         ...prev,
@@ -201,7 +202,7 @@ export default function RegisterAgencyPage() {
         // Check if we have at least one of each role
         const hasAuctioneer = users.some((user) => user.role === "auctioneer")
         const hasAuthority = users.some((user) => user.role === "authority")
-        const hasSupport = users.some((user) => user.role === "support")
+        const hasSupport = users.some((user) => user.role === "agency_support")
 
         if (!hasAuctioneer || !hasAuthority || !hasSupport) {
           toast({
@@ -254,6 +255,7 @@ export default function RegisterAgencyPage() {
       }
 
       console.log("📝 Inserindo órgão na tabela agencies...")
+
       console.log(supabase)
 
       const { data: agencyData, error: agencyError } = await supabase
@@ -594,7 +596,7 @@ export default function RegisterAgencyPage() {
                       onChange={(e) => {
                         const cep = e.target.value.replace(/\D/g, "").replace(/^(\d{5})(\d)/, "$1-$2")
                         setFormData({ ...formData, cep })
-                        if (cep.length === 9) fetchCep
+                        if (cep.length === 9) fetchCep(cep)
                       }}
                       maxLength={9}
                       required

@@ -351,7 +351,7 @@ export default function ManageUsersPage() {
                           </div>
                         </div>
                         <div className="col-span-2">
-                          <Badge variant={getStatusBadgeVariant(user.status)}>
+                          <Badge variant="default">
                             {getStatusLabel(user.status)}
                           </Badge>
                         </div>

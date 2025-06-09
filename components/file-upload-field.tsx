@@ -60,14 +60,14 @@ export function FileUploadField({
       setError(null);
     }
   };
-
+  
   const uploadFile = async () => {
     if (!file) return;
-
+  
     setUploading(true);
     setProgress(0);
     setError(null);
-
+  
     try {
       // Simulate progress
       const progressInterval = setInterval(() => {
@@ -79,30 +79,31 @@ export function FileUploadField({
           return prev + 5;
         });
       }, 100);
-
+  
       const formData = new FormData();
       formData.append("file", file);
       formData.append("folder", folder);
-
+  
       if (entityId) formData.append("entityId", entityId);
       if (entityType) formData.append("entityType", entityType);
-
-      const response = await fetch("/api/upload", {
+  
+      // Usar o novo endpoint para upload local
+      const response = await fetch("/api/local-upload", {
         method: "POST",
         body: formData,
       });
-
+  
       clearInterval(progressInterval);
       setProgress(100);
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Erro ao enviar arquivo");
       }
-
+  
       const data = await response.json();
       setUploadedFile(data);
-
+  
       if (onUploadComplete) {
         onUploadComplete(data);
       }
@@ -117,7 +118,7 @@ export function FileUploadField({
       }, 500);
     }
   };
-
+  
   const removeFile = () => {
     setFile(null);
     setUploadedFile(null);
