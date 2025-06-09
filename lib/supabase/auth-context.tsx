@@ -177,7 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Redirect based on agency_id/supplier_id first, then profile_type
           if (userProfile?.agency_id) {
             console.log("🏢 Usuário tem agency_id, redirecionando para /dashboard/agency")
-            router.push("/dashboard/agency")
+            window.location.href = "/dashboard/agency";
           } else if (userProfile?.supplier_id) {
             console.log("🏭 Usuário tem supplier_id, redirecionando para /dashboard/supplier")
             router.push("/dashboard/supplier")
