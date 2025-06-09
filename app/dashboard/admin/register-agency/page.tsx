@@ -275,7 +275,6 @@ export default function RegisterAgencyPage() {
           website: formData.website || null,
           description: formData.description || null,
           status: "pending", // Inicialmente pendente
-          created_by: user?.id, // Quem criou o órgão
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
@@ -283,9 +282,12 @@ export default function RegisterAgencyPage() {
         .single();
   
       console.log("🏢 Órgão criado:", agencyData);
+
       if (agencyError) throw agencyError;
   
       const agencyId = agencyData.id;
+
+      console.log(`📋 Agency ID: ${agencyId}`)
   
       // ✨ NOVA ETAPA: Atualizar profile do usuário atual se for citizen
       let userProfileUpdated = false;
