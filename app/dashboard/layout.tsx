@@ -14,6 +14,15 @@ export default function DashboardLayout({
 }) {
   const { profile, signOut } = useAuth()
 
+  // Determine user role based on agency_id/supplier_id first, then profile_type
+  const getUserRole = () => {
+    if (profile?.agency_id) return "agency"
+    if (profile?.supplier_id) return "supplier"
+    return profile?.profile_type || "citizen"
+  }
+
+  const userRole = getUserRole()
+
   const userData = {
     name: profile?.name || "Usuário",
     email: profile?.email || "",
@@ -29,7 +38,7 @@ export default function DashboardLayout({
   return (
     <AuthGuard>
       <SidebarProvider>
-        <DashboardSidebar userRole={profile?.profile_type || "citizen"} />
+        <DashboardSidebar userRole={userRole} />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 py-8">
             <SidebarTrigger className="-ml-1" />
@@ -58,6 +67,8 @@ function getUserRoleLabel(profileType?: string): string {
       return "Suporte"
     case "registration":
       return "Cadastro"
+    case "agency_support":
+      return "Suporte do Órgão"
     default:
       return "Usuário"
   }

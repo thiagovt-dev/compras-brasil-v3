@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string, userData: any) => {
     try {
       console.log("🚀 Iniciando signUp:", { email, userData })
-  
+
       // First, create the user in Auth
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -93,17 +93,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           emailRedirectTo: `${window.location.origin}/api/auth`,
         },
       })
-  
+
       if (error) {
         console.error("❌ Erro no auth signUp:", error)
         throw error
       }
-  
+
       console.log("✅ Auth user criado:", data.user?.id)
-  
+
       if (data.user) {
         console.log("📝 Criando profile via API...")
-  
+
         // Call our API route to create the profile
         const response = await fetch("/api/create-profile", {
           method: "POST",
@@ -115,12 +115,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             userData: userData,
           }),
         })
-  
+
         console.log("📤 Response status:", response.status)
-        
+
         const responseText = await response.text()
         console.log("📄 Response text:", responseText)
-  
+
         if (!response.ok) {
           let errorMessage = "Failed to create profile"
           try {
@@ -131,7 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           throw new Error(errorMessage)
         }
-  
+
         try {
           const responseData = JSON.parse(responseText)
           console.log("✅ Profile criado via API:", responseData)
@@ -139,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.warn("⚠️ Response não é JSON válido, mas status OK")
         }
       }
-  
+
       return data
     } catch (error) {
       console.error("💥 Error signing up:", error)
@@ -158,19 +158,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error
       }
 
-      // Fetch profile after sign in
+      // Fetch profile after sign in and wait for it
       if (data.user) {
-        await fetchProfile(data.user.id)
-      }
+        console.log("🔍 Buscando profile do usuário:", data.user.id)
 
-      // Redirect based on profile type and agency_id/supplier_id
-      if (profile) {
-        if (profile.profile_type === "agency" && profile.agency_id) {
-          router.push("/dashboard/agency")
-        } else if (profile.profile_type === "supplier" && profile.supplier_id) {
-          router.push("/dashboard/supplier")
+        const { data: userProfile, error: profileError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", data.user.id)
+          .single()
+
+        if (profileError) {
+          console.error("❌ Erro ao buscar profile:", profileError)
         } else {
-          router.push("/dashboard/citizen")
+          console.log("✅ Profile encontrado:", userProfile)
+          setProfile(userProfile)
+
+          // Redirect based on agency_id/supplier_id first, then profile_type
+          if (userProfile?.agency_id) {
+            console.log("🏢 Usuário tem agency_id, redirecionando para /dashboard/agency")
+            router.push("/dashboard/agency")
+          } else if (userProfile?.supplier_id) {
+            console.log("🏭 Usuário tem supplier_id, redirecionando para /dashboard/supplier")
+            router.push("/dashboard/supplier")
+          } else if (userProfile?.profile_type === "admin") {
+            console.log("👑 Usuário é admin, redirecionando para /dashboard/admin")
+            router.push("/dashboard/admin")
+          } else {
+            console.log("👤 Usuário é citizen, redirecionando para /dashboard/citizen")
+            router.push("/dashboard/citizen")
+          }
         }
       }
 
