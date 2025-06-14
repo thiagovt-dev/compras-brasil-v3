@@ -98,7 +98,7 @@ export default function PublicSessionPage() {
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <Badge variant={getStatusBadgeVariant(tender.status)}>{tender.status}</Badge>
+              <Badge variant="outline">{tender.status}</Badge>
               {countdown !== null && (
                 <div className="flex items-center gap-1 rounded-md bg-yellow-100 px-2 py-1 text-[1rem] font-medium text-yellow-800">
                   <Clock className="h-4 w-4" />
@@ -196,7 +196,7 @@ export default function PublicSessionPage() {
                           {tender.judgmentCriteria === "Menor Preço por item" ? "Item" : "Lote"}{" "}
                           {lot.id}
                         </CardTitle>
-                        <Badge variant={getLotStatusBadgeVariant(lot.status || tender.status)}>
+                        <Badge variant="outline">
                           {lot.status || tender.status}
                         </Badge>
                       </div>
@@ -309,7 +309,7 @@ export default function PublicSessionPage() {
                                 <div className="text-right">
                                   <p className="font-medium">R$ {proposal.value}</p>
                                   {index === 0 && (
-                                    <Badge variant="success" className="mt-1">
+                                    <Badge variant="default" className="mt-1">
                                       Melhor lance
                                     </Badge>
                                   )}
@@ -377,13 +377,7 @@ export default function PublicSessionPage() {
                                   </h3>
                                 </div>
                                 <Badge
-                                  variant={
-                                    doc.status === "Aprovado"
-                                      ? "success"
-                                      : doc.status === "Reprovado"
-                                      ? "destructive"
-                                      : "outline"
-                                  }>
+                                  variant="outline">
                                   {doc.status}
                                 </Badge>
                               </div>
@@ -430,7 +424,7 @@ export default function PublicSessionPage() {
               <div className="space-y-4">
                 <div>
                   <h3 className="text-[1rem] font-medium">Status</h3>
-                  <Badge variant={getStatusBadgeVariant(tender.status)} className="mt-1">
+                  <Badge variant="outline" className="mt-1">
                     {tender.status}
                   </Badge>
                 </div>
