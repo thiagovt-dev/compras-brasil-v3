@@ -70,3 +70,5 @@ export async function getLiveSessionsForSupplier(userId: string) {
 
   return { data: tenders, error }
 }
+
+export { createServerComponentClient as createServerSupabaseClient } from "@supabase/auth-helpers-nextjs"
