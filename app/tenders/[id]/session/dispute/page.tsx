@@ -27,7 +27,7 @@ export default async function DisputePage({ params }: { params: { id: string } }
     .single()
 
   if (error || !tender) {
-    redirect(`/tenders/${params.id}/session`)
+    redirect(`/dashboard/tenders/${params.id}`)
   }
 
   // Buscar perfil do usuário
@@ -41,7 +41,7 @@ export default async function DisputePage({ params }: { params: { id: string } }
     .eq("user_id", session.user.id)
     .single()
 
-  const isAuctioneer = teamMember?.role === "pregoeiro"
+  const isAuctioneer = teamMember?.role === "pregoeiro" || teamMember?.role === "auctioneer"
 
   // Verificar se o usuário é fornecedor participante
   const { data: supplierParticipation } = await supabase
@@ -53,16 +53,15 @@ export default async function DisputePage({ params }: { params: { id: string } }
 
   const isSupplier = !!supplierParticipation
 
-  // Se não for pregoeiro nem fornecedor participante, redirecionar
-  if (!isAuctioneer && !isSupplier) {
-    redirect(`/tenders/${params.id}/session`)
-  }
+  // Cidadãos podem visualizar, mas não participar
+  const isCitizen = profile?.role === "citizen" || (!isAuctioneer && !isSupplier)
 
   return (
     <DisputeRoom
       tender={tender}
       isAuctioneer={isAuctioneer}
       isSupplier={isSupplier}
+      isCitizen={isCitizen}
       userId={session.user.id}
       profile={profile}
     />

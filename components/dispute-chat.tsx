@@ -8,12 +8,16 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
+import { MessageSquare, Send, Settings, Download } from "lucide-react"
 
 interface DisputeChatProps {
   tenderId: string
-  itemId: string | null
+  activeLot: string | null
   isAuctioneer: boolean
+  isSupplier: boolean
+  isCitizen: boolean
   userId: string
   status: string
 }
@@ -32,13 +36,20 @@ type Message = {
   }
 }
 
-export function DisputeChat({ tenderId, itemId, isAuctioneer, userId, status }: DisputeChatProps) {
+export function DisputeChat({
+  tenderId,
+  activeLot,
+  isAuctioneer,
+  isSupplier,
+  isCitizen,
+  userId,
+  status,
+}: DisputeChatProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [chatEnabled, setChatEnabled] = useState(true)
-  const [privateMode, setPrivateMode] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<string | null>(null)
+  const [soundEnabled, setSoundEnabled] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClientSupabaseClient()
   const { toast } = useToast()
@@ -75,21 +86,19 @@ export function DisputeChat({ tenderId, itemId, isAuctioneer, userId, status }: 
         if (error) throw error
 
         if (data) {
-          const formattedMessages = data.map((msg: any) => {
-            return {
-              id: msg.id,
-              user_id: msg.user_id,
-              content: msg.content,
-              created_at: msg.created_at,
-              type: msg.type,
-              is_private: msg.is_private,
-              recipient_id: msg.recipient_id,
-              user: {
-                name: msg.profiles?.name,
-                email: msg.profiles?.email || "Usuário",
-              },
-            }
-          }) as Message[]
+          const formattedMessages = data.map((msg: any) => ({
+            id: msg.id,
+            user_id: msg.user_id,
+            content: msg.content,
+            created_at: msg.created_at,
+            type: msg.type,
+            is_private: msg.is_private,
+            recipient_id: msg.recipient_id,
+            user: {
+              name: msg.profiles?.name,
+              email: msg.profiles?.email || "Usuário",
+            },
+          })) as Message[]
 
           setMessages(formattedMessages)
           scrollToBottom()
@@ -132,17 +141,21 @@ export function DisputeChat({ tenderId, itemId, isAuctioneer, userId, status }: 
             .eq("id", newMessage.user_id)
             .single()
 
-          setMessages((prev) => [
-            ...prev,
-            {
-              ...newMessage,
-              user: {
-                name: userData?.name,
-                email: userData?.email || "Usuário",
-              },
+          const messageWithUser = {
+            ...newMessage,
+            user: {
+              name: userData?.name,
+              email: userData?.email || "Usuário",
             },
-          ])
+          }
+
+          setMessages((prev) => [...prev, messageWithUser])
           scrollToBottom()
+
+          // Tocar som se habilitado
+          if (soundEnabled && newMessage.user_id !== userId) {
+            // Aqui você pode adicionar um som de notificação
+          }
         },
       )
       .subscribe()
@@ -150,12 +163,7 @@ export function DisputeChat({ tenderId, itemId, isAuctioneer, userId, status }: 
     return () => {
       subscription.unsubscribe()
     }
-  }, [tenderId, isAuctioneer, userId, supabase, toast])
-
-  // Atualizar estado do chat quando o status da disputa mudar
-  useEffect(() => {
-    setChatEnabled(status === "open" || status === "negotiation")
-  }, [status])
+  }, [tenderId, isAuctioneer, userId, supabase, toast, soundEnabled])
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -166,26 +174,23 @@ export function DisputeChat({ tenderId, itemId, isAuctioneer, userId, status }: 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!newMessage.trim()) return
+    if (!newMessage.trim() || !chatEnabled || isCitizen) return
 
     setIsLoading(true)
 
     try {
       const { error } = await supabase.from("dispute_messages").insert({
         tender_id: tenderId,
-        item_id: itemId,
+        lot_id: activeLot,
         user_id: userId,
         content: newMessage,
         type: "chat",
-        is_private: privateMode,
-        recipient_id: privateMode ? selectedUser : null,
+        is_private: false,
       })
 
       if (error) throw error
 
       setNewMessage("")
-      setPrivateMode(false)
-      setSelectedUser(null)
     } catch (error) {
       console.error("Erro ao enviar mensagem:", error)
       toast({
@@ -198,11 +203,81 @@ export function DisputeChat({ tenderId, itemId, isAuctioneer, userId, status }: 
     }
   }
 
-  const formatDate = (dateString: string) => {
+  const toggleChatEnabled = async () => {
+    if (!isAuctioneer) return
+
+    try {
+      const newStatus = !chatEnabled
+      setChatEnabled(newStatus)
+
+      // Enviar mensagem do sistema
+      await supabase.from("dispute_messages").insert({
+        tender_id: tenderId,
+        lot_id: activeLot,
+        user_id: userId,
+        content: `Chat ${newStatus ? "habilitado" : "desabilitado"} pelo pregoeiro.`,
+        type: "system",
+        is_private: false,
+      })
+
+      toast({
+        title: newStatus ? "Chat habilitado" : "Chat desabilitado",
+        description: `O chat foi ${newStatus ? "habilitado" : "desabilitado"} para os fornecedores.`,
+      })
+    } catch (error) {
+      console.error("Erro ao alterar status do chat:", error)
+    }
+  }
+
+  const exportChat = async () => {
+    try {
+      const { data } = await supabase
+        .from("dispute_messages")
+        .select(`
+          *,
+          profiles:user_id(name, email)
+        `)
+        .eq("tender_id", tenderId)
+        .order("created_at", { ascending: true })
+
+      if (data) {
+        const chatContent = data
+          .map((msg: any) => {
+            const timestamp = new Date(msg.created_at).toLocaleString("pt-BR")
+            const userName = msg.profiles?.name || msg.profiles?.email || "Sistema"
+            return `[${timestamp}] ${userName}: ${msg.content}`
+          })
+          .join("\n")
+
+        const blob = new Blob([chatContent], { type: "text/plain" })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        a.download = `chat-disputa-${tenderId}.txt`
+        a.click()
+        URL.revokeObjectURL(url)
+
+        toast({
+          title: "Chat exportado",
+          description: "O histórico do chat foi exportado com sucesso.",
+        })
+      }
+    } catch (error) {
+      console.error("Erro ao exportar chat:", error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível exportar o chat.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const formatTime = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleTimeString("pt-BR", {
       hour: "2-digit",
       minute: "2-digit",
+      second: "2-digit",
     })
   }
 
@@ -212,68 +287,87 @@ export function DisputeChat({ tenderId, itemId, isAuctioneer, userId, status }: 
     return "US"
   }
 
+  const getUserDisplayName = (message: Message) => {
+    if (message.type === "system") return "Sistema"
+    if (message.user_id === userId) return "Você"
+    if (isAuctioneer) return message.user?.name || message.user?.email || "Fornecedor"
+    return `Fornecedor ${message.user_id.substring(0, 8)}`
+  }
+
   return (
-    <Card className="flex flex-col h-full">
+    <Card className="h-[400px] flex flex-col">
       <CardHeader className="px-4 py-3 border-b">
-        <CardTitle className="text-lg font-medium">Chat da Disputa</CardTitle>
-      </CardHeader>
-      <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
-            Nenhuma mensagem ainda. {chatEnabled ? "Seja o primeiro a enviar!" : "Aguardando início da disputa."}
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-medium flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            Mensagens
+            {!chatEnabled && <Badge variant="destructive">Desabilitado</Badge>}
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            {isAuctioneer && (
+              <>
+                <Button size="sm" variant="outline" onClick={toggleChatEnabled}>
+                  <Settings className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="outline" onClick={exportChat}>
+                  <Download className="h-4 w-4" />
+                </Button>
+              </>
+            )}
           </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="flex-1 overflow-y-auto p-4 space-y-3">
+        {messages.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-muted-foreground">Nenhuma mensagem ainda.</div>
         ) : (
           messages.map((message) => (
             <div
               key={message.id}
-              className={`flex gap-3 ${message.type === "system" ? "bg-muted/50 p-3 rounded-md" : ""} ${
-                message.is_private ? "bg-yellow-50 p-3 rounded-md" : ""
-              }`}
+              className={`flex gap-3 ${
+                message.type === "system" ? "bg-blue-50 p-3 rounded-md" : ""
+              } ${message.is_private ? "bg-yellow-50 p-3 rounded-md border-l-4 border-yellow-400" : ""}`}
             >
               <Avatar className="h-8 w-8">
-                <AvatarFallback>{getInitials(message.user?.name || "", message.user?.email || "")}</AvatarFallback>
+                <AvatarFallback className={message.type === "system" ? "bg-blue-500 text-white" : ""}>
+                  {message.type === "system" ? "S" : getInitials(message.user?.name || "", message.user?.email || "")}
+                </AvatarFallback>
               </Avatar>
               <div className="flex-1 space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-[1rem]">
-                    {message.type === "system" ? "Sistema" : message.user?.name || message.user?.email || "Usuário"}
-                    {message.is_private && " (Mensagem Privada)"}
+                  <span className="font-medium text-sm">
+                    {getUserDisplayName(message)}
+                    {message.is_private && " (Privado)"}
                   </span>
-                  <span className="text-[1rem] text-muted-foreground">{formatDate(message.created_at)}</span>
+                  <span className="text-xs text-muted-foreground">{formatTime(message.created_at)}</span>
                 </div>
-                <p className="text-[1rem]">{message.content}</p>
+                <p className="text-sm">{message.content}</p>
               </div>
             </div>
           ))
         )}
         <div ref={messagesEndRef} />
       </CardContent>
-      <CardFooter className="p-3 border-t">
-        <form onSubmit={sendMessage} className="flex w-full gap-2">
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder={
-              !chatEnabled ? "Chat desativado" : privateMode ? "Mensagem privada..." : "Digite sua mensagem..."
-            }
-            disabled={isLoading || !chatEnabled}
-            className="flex-1"
-          />
-          {isAuctioneer && chatEnabled && (
-            <Button
-              type="button"
-              variant={privateMode ? "default" : "outline"}
-              onClick={() => setPrivateMode(!privateMode)}
-              disabled={isLoading}
-            >
-              {privateMode ? "Privado" : "Público"}
+
+      {!isCitizen && (
+        <CardFooter className="p-3 border-t">
+          <form onSubmit={sendMessage} className="flex w-full gap-2">
+            <Input
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder={
+                !chatEnabled ? "Chat desabilitado" : isAuctioneer ? "Digite sua mensagem..." : "Digite sua mensagem..."
+              }
+              disabled={isLoading || !chatEnabled}
+              className="flex-1"
+            />
+            <Button type="submit" disabled={isLoading || !newMessage.trim() || !chatEnabled} size="sm">
+              <Send className="h-4 w-4" />
             </Button>
-          )}
-          <Button type="submit" disabled={isLoading || !newMessage.trim() || !chatEnabled}>
-            Enviar
-          </Button>
-        </form>
-      </CardFooter>
+          </form>
+        </CardFooter>
+      )}
     </Card>
   )
 }
