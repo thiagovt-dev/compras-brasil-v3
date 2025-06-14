@@ -14,6 +14,7 @@ export default function DisputePage({ params }: { params: { id: string } }) {
   const [profile, setProfile] = useState<any>(null)
   const [isAuctioneer, setIsAuctioneer] = useState(false)
   const [isSupplier, setIsSupplier] = useState(false)
+  const [isCitizen, setIsCitizen] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -44,7 +45,7 @@ export default function DisputePage({ params }: { params: { id: string } }) {
           .single()
         
         if (tenderError || !tenderData) {
-          router.push(`/tenders/${params.id}/session`)
+          router.push(`/dashboard/tenders/${params.id}`)
           return
         }
         
@@ -67,7 +68,8 @@ export default function DisputePage({ params }: { params: { id: string } }) {
           .eq("user_id", session.user.id)
           .single()
           
-        setIsAuctioneer(teamMember?.role === "pregoeiro")
+        const auctioneeerRole = teamMember?.role === "pregoeiro" || teamMember?.role === "auctioneer"
+        setIsAuctioneer(auctioneeerRole)
         
         // Check if user is a supplier
         const { data: supplierParticipation } = await supabase
@@ -79,18 +81,13 @@ export default function DisputePage({ params }: { params: { id: string } }) {
           
         setIsSupplier(!!supplierParticipation)
         
-        // If not auctioneer or supplier, redirect
-        if (
-          (teamMember?.role !== "contracting_agent" || teamMember.role !== "auctioneer") &&
-          !supplierParticipation
-        ) {
-          router.push(`/tenders/${params.id}/session`);
-          return;
-        }
+        // Check if user is a citizen (can view but not participate)
+        const citizen = profileData?.role === "citizen" || (!auctioneeerRole && !supplierParticipation)
+        setIsCitizen(citizen)
         
       } catch (error) {
         console.error("Error fetching data:", error)
-        router.push(`/tenders/${params.id}/session`)
+        router.push(`/dashboard/tenders/${params.id}`)
       } finally {
         setIsLoading(false)
       }
@@ -103,9 +100,8 @@ export default function DisputePage({ params }: { params: { id: string } }) {
     return <div className="flex items-center justify-center min-h-screen">Carregando...</div>
   }
   
-  // Redirect if conditions aren't met
-  if (!isAuctioneer && !isSupplier) {
-    return null // We'll redirect in the useEffect
+  if (!tender) {
+    return null // Will redirect in useEffect
   }
   
   return (
@@ -113,6 +109,7 @@ export default function DisputePage({ params }: { params: { id: string } }) {
       tender={tender}
       isAuctioneer={isAuctioneer}
       isSupplier={isSupplier}
+      isCitizen={isCitizen}
       userId={userId || ""}
       profile={profile}
     />

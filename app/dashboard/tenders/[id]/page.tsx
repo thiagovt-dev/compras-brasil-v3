@@ -21,7 +21,6 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
   let profile = null;
   if (session) {
     const { data } = await supabase.from("profiles").select("*").eq("id", session.user.id).single();
-
     profile = data;
   }
 
@@ -57,15 +56,26 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
       (member.role === "auctioneer" || member.role === "contracting_agent")
   );
 
+  // Check if user is supplier participant
+  const { data: supplierParticipation } = await supabase
+    .from("tender_suppliers")
+    .select("*")
+    .eq("tender_id", params.id)
+    .eq("user_id", session?.user.id)
+    .single();
+
+  const isSupplierParticipant = !!supplierParticipation;
   const isAgencyUser = profile?.role === "agency";
   const isSupplierUser = profile?.role === "supplier";
   const isAdminUser = profile?.role === "admin";
+  const isCitizen = profile?.role === "citizen" || !profile?.role;
 
   // Check if user is the owner of the tender
   const isOwner = session?.user.id === tender.created_by;
 
   // Determine if proposals tab should be shown
   const showProposals = (isAgencyUser && isOwner) || isAdminUser;
+
   return (
     <TenderDetails
       tender={tender}
@@ -73,6 +83,9 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
       showProposals={showProposals}
       isAuctioneer={isAuctioneer as boolean}
       isAdmin={isAdminUser}
+      isSupplierParticipant={isSupplierParticipant}
+      isCitizen={isCitizen}
+      userProfile={profile}
     />
   );
 }

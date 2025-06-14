@@ -2,59 +2,83 @@
 
 import { useState, useEffect } from "react"
 import { createClientSupabaseClient } from "@/lib/supabase/client"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
+import { DisputeHeader } from "@/components/dispute-header"
+import { DisputeLotsList } from "@/components/dispute-lots-list"
 import { DisputeChat } from "@/components/dispute-chat"
-import { DisputeProposals } from "@/components/dispute-proposals"
+import { DisputeBidsPanel } from "@/components/dispute-bids-panel"
 import { DisputeControls } from "@/components/dispute-controls"
-import { DisputeItems } from "@/components/dispute-items"
+import { Eye, Users } from "lucide-react"
 
 interface DisputeRoomProps {
   tender: any
   isAuctioneer: boolean
   isSupplier: boolean
+  isCitizen: boolean
   userId: string
   profile: any
 }
 
-export default function DisputeRoom({ tender, isAuctioneer, isSupplier, userId, profile }: DisputeRoomProps) {
-  const [activeItem, setActiveItem] = useState<string | null>(null)
-  const [disputeStatus, setDisputeStatus] = useState<string>("waiting") // waiting, open, negotiation, closed
-  const [proposals, setProposals] = useState<any[]>([])
+export default function DisputeRoom({
+  tender,
+  isAuctioneer,
+  isSupplier,
+  isCitizen,
+  userId,
+  profile,
+}: DisputeRoomProps) {
+  const [disputeStatus, setDisputeStatus] = useState<string>("waiting")
+  const [activeLot, setActiveLot] = useState<string | null>(null)
+  const [lots, setLots] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [currentTime, setCurrentTime] = useState(new Date())
+
   const supabase = createClientSupabaseClient()
   const { toast } = useToast()
 
+  // Atualizar relógio a cada segundo
   useEffect(() => {
-    // Carregar status da disputa
-    const fetchDisputeStatus = async () => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    // Carregar dados iniciais
+    const loadInitialData = async () => {
       try {
-        const { data, error } = await supabase.from("tender_disputes").select("*").eq("tender_id", tender.id).single()
+        // Carregar status da disputa
+        const { data: dispute } = await supabase.from("tender_disputes").select("*").eq("tender_id", tender.id).single()
 
-        if (data) {
-          setDisputeStatus(data.status)
-          setActiveItem(data.active_item_id)
-        } else {
-          // Se não existir, criar um registro de disputa
-          if (isAuctioneer) {
-            const { error: createError } = await supabase.from("tender_disputes").insert({
-              tender_id: tender.id,
-              status: "waiting",
-              active_item_id: null,
-              created_by: userId,
-            })
-
-            if (createError) throw createError
-          }
+        if (dispute) {
+          setDisputeStatus(dispute.status)
+          setActiveLot(dispute.active_lot_id)
         }
+
+        // Carregar lotes com propostas
+        const { data: lotsData } = await supabase
+          .from("tender_lots")
+          .select(`
+            *,
+            items:tender_items(*),
+            proposals:tender_proposals(
+              *,
+              profiles:user_id(name, email)
+            )
+          `)
+          .eq("tender_id", tender.id)
+          .order("created_at", { ascending: true })
+
+        setLots(lotsData || [])
       } catch (error) {
-        console.error("Erro ao carregar status da disputa:", error)
+        console.error("Erro ao carregar dados:", error)
         toast({
           title: "Erro",
-          description: "Não foi possível carregar o status da disputa.",
+          description: "Não foi possível carregar os dados da disputa.",
           variant: "destructive",
         })
       } finally {
@@ -62,11 +86,11 @@ export default function DisputeRoom({ tender, isAuctioneer, isSupplier, userId, 
       }
     }
 
-    fetchDisputeStatus()
+    loadInitialData()
 
-    // Inscrever-se para atualizações em tempo real do status da disputa
+    // Inscrever-se para atualizações em tempo real
     const disputeSubscription = supabase
-      .channel("tender_disputes_changes")
+      .channel("dispute_updates")
       .on(
         "postgres_changes",
         {
@@ -78,7 +102,20 @@ export default function DisputeRoom({ tender, isAuctioneer, isSupplier, userId, 
         (payload) => {
           const newData = payload.new as any
           setDisputeStatus(newData.status)
-          setActiveItem(newData.active_item_id)
+          setActiveLot(newData.active_lot_id)
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "tender_proposals",
+          filter: `tender_id=eq.${tender.id}`,
+        },
+        () => {
+          // Recarregar lotes quando houver mudanças nas propostas
+          loadInitialData()
         },
       )
       .subscribe()
@@ -86,64 +123,12 @@ export default function DisputeRoom({ tender, isAuctioneer, isSupplier, userId, 
     return () => {
       disputeSubscription.unsubscribe()
     }
-  }, [tender.id, isAuctioneer, userId, supabase, toast])
-
-  // Carregar propostas quando um item estiver ativo
-  useEffect(() => {
-    if (activeItem) {
-      const fetchProposals = async () => {
-        try {
-          const { data, error } = await supabase
-            .from("tender_proposals")
-            .select(`
-              *,
-              profiles:user_id (*)
-            `)
-            .eq("tender_item_id", activeItem)
-            .order("value", { ascending: true })
-
-          if (error) throw error
-
-          setProposals(data || [])
-        } catch (error) {
-          console.error("Erro ao carregar propostas:", error)
-          toast({
-            title: "Erro",
-            description: "Não foi possível carregar as propostas.",
-            variant: "destructive",
-          })
-        }
-      }
-
-      fetchProposals()
-
-      // Inscrever-se para atualizações em tempo real das propostas
-      const proposalsSubscription = supabase
-        .channel("tender_proposals_changes")
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "tender_proposals",
-            filter: `tender_item_id=eq.${activeItem}`,
-          },
-          () => {
-            fetchProposals()
-          },
-        )
-        .subscribe()
-
-      return () => {
-        proposalsSubscription.unsubscribe()
-      }
-    }
-  }, [activeItem, supabase, toast])
+  }, [tender.id, supabase, toast])
 
   if (loading) {
     return (
-      <div className="container py-6">
-        <Card>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <Card className="max-w-4xl mx-auto">
           <CardContent className="pt-6">
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -154,145 +139,91 @@ export default function DisputeRoom({ tender, isAuctioneer, isSupplier, userId, 
     )
   }
 
+  const getUserTypeInfo = () => {
+    if (isAuctioneer) {
+      return {
+        icon: <Users className="h-4 w-4" />,
+        label: "Pregoeiro",
+        description: "Você pode gerenciar esta disputa",
+        variant: "default" as const,
+      }
+    }
+    if (isSupplier) {
+      return {
+        icon: <Users className="h-4 w-4" />,
+        label: "Fornecedor",
+        description: "Você pode participar desta disputa",
+        variant: "default" as const,
+      }
+    }
+    return {
+      icon: <Eye className="h-4 w-4" />,
+      label: "Observador",
+      description: "Você pode acompanhar esta disputa",
+      variant: "secondary" as const,
+    }
+  }
+
+  const userInfo = getUserTypeInfo()
+
   return (
-    <div className="container py-6 space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">{tender.title}</h1>
-          <p className="text-muted-foreground">Nº {tender.tender_number}</p>
-          <div className="flex items-center gap-2 mt-2">
-            <Badge
-              variant={
-                disputeStatus === "waiting"
-                  ? "outline"
-                  : disputeStatus === "open"
-                    ? "default"
-                    : disputeStatus === "negotiation"
-                      ? "secondary"
-                      : "destructive"
-              }
-            >
-              {disputeStatus === "waiting"
-                ? "Aguardando Início"
-                : disputeStatus === "open"
-                  ? "Disputa Aberta"
-                  : disputeStatus === "negotiation"
-                    ? "Em Negociação"
-                    : "Encerrada"}
-            </Badge>
-            {activeItem && (
-              <Badge variant="outline">
-                Item/Lote Ativo:{" "}
-                {tender.lots
-                  .flatMap((lot) => lot.items)
-                  .find((item) => item.id === activeItem)
-                  ?.description.substring(0, 30)}
-                ...
-              </Badge>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header da Sala de Disputa */}
+      <DisputeHeader tender={tender} disputeStatus={disputeStatus} currentTime={currentTime} userInfo={userInfo} />
+
+      <div className="container mx-auto p-4 space-y-4">
+        {/* Controles do Pregoeiro */}
+        {isAuctioneer && (
+          <DisputeControls tenderId={tender.id} status={disputeStatus} activeLot={activeLot} lots={lots} />
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          {/* Lista de Lotes - 2 colunas */}
+          <div className="lg:col-span-2">
+            <DisputeLotsList
+              lots={lots}
+              activeLot={activeLot}
+              disputeStatus={disputeStatus}
+              isAuctioneer={isAuctioneer}
+              isSupplier={isSupplier}
+              userId={userId}
+              tenderId={tender.id}
+            />
+          </div>
+
+          {/* Chat e Painel de Lances - 2 colunas */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Chat */}
+            <DisputeChat
+              tenderId={tender.id}
+              activeLot={activeLot}
+              isAuctioneer={isAuctioneer}
+              isSupplier={isSupplier}
+              isCitizen={isCitizen}
+              userId={userId}
+              status={disputeStatus}
+            />
+
+            {/* Painel de Lances */}
+            {activeLot && (
+              <DisputeBidsPanel
+                tenderId={tender.id}
+                lotId={activeLot}
+                isAuctioneer={isAuctioneer}
+                isSupplier={isSupplier}
+                isCitizen={isCitizen}
+                userId={userId}
+                disputeStatus={disputeStatus}
+              />
             )}
           </div>
         </div>
 
-        {isAuctioneer && (
-          <DisputeControls
-            tenderId={tender.id}
-            status={disputeStatus}
-            activeItem={activeItem}
-            items={tender.lots.flatMap((lot) => lot.items)}
-          />
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Tabs defaultValue="chat">
-            <TabsList>
-              <TabsTrigger value="chat">Chat da Disputa</TabsTrigger>
-              <TabsTrigger value="proposals">Propostas</TabsTrigger>
-              {isAuctioneer && <TabsTrigger value="items">Itens/Lotes</TabsTrigger>}
-            </TabsList>
-
-            <TabsContent value="chat" className="h-[500px]">
-              <DisputeChat
-                tenderId={tender.id}
-                itemId={activeItem}
-                isAuctioneer={isAuctioneer}
-                userId={userId}
-                status={disputeStatus}
-              />
-            </TabsContent>
-
-            <TabsContent value="proposals">
-              <DisputeProposals
-                proposals={proposals}
-                isAuctioneer={isAuctioneer}
-                userId={userId}
-                status={disputeStatus}
-                tenderId={tender.id}
-                itemId={activeItem}
-              />
-            </TabsContent>
-
-            {isAuctioneer && (
-              <TabsContent value="items">
-                <DisputeItems
-                  items={tender.lots.flatMap((lot) => lot.items)}
-                  activeItem={activeItem}
-                  tenderId={tender.id}
-                />
-              </TabsContent>
-            )}
-          </Tabs>
-        </div>
-
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações da Disputa</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h3 className="font-medium">Status:</h3>
-                <p>
-                  {disputeStatus === "waiting"
-                    ? "Aguardando Início da Disputa"
-                    : disputeStatus === "open"
-                      ? "Disputa em Andamento"
-                      : disputeStatus === "negotiation"
-                        ? "Negociação em Andamento"
-                        : "Disputa Encerrada"}
-                </p>
-              </div>
-
-              {activeItem && (
-                <div>
-                  <h3 className="font-medium">Item/Lote Atual:</h3>
-                  <p>{tender.lots.flatMap((lot) => lot.items).find((item) => item.id === activeItem)?.description}</p>
-                </div>
-              )}
-
-              {isSupplier && (
-                <div>
-                  <h3 className="font-medium">Sua Participação:</h3>
-                  <p>
-                    {proposals.find((p) => p.user_id === userId)
-                      ? "Você enviou uma proposta para este item"
-                      : "Você ainda não enviou proposta para este item"}
-                  </p>
-                </div>
-              )}
-
-              <div className="pt-4">
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => (window.location.href = `/tenders/${tender.id}/session`)}
-                >
-                  Voltar para Sessão
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Botão para voltar */}
+        <div className="flex justify-center pt-4">
+          <Button variant="outline" onClick={() => window.history.back()}>
+            Voltar para Detalhes da Licitação
+          </Button>
         </div>
       </div>
     </div>

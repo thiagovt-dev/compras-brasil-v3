@@ -121,3 +121,5 @@ export async function getUnreadNotificationCount(userId: string) {
     return { success: false, count: 0, error }
   }
 }
+
+export { sendNotification as createNotification }
