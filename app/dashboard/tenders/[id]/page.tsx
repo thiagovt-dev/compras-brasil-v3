@@ -1,27 +1,27 @@
-import { redirect } from "next/navigation"
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
-import TenderDetails from "@/components/tender-details"
+import { redirect } from "next/navigation";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import TenderDetails from "@/components/tender-details";
 
 interface TenderDetailPageProps {
   params: {
-    id: string
-  }
+    id: string;
+  };
 }
 
 export default async function TenderDetailPage({ params }: TenderDetailPageProps) {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = createServerComponentClient({ cookies });
 
   // Check if user is authenticated
   const {
     data: { session },
-  } = await supabase.auth.getSession()
+  } = await supabase.auth.getSession();
 
   // Get user profile if authenticated
-  let profile = null
+  let profile = null;
   if (session) {
-    const { data } = await supabase.from("profiles").select("*").eq("id", session.user.id).single()
-    profile = data
+    const { data } = await supabase.from("profiles").select("*").eq("id", session.user.id).single();
+    profile = data;
   }
 
   // Get tender details
@@ -35,22 +35,26 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
         *,
         items:tender_items(*)
       )
-    `,
+    `
     )
     .eq("id", params.id)
-    .single()
+    .single();
 
   if (error || !tender) {
-    redirect("/dashboard/tenders")
+    redirect("/dashboard/tenders");
   }
 
-  const { data: tenderTeam } = await supabase.from("tender_team").select("user_id, role").eq("tender_id", params.id)
+  const { data: tenderTeam } = await supabase
+    .from("tender_team")
+    .select("user_id, role")
+    .eq("tender_id", params.id);
 
   // Check if current user is auctioneer
   const isAuctioneer = tenderTeam?.some(
     (member) =>
-      member.user_id === session?.user.id && (member.role === "auctioneer" || member.role === "contracting_agent"),
-  )
+      member.user_id === session?.user.id &&
+      (member.role === "auctioneer" || member.role === "contracting_agent")
+  );
 
   // Check if user is supplier participant
   const { data: supplierParticipation } = await supabase
@@ -58,19 +62,19 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
     .select("*")
     .eq("tender_id", params.id)
     .eq("user_id", session?.user.id)
-    .single()
+    .single();
 
-  const isSupplierParticipant = !!supplierParticipation
-  const isAgencyUser = profile?.role === "agency"
-  const isSupplierUser = profile?.role === "supplier"
-  const isAdminUser = profile?.role === "admin"
-  const isCitizen = profile?.role === "citizen" || !profile?.role
+  const isSupplierParticipant = !!supplierParticipation;
+  const isAgencyUser = profile?.role === "agency";
+  const isSupplierUser = profile?.role === "supplier";
+  const isAdminUser = profile?.role === "admin";
+  const isCitizen = profile?.role === "citizen" || !profile?.role;
 
   // Check if user is the owner of the tender
-  const isOwner = session?.user.id === tender.created_by
+  const isOwner = session?.user.id === tender.created_by;
 
   // Determine if proposals tab should be shown
-  const showProposals = (isAgencyUser && isOwner) || isAdminUser
+  const showProposals = (isAgencyUser && isOwner) || isAdminUser;
 
   return (
     <TenderDetails
@@ -83,5 +87,5 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
       isCitizen={isCitizen}
       userProfile={profile}
     />
-  )
+  );
 }

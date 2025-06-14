@@ -1,4 +1,5 @@
 "use client"
+import React from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TenderActions } from "@/components/tender-actions"
 import { TenderLots } from "@/components/tender-lots"
@@ -72,7 +73,9 @@ const TenderDetails = ({
             </Button>
 
             {/* Indicador do tipo de acesso */}
-            <Badge variant={isCitizen ? "secondary" : "default"}>{isCitizen ? "Visualização" : "Participação"}</Badge>
+            <Badge variant={isCitizen ? "secondary" : "default"}>
+              {isCitizen ? "Visualização" : "Participação"}
+            </Badge>
           </div>
         )}
       </div>
@@ -204,7 +207,11 @@ const TenderDetails = ({
         {showProposals && (
           <TabsContent value="proposals">
             <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-              <TenderProposals tenderId={tender.id} lots={tender.lots || []} isAgencyUser={isAgencyUser} />
+              <TenderProposals
+                tenderId={tender.id}
+                lots={tender.lots || []}
+                isAgencyUser={isAgencyUser}
+              />
             </Suspense>
           </TabsContent>
         )}
