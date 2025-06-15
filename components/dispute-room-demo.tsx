@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { DisputeHeader } from "@/components/dispute-header";
-import { DisputeControls } from "@/components/dispute-controls";
 import { Eye, Users } from "lucide-react";
 import { DisputeLotsListDemo } from "./dispute-lots-list-demo";
 import { DisputeRightPanelDemo } from "./dispute-right-panel-demo";
 import { DisputeChatDemo } from "./dispute-chat-demo";
+import { DisputeModeSelectorDemo } from "./dispute-mode-selector-demo";
+import { DisputeTimerDemo } from "./dispute-timer-demo";
+import { DisputeModeIndicator } from "./dispute-mode-indicator";
 
 interface DisputeRoomDemoProps {
   tender: any;
@@ -15,76 +17,17 @@ interface DisputeRoomDemoProps {
   isSupplier: boolean;
   isCitizen: boolean;
   userId: string;
-  profile: any; // O profile real do usuário, que pode ser usado para simular o perfil da demo
+  profile: any;
 }
 
 // Dados mocados para o perfil do usuário na demo
 const mockUserProfile = {
-  id: "supplier-demo-001", // ID de usuário mocada para o fornecedor da demo
+  id: "supplier-demo-001",
   name: "João Silva",
   company_name: "Fornecedora ABC",
   role: "supplier",
-  supplierNumber: 23, // Novo campo para o número do fornecedor
+  supplierNumber: 23,
 };
-
-// Dados mocados para o chat de demonstração (mantidos aqui para consistência com o mockUserProfile)
-const mockMessages = [
-  {
-    id: "msg-001",
-    user_id: "auctioneer-demo-001",
-    message: "Bom dia! Iniciando a sessão de disputa do Lote 1 - Material Escolar Básico",
-    message_type: "system",
-    created_at: new Date(Date.now() - 300000).toISOString(),
-    profiles: {
-      name: "Maria Santos - Pregoeiro",
-      role: "auctioneer",
-    },
-  },
-  {
-    id: "msg-002",
-    user_id: mockUserProfile.id, // Usando o ID do perfil mocado
-    message: "Bom dia! Empresa ABC presente e pronta para participar.",
-    message_type: "chat",
-    created_at: new Date(Date.now() - 240000).toISOString(),
-    profiles: {
-      name: mockUserProfile.name,
-      role: mockUserProfile.role,
-    },
-  },
-  {
-    id: "msg-003",
-    user_id: "supplier-demo-002",
-    message: "Empresa XYZ também presente!",
-    message_type: "chat",
-    created_at: new Date(Date.now() - 180000).toISOString(),
-    profiles: {
-      name: "Pedro Costa - Fornecedora XYZ",
-      role: "supplier",
-    },
-  },
-  {
-    id: "msg-004",
-    user_id: "auctioneer-demo-001",
-    message: "Perfeito! Temos 3 fornecedores habilitados. Iniciando a fase de lances.",
-    message_type: "system",
-    created_at: new Date(Date.now() - 120000).toISOString(),
-    profiles: {
-      name: "Maria Santos - Pregoeiro",
-      role: "auctioneer",
-    },
-  },
-  {
-    id: "msg-005",
-    user_id: mockUserProfile.id, // Usando o ID do perfil mocado
-    message: "Lance enviado para o item 1!",
-    message_type: "bid",
-    created_at: new Date(Date.now() - 60000).toISOString(),
-    profiles: {
-      name: mockUserProfile.name,
-      role: mockUserProfile.role,
-    },
-  },
-];
 
 // Dados mocados para propostas classificadas por lote
 const mockLotProposals: Record<string, any[]> = {
@@ -105,7 +48,6 @@ const mockLotProposals: Record<string, any[]> = {
     { id: "p10", user_id: "supplier-01", name: "FORNECEDOR 01", value: 48.0 },
     { id: "p11", user_id: "supplier-07", name: "FORNECEDOR 07", value: 49.5 },
   ],
-  // Adicione mais dados para outros lotes conforme necessário
 };
 
 // Dados mocados para itens do lote por lote
@@ -156,7 +98,6 @@ const mockLotItems: Record<string, any[]> = {
       value: 200.0,
     },
   ],
-  // Adicione mais itens para outros lotes conforme necessário
 };
 
 export default function DisputeRoomDemo({
@@ -164,19 +105,15 @@ export default function DisputeRoomDemo({
   isAuctioneer,
   isSupplier,
   isCitizen,
-  userId, // Este userId será o do usuário logado, não o mocado para o fornecedor da demo
-  profile, // Este profile será o do usuário logado, não o mocado para o fornecedor da demo
+  userId,
+  profile,
 }: DisputeRoomDemoProps) {
   const [disputeStatus, setDisputeStatus] = useState<string>("active");
-  const [activeLot, setActiveLot] = useState<any>(tender.lots[0]); // Primeiro lote ativo
+  const [disputeMode, setDisputeMode] = useState<string>("open");
+  const [activeLot, setActiveLot] = useState<any>(tender.lots[0]);
   const [lots, setLots] = useState<any[]>(tender.lots);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [disputeMode, setDisputeMode] = useState<string>("open");
-  const [messages, setMessages] = useState(mockMessages);
-  // Os bids e proposals não precisam ser passados diretamente para o DisputeRoomDemo,
-  // pois serão gerenciados dentro de DisputeLotsListDemo e DisputeRightPanelDemo
-  // const [bids, setBids] = useState(mockBids)
-  // const [proposals, setProposals] = useState(mockProposals)
+  const [timerActive, setTimerActive] = useState(true);
 
   const { toast } = useToast();
 
@@ -189,36 +126,48 @@ export default function DisputeRoomDemo({
     return () => clearInterval(timer);
   }, []);
 
-  // Simular chegada de novas mensagens e lances (mantido para simular atividade geral)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Simular nova mensagem ocasionalmente
-      if (Math.random() < 0.1) {
-        const randomSupplierId = Math.random() > 0.5 ? "supplier-demo-002" : "supplier-demo-003";
-        const randomSupplierName =
-          randomSupplierId === "supplier-demo-002"
-            ? "Pedro Costa - Fornecedora XYZ"
-            : "Ana Lima - Fornecedora 123";
-        const newMessage = {
-          id: `msg-${Date.now()}`,
-          user_id: randomSupplierId,
-          message:
-            Math.random() > 0.5
-              ? "Aguardando próximo item..."
-              : "Sistema funcionando perfeitamente!",
-          message_type: "chat",
-          created_at: new Date().toISOString(),
-          profiles: {
-            name: randomSupplierName,
-            role: "supplier",
-          },
-        };
-        setMessages((prev) => [...prev, newMessage]);
-      }
-    }, 5000);
+  const handleModeChange = (newMode: string) => {
+    console.log("DisputeRoomDemo: Changing mode to", newMode);
+    setDisputeMode(newMode);
+    setTimerActive(false);
+    setTimeout(() => setTimerActive(true), 100); // Reset timer
 
-    return () => clearInterval(interval);
-  }, []);
+    toast({
+      title: "Modo de Disputa Alterado",
+      description: `Demonstração configurada para modo: ${getModeName(newMode)}`,
+      duration: 3000,
+    });
+  };
+
+  const getModeName = (mode: string) => {
+    const modeNames: Record<string, string> = {
+      open: "Aberto",
+      open_restart: "Aberto (com reinício)",
+      closed: "Fechado",
+      open_closed: "Aberto e Fechado",
+      closed_open: "Fechado e Aberto",
+      random: "Randômico",
+    };
+    return modeNames[mode] || mode;
+  };
+
+  useEffect(() => {
+    console.log("DisputeRoomDemo: Current disputeMode is", disputeMode);
+  }, [disputeMode]);
+
+  const handleTimerEnd = () => {
+    toast({
+      title: "Tempo Encerrado",
+      description: "O tempo da disputa foi encerrado.",
+    });
+  };
+
+  const handleTimerExtension = () => {
+    toast({
+      title: "Disputa Prorrogada",
+      description: "A disputa foi prorrogada automaticamente.",
+    });
+  };
 
   const getUserTypeInfo = () => {
     if (isAuctioneer) {
@@ -246,7 +195,6 @@ export default function DisputeRoomDemo({
   };
 
   const userInfo = getUserTypeInfo();
-  // Usar o mockUserProfile para o supplierIdentifier na demo
   const supplierIdentifier = isSupplier ? `FORNECEDOR ${mockUserProfile.supplierNumber}` : null;
 
   return (
@@ -261,18 +209,35 @@ export default function DisputeRoomDemo({
         disputeMode={disputeMode}
       />
 
-      {/* Controles do Pregoeiro */}
-      {isAuctioneer && (
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
-          <DisputeControls
-            tenderId={tender.id}
-            status={disputeStatus}
-            activeLot={activeLot}
-            lots={lots}
-            userId={userId}
-          />
+      {/* Controles do Pregoeiro e Timer */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4 space-y-4">
+        {/* Indicador Visual do Modo */}
+        <DisputeModeIndicator mode={disputeMode} />
+
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <DisputeModeSelectorDemo
+              currentMode={disputeMode}
+              onModeChange={handleModeChange}
+              isAuctioneer={isAuctioneer}
+            />
+
+            <DisputeTimerDemo
+              mode={disputeMode}
+              isActive={timerActive}
+              onTimeEnd={handleTimerEnd}
+              onExtension={handleTimerExtension}
+              isAuctioneer={isAuctioneer}
+            />
+          </div>
+
+          {isAuctioneer && (
+            <div className="text-sm text-gray-600">
+              <span className="font-medium">Demonstração:</span> Todos os recursos são simulados
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Layout Principal */}
       <div className="flex-1 flex">
@@ -284,8 +249,8 @@ export default function DisputeRoomDemo({
             isAuctioneer={isAuctioneer}
             isSupplier={isSupplier}
             isCitizen={isCitizen}
-            userId={mockUserProfile.id} // Passa o userId mocada para o chat
-            profile={mockUserProfile} // Passa o profile mocada para o chat
+            userId={mockUserProfile.id}
+            profile={mockUserProfile}
             status={disputeStatus}
           />
         </div>
@@ -296,10 +261,11 @@ export default function DisputeRoomDemo({
             lots={lots}
             activeLot={activeLot}
             disputeStatus={disputeStatus}
+            disputeMode={disputeMode}
             isAuctioneer={isAuctioneer}
             isSupplier={isSupplier}
-            userId={mockUserProfile.id} // Passa o userId mocada para a lista de lotes
-            profile={mockUserProfile} // Passa o profile mocada para a lista de lotes
+            userId={mockUserProfile.id}
+            profile={mockUserProfile}
             onSelectLot={setActiveLot}
           />
         </div>
@@ -308,7 +274,6 @@ export default function DisputeRoomDemo({
         <div className="w-1/4 bg-white border-l border-gray-200 flex flex-col">
           <DisputeRightPanelDemo
             activeLot={activeLot}
-            // Passa as propostas e itens específicos do lote ativo
             lotProposals={activeLot ? mockLotProposals[activeLot.id] || [] : []}
             lotItems={activeLot ? mockLotItems[activeLot.id] || [] : []}
           />

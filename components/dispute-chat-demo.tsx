@@ -59,6 +59,7 @@ export function DisputeChatDemo({
   const [isLoading, setIsLoading] = useState(false);
   const [chatEnabled, setChatEnabled] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   // Simular mensagens iniciais e novas mensagens
@@ -138,8 +139,14 @@ export function DisputeChatDemo({
   }, [messages]);
 
   const scrollToBottom = () => {
+    // Scroll imediato
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+
+    // Scroll forçado caso o primeiro não funcione
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
     }, 100);
   };
 
@@ -284,7 +291,10 @@ export function DisputeChatDemo({
       </div>
 
       {/* Área de Mensagens */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth"
+        style={{ maxHeight: "calc(100vh - 200px)" }}>
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-500 text-lg">
             Nenhuma mensagem ainda.

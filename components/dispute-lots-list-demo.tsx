@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, TrendingDown, Timer, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { Users, TrendingDown, Timer, AlertCircle, CheckCircle, Clock, Target } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ interface DisputeLotsListDemoProps {
   lots: any[];
   activeLot: any | null;
   disputeStatus: string;
+  disputeMode: string;
   isAuctioneer: boolean;
   isSupplier: boolean;
   userId: string;
@@ -39,54 +40,54 @@ const mockLotBids: Record<
   { value: number; is_percentage: boolean; profiles: { name: string; company_name: string } }
 > = {
   "lot-001": {
-    value: 8.2, // Valor inicial para simulação
+    value: 8.2,
     is_percentage: false,
-    profiles: { name: "Fornecedora ABC", company_name: "ABC Materiais Ltda" },
+    profiles: { name: "Fornecedor 15", company_name: "Empresa 15 Ltda" },
   },
   "lot-002": {
     value: 120.0,
     is_percentage: false,
-    profiles: { name: "Fornecedora XYZ", company_name: "XYZ Suprimentos Ltda" },
+    profiles: { name: "Fornecedor 8", company_name: "Empresa 8 Ltda" },
   },
   "lot-003": {
     value: 50.0,
     is_percentage: false,
-    profiles: { name: "Fornecedora 123", company_name: "123 Materiais Ltda" },
+    profiles: { name: "Fornecedor 22", company_name: "Empresa 22 Ltda" },
   },
   "lot-004": {
     value: 25.0,
     is_percentage: false,
-    profiles: { name: "Fornecedora ABC", company_name: "ABC Materiais Ltda" },
+    profiles: { name: "Fornecedor 11", company_name: "Empresa 11 Ltda" },
   },
   "lot-005": {
     value: 15.0,
     is_percentage: false,
-    profiles: { name: "Fornecedora XYZ", company_name: "XYZ Suprimentos Ltda" },
+    profiles: { name: "Fornecedor 7", company_name: "Empresa 7 Ltda" },
   },
   "lot-006": {
     value: 30.0,
     is_percentage: false,
-    profiles: { name: "Fornecedora 123", company_name: "123 Materiais Ltda" },
+    profiles: { name: "Fornecedor 19", company_name: "Empresa 19 Ltda" },
   },
   "lot-007": {
     value: 40.0,
     is_percentage: false,
-    profiles: { name: "Fornecedora ABC", company_name: "ABC Materiais Ltda" },
+    profiles: { name: "Fornecedor 3", company_name: "Empresa 3 Ltda" },
   },
   "lot-008": {
     value: 10.0,
     is_percentage: false,
-    profiles: { name: "Fornecedora XYZ", company_name: "XYZ Suprimentos Ltda" },
+    profiles: { name: "Fornecedor 14", company_name: "Empresa 14 Ltda" },
   },
   "lot-009": {
     value: 5.0,
     is_percentage: false,
-    profiles: { name: "Fornecedora 123", company_name: "123 Materiais Ltda" },
+    profiles: { name: "Fornecedor 25", company_name: "Empresa 25 Ltda" },
   },
   "lot-010": {
     value: 20.0,
     is_percentage: false,
-    profiles: { name: "Fornecedora ABC", company_name: "ABC Materiais Ltda" },
+    profiles: { name: "Fornecedor 9", company_name: "Empresa 9 Ltda" },
   },
 };
 
@@ -107,6 +108,7 @@ export function DisputeLotsListDemo({
   lots,
   activeLot,
   disputeStatus,
+  disputeMode,
   isAuctioneer,
   isSupplier,
   userId,
@@ -133,37 +135,50 @@ export function DisputeLotsListDemo({
   const countdownRefs = useRef<Record<string, NodeJS.Timeout | null>>({});
   const { toast } = useToast();
 
-  // Simular mudanças no melhor lance
+  // Simular mudanças no melhor lance baseado no modo de disputa
   useEffect(() => {
-    const interval = setInterval(() => {
-      setBestBids((prevBids) => {
-        const updatedBids = { ...prevBids };
-        for (const lotId in updatedBids) {
-          if (Math.random() < 0.1) {
-            const newValue = updatedBids[lotId].value - (Math.random() * 0.1 + 0.01);
-            const randomSupplierNumber = Math.floor(Math.random() * 30) + 1; // Simula um número de fornecedor
-            updatedBids[lotId] = {
-              ...updatedBids[lotId],
-              value: Number(newValue.toFixed(2)),
-              profiles: {
-                name: `Fornecedor ${randomSupplierNumber}`, // Nome do fornecedor simulado
-                company_name: `Empresa ${randomSupplierNumber} Ltda`,
-              },
-            };
+    console.log("DisputeLotsListDemo: disputeMode changed to", disputeMode);
+    if (disputeMode === "closed") return; // Modo fechado não tem lances em tempo real
+
+    const interval = setInterval(
+      () => {
+        setBestBids((prevBids) => {
+          const updatedBids = { ...prevBids };
+          for (const lotId in updatedBids) {
+            if (mockLotStatuses[lotId] === "open" && Math.random() < 0.15) {
+              const currentValue = updatedBids[lotId].value;
+              const reduction =
+                disputeMode === "random" ? Math.random() * 0.2 + 0.05 : Math.random() * 0.1 + 0.01;
+              const newValue = currentValue - reduction;
+              const randomSupplierNumber = Math.floor(Math.random() * 30) + 1;
+
+              updatedBids[lotId] = {
+                ...updatedBids[lotId],
+                value: Number(newValue.toFixed(2)),
+                profiles: {
+                  name: `Fornecedor ${randomSupplierNumber}`,
+                  company_name: `Empresa ${randomSupplierNumber} Ltda`,
+                },
+              };
+            }
           }
-        }
-        return updatedBids;
-      });
-    }, 3000);
+          return updatedBids;
+        });
+      },
+      disputeMode === "random" ? 2000 : 4000
+    ); // Mais frequente no modo randômico
 
     return () => clearInterval(interval);
-  }, []);
+  }, [disputeMode]);
 
   const startCountdown = (lotId: string) => {
-    setCountdown((prev) => ({ ...prev, [lotId]: 10 }));
+    const countdownTime = disputeMode === "random" ? 5 : 10; // Countdown mais rápido no modo randômico
+    setCountdown((prev) => ({ ...prev, [lotId]: countdownTime }));
+
     if (countdownRefs.current[lotId]) {
       clearInterval(countdownRefs.current[lotId]!);
     }
+
     countdownRefs.current[lotId] = setInterval(() => {
       setCountdown((prev) => {
         const current = prev[lotId];
@@ -188,7 +203,17 @@ export function DisputeLotsListDemo({
       return;
     }
 
-    // Simular envio do lance (sem banco de dados)
+    const currentBest = bestBids[lotId]?.value || 0;
+    if (bidValue >= currentBest) {
+      toast({
+        title: "Lance Inválido",
+        description: "Seu lance deve ser menor que o melhor lance atual.",
+        variant: "destructive",
+      });
+      setIsSubmitting((prev) => ({ ...prev, [lotId]: false }));
+      return;
+    }
+
     setNewBidValues((prev) => ({ ...prev, [lotId]: "" }));
     startCountdown(lotId);
     toast({ title: "Lance enviado", description: "Aguardando confirmação do lance..." });
@@ -205,7 +230,6 @@ export function DisputeLotsListDemo({
 
   const handleEffectiveBid = (lotId: string) => {
     try {
-      // Simular efetivação do lance
       const bidValue = Number.parseFloat(newBidValues[lotId]?.replace(",", ".") || "");
       setBestBids((prev) => ({
         ...prev,
@@ -222,7 +246,11 @@ export function DisputeLotsListDemo({
         },
       }));
 
-      toast({ title: "Lance efetivado", description: "Seu lance foi registrado com sucesso." });
+      toast({
+        title: "Lance efetivado",
+        description: `Seu lance de R$ ${bidValue.toFixed(2)} foi registrado com sucesso!`,
+        duration: 5000,
+      });
     } catch (error) {
       console.error("Erro ao efetivar lance:", error);
       toast({
@@ -242,11 +270,25 @@ export function DisputeLotsListDemo({
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
   };
 
-  const getSuggestedBid = (lotId: string) => {
+  const getSuggestedBids = (lotId: string) => {
     const currentBest = bestBids[lotId]?.value;
-    if (!currentBest) return "7,50";
-    const suggested = currentBest - 0.05;
-    return suggested.toFixed(2).replace(".", ",");
+    if (!currentBest) return ["7,50", "7,00", "6,50"];
+
+    const suggestions = [
+      (currentBest - 0.05).toFixed(2),
+      (currentBest - 0.1).toFixed(2),
+      (currentBest - 0.2).toFixed(2),
+    ];
+
+    return suggestions.map((s) => s.replace(".", ","));
+  };
+
+  const handleSuggestedBidClick = (lotId: string, value: string) => {
+    setNewBidValues((prev) => ({ ...prev, [lotId]: value }));
+    toast({
+      title: "Valor Sugerido Aplicado",
+      description: `Valor R$ ${value} aplicado ao campo de lance.`,
+    });
   };
 
   const getLotStatusInfo = (lotId: string) => {
@@ -265,9 +307,32 @@ export function DisputeLotsListDemo({
     }
   };
 
+  const canSendBid = (lotId: string) => {
+    if (disputeMode === "closed") return false;
+    return mockLotStatuses[lotId] === "open" && isSupplier;
+  };
+
+  const getModeName = (mode: string) => {
+    const modeNames: Record<string, string> = {
+      open: "Aberto",
+      open_restart: "Aberto (com reinício)",
+      closed: "Fechado",
+      open_closed: "Aberto e Fechado",
+      closed_open: "Fechado e Aberto",
+      random: "Randômico",
+    };
+    return modeNames[mode] || mode;
+  };
+
   return (
     <div className="h-full flex flex-col bg-gray-50 p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Lotes da Licitação</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">Lotes da Licitação</h2>
+        <Badge variant="outline" className="text-sm">
+          Modo: {getModeName(disputeMode)}
+        </Badge>
+      </div>
+
       <div className="flex-1 overflow-y-auto space-y-4 pr-2">
         {lots.map((lot) => {
           const statusInfo = getLotStatusInfo(lot.id);
@@ -276,6 +341,7 @@ export function DisputeLotsListDemo({
           const currentCountdown = countdown[lot.id];
           const isLotSubmitting = isSubmitting[lot.id];
           const isActive = activeLot?.id === lot.id;
+          const suggestedBids = getSuggestedBids(lot.id);
 
           return (
             <Card
@@ -319,7 +385,7 @@ export function DisputeLotsListDemo({
                   </div>
                 </div>
 
-                {isSupplier && statusInfo.label === "Em disputa" && (
+                {canSendBid(lot.id) && (
                   <div className="mt-4 pt-4 border-t border-gray-200">
                     {currentCountdown !== null ? (
                       <div className="text-center">
@@ -340,10 +406,27 @@ export function DisputeLotsListDemo({
                       </div>
                     ) : (
                       <div className="space-y-3">
+                        {/* Valores Sugeridos */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Target className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm text-gray-600">Valores sugeridos:</span>
+                          {suggestedBids.map((suggestedValue, index) => (
+                            <Button
+                              key={index}
+                              variant="outline"
+                              size="sm"
+                              className="h-8 text-xs"
+                              onClick={() => handleSuggestedBidClick(lot.id, suggestedValue)}>
+                              R$ {suggestedValue}
+                            </Button>
+                          ))}
+                        </div>
+
+                        {/* Campo de Lance */}
                         <div className="flex items-center gap-3">
                           <Input
                             type="text"
-                            placeholder={`R$ ${getSuggestedBid(lot.id)}`}
+                            placeholder={`R$ ${suggestedBids[0]}`}
                             value={newBidValues[lot.id] || ""}
                             onChange={(e) =>
                               setNewBidValues((prev) => ({ ...prev, [lot.id]: e.target.value }))
@@ -359,11 +442,22 @@ export function DisputeLotsListDemo({
                             Enviar Lance
                           </Button>
                         </div>
+
                         <p className="text-center text-gray-500 text-sm">
-                          Sugestão: R$ {getSuggestedBid(lot.id)} (R$ 0,05 melhor que o atual)
+                          Melhor atual: {formatValue(bestBidForLot?.value || 0, false)} • Mínimo: R${" "}
+                          {(bestBidForLot?.value - 0.01 || 0).toFixed(2).replace(".", ",")}
                         </p>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {disputeMode === "closed" && statusInfo.label === "Em disputa" && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="text-center text-gray-600">
+                      <Clock className="h-8 w-8 mx-auto mb-2" />
+                      <p className="text-sm">Modo Fechado - Aguardando abertura das propostas</p>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -375,8 +469,7 @@ export function DisputeLotsListDemo({
       {/* Pop-up de Confirmação de Lance */}
       <Dialog
         open={!!showConfirmDialog}
-        onOpenChange={(open) => setShowConfirmDialog(open ? showConfirmDialog : null)}
-      >
+        onOpenChange={(open) => setShowConfirmDialog(open ? showConfirmDialog : null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-2xl">Confirmar Lance</DialogTitle>
@@ -384,6 +477,18 @@ export function DisputeLotsListDemo({
               Você está prestes a enviar um lance de{" "}
               <span className="font-bold text-blue-600 text-xl">
                 R$ {newBidValues[showConfirmDialog || ""]}
+              </span>
+              <br />
+              <br />
+              <span className="text-sm text-gray-600">
+                Modo de disputa:{" "}
+                <strong>
+                  {disputeMode === "open"
+                    ? "Aberto"
+                    : disputeMode === "random"
+                    ? "Randômico"
+                    : "Combinado"}
+                </strong>
               </span>
               <br />
               Deseja continuar?

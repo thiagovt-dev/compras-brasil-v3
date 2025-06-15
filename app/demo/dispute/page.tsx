@@ -182,7 +182,7 @@ export default function DemoDisputePage() {
                     ? "bg-blue-600 text-white"
                     : "bg-white text-gray-700 hover:bg-gray-50"
                 }`}>
-                Observador
+                Cidadão
               </button>
             </div>
           </div>
