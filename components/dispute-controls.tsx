@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { createClientSupabaseClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { useToast } from "@/hooks/use-toast"
+import { useState } from "react";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -12,67 +12,83 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Play, Pause, MessageSquare, CheckCircle, Settings } from "lucide-react"
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Play, Pause, MessageSquare, CheckCircle, Settings } from "lucide-react";
 
 interface DisputeControlsProps {
-  tenderId: string
-  status: string
-  activeLot: string | null
-  lots: any[]
+  tenderId: string;
+  status: string;
+  activeLot: any | null;
+  lots: any[];
+  userId: string;
 }
 
-export function DisputeControls({ tenderId, status, activeLot, lots }: DisputeControlsProps) {
-  const [isLoading, setIsLoading] = useState(false)
-  const [selectedLot, setSelectedLot] = useState<string>(activeLot || "")
-  const [openLotDialog, setOpenLotDialog] = useState(false)
-  const [disputeMode, setDisputeMode] = useState<string>("open")
-  const [disputeTime, setDisputeTime] = useState<number>(15)
+export function DisputeControls({
+  tenderId,
+  status,
+  activeLot,
+  lots,
+  userId,
+}: DisputeControlsProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedLotId, setSelectedLotId] = useState<string>(activeLot?.id || "");
+  const [openLotDialog, setOpenLotDialog] = useState(false);
+  const [disputeMode, setDisputeMode] = useState<string>("open_closed"); // Default to Aberto-Fechado
+  const [disputeTime, setDisputeTime] = useState<number>(15); // Initial time for open phase
 
-  const supabase = createClientSupabaseClient()
-  const { toast } = useToast()
+  const supabase = createClientSupabaseClient();
+  const { toast } = useToast();
 
   const updateDisputeStatus = async (newStatus: string) => {
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
-      const { error } = await supabase.from("tender_disputes").update({ status: newStatus }).eq("tender_id", tenderId)
+      const { error } = await supabase
+        .from("tender_disputes")
+        .update({ status: newStatus })
+        .eq("tender_id", tenderId);
 
-      if (error) throw error
+      if (error) throw error;
 
       // Enviar mensagem no sistema
       await supabase.from("dispute_messages").insert({
         tender_id: tenderId,
-        lot_id: activeLot,
-        user_id: (await supabase.auth.getUser()).data.user?.id,
+        lot_id: activeLot?.id || null,
+        user_id: userId,
         content: getStatusMessage(newStatus),
         type: "system",
         is_private: false,
-      })
+      });
 
       toast({
         title: "Status atualizado",
         description: `Status da disputa atualizado para ${getStatusLabel(newStatus)}.`,
-      })
+      });
     } catch (error) {
-      console.error("Erro ao atualizar status da disputa:", error)
+      console.error("Erro ao atualizar status da disputa:", error);
       toast({
         title: "Erro",
         description: "Não foi possível atualizar o status da disputa.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const startDispute = async () => {
-    if (!selectedLot) return
+    if (!selectedLotId) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
       // Atualizar disputa principal
@@ -80,143 +96,161 @@ export function DisputeControls({ tenderId, status, activeLot, lots }: DisputeCo
         .from("tender_disputes")
         .update({
           status: "open",
-          active_lot_id: selectedLot,
+          active_lot_id: selectedLotId,
           dispute_mode: disputeMode,
         })
-        .eq("tender_id", tenderId)
+        .eq("tender_id", tenderId);
 
-      if (disputeError) throw disputeError
+      if (disputeError) throw disputeError;
 
       // Criar/atualizar status do lote
       const { error: lotError } = await supabase.from("tender_lot_disputes").upsert({
         tender_id: tenderId,
-        lot_id: selectedLot,
+        lot_id: selectedLotId,
         status: "open",
         dispute_mode: disputeMode,
         time_limit: disputeTime,
-      })
+        // For random mode, set a random end time
+        random_end_time:
+          disputeMode === "random"
+            ? new Date(Date.now() + Math.random() * 30 * 60 * 1000).toISOString()
+            : null,
+      });
 
-      if (lotError) throw lotError
+      if (lotError) throw lotError;
 
-      const selectedLotData = lots.find((lot) => lot.id === selectedLot)
+      const selectedLotData = lots.find((lot) => lot.id === selectedLotId);
 
       // Enviar mensagem no sistema
       await supabase.from("dispute_messages").insert({
         tender_id: tenderId,
-        lot_id: selectedLot,
-        user_id: (await supabase.auth.getUser()).data.user?.id,
-        content: `Disputa iniciada para o lote "${selectedLotData?.name}". Modo: ${getDisputeModeLabel(disputeMode)}.`,
+        lot_id: selectedLotId,
+        user_id: userId,
+        content: `Disputa iniciada para o lote "${
+          selectedLotData?.name
+        }". Modo: ${getDisputeModeLabel(disputeMode)}.`,
         type: "system",
         is_private: false,
-      })
+      });
+
+      if (disputeMode === "random") {
+        await supabase.from("dispute_messages").insert({
+          tender_id: tenderId,
+          lot_id: selectedLotId,
+          user_id: userId,
+          content: `Tempo randômico iniciado para o lote "${selectedLotData?.name}".`,
+          type: "system",
+          is_private: false,
+        });
+      }
 
       toast({
         title: "Disputa iniciada",
         description: `Disputa iniciada para o lote "${selectedLotData?.name}".`,
-      })
+      });
 
-      setOpenLotDialog(false)
+      setOpenLotDialog(false);
     } catch (error) {
-      console.error("Erro ao iniciar disputa:", error)
+      console.error("Erro ao iniciar disputa:", error);
       toast({
         title: "Erro",
         description: "Não foi possível iniciar a disputa.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const selectLot = async () => {
-    if (!selectedLot) return
+    if (!selectedLotId) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
       const { error } = await supabase
         .from("tender_disputes")
-        .update({ active_lot_id: selectedLot })
-        .eq("tender_id", tenderId)
+        .update({ active_lot_id: selectedLotId })
+        .eq("tender_id", tenderId);
 
-      if (error) throw error
+      if (error) throw error;
 
-      const selectedLotData = lots.find((lot) => lot.id === selectedLot)
+      const selectedLotData = lots.find((lot) => lot.id === selectedLotId);
 
       toast({
         title: "Lote selecionado",
         description: `Lote "${selectedLotData?.name}" selecionado para disputa.`,
-      })
+      });
 
       // Enviar mensagem no sistema
       await supabase.from("dispute_messages").insert({
         tender_id: tenderId,
-        lot_id: selectedLot,
-        user_id: (await supabase.auth.getUser()).data.user?.id,
+        lot_id: selectedLotId,
+        user_id: userId,
         content: `Lote "${selectedLotData?.name}" selecionado para disputa.`,
         type: "system",
         is_private: false,
-      })
+      });
 
-      setOpenLotDialog(false)
+      setOpenLotDialog(false);
     } catch (error) {
-      console.error("Erro ao selecionar lote:", error)
+      console.error("Erro ao selecionar lote:", error);
       toast({
         title: "Erro",
         description: "Não foi possível selecionar o lote para disputa.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const getStatusLabel = (statusCode: string) => {
     switch (statusCode) {
       case "waiting":
-        return "Aguardando Início"
+        return "Aguardando Início";
       case "open":
-        return "Disputa Aberta"
+        return "Disputa Aberta";
       case "negotiation":
-        return "Em Negociação"
+        return "Em Negociação";
       case "closed":
-        return "Encerrada"
+        return "Encerrada";
       default:
-        return statusCode
+        return statusCode;
     }
-  }
+  };
 
   const getStatusMessage = (statusCode: string) => {
     switch (statusCode) {
       case "waiting":
-        return "Disputa retornada para aguardando início."
+        return "Disputa retornada para aguardando início.";
       case "open":
-        return "Disputa aberta para lances."
+        return "Disputa aberta para lances.";
       case "negotiation":
-        return "Iniciada fase de negociação."
+        return "Iniciada fase de negociação.";
       case "closed":
-        return "Disputa encerrada."
+        return "Disputa encerrada.";
       default:
-        return `Status alterado para ${statusCode}.`
+        return `Status alterado para ${statusCode}.`;
     }
-  }
+  };
 
   const getDisputeModeLabel = (mode: string) => {
     switch (mode) {
       case "open":
-        return "Aberto"
+        return "Aberto";
       case "closed":
-        return "Fechado"
+        return "Fechado";
       case "open_closed":
-        return "Aberto e Fechado"
+        return "Aberto e Fechado";
       case "closed_open":
-        return "Fechado e Aberto"
+        return "Fechado e Aberto";
       case "random":
-        return "Randômico"
+        return "Randômico";
       default:
-        return mode
+        return mode;
     }
-  }
+  };
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm border">
@@ -232,12 +266,14 @@ export function DisputeControls({ tenderId, status, activeLot, lots }: DisputeCo
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>Iniciar Disputa</DialogTitle>
-                <DialogDescription>Configure os parâmetros da disputa antes de iniciar.</DialogDescription>
+                <DialogDescription>
+                  Configure os parâmetros da disputa antes de iniciar.
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="lot-select">Selecionar Lote</Label>
-                  <Select value={selectedLot} onValueChange={setSelectedLot}>
+                  <Select value={selectedLotId} onValueChange={setSelectedLotId}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um lote" />
                     </SelectTrigger>
@@ -267,23 +303,25 @@ export function DisputeControls({ tenderId, status, activeLot, lots }: DisputeCo
                   </Select>
                 </div>
 
-                <div>
-                  <Label htmlFor="dispute-time">Tempo Inicial (minutos)</Label>
-                  <Input
-                    id="dispute-time"
-                    type="number"
-                    min="1"
-                    max="60"
-                    value={disputeTime}
-                    onChange={(e) => setDisputeTime(Number.parseInt(e.target.value))}
-                  />
-                </div>
+                {disputeMode !== "random" && ( // Only show time for non-random modes
+                  <div>
+                    <Label htmlFor="dispute-time">Tempo Inicial (minutos)</Label>
+                    <Input
+                      id="dispute-time"
+                      type="number"
+                      min="1"
+                      max="60"
+                      value={disputeTime}
+                      onChange={(e) => setDisputeTime(Number.parseInt(e.target.value))}
+                    />
+                  </div>
+                )}
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpenLotDialog(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={startDispute} disabled={!selectedLot || isLoading}>
+                <Button onClick={startDispute} disabled={!selectedLotId || isLoading}>
                   Iniciar Disputa
                 </Button>
               </DialogFooter>
@@ -293,7 +331,10 @@ export function DisputeControls({ tenderId, status, activeLot, lots }: DisputeCo
 
         {status === "open" && (
           <>
-            <Button variant="default" onClick={() => updateDisputeStatus("negotiation")} disabled={isLoading}>
+            <Button
+              variant="default"
+              onClick={() => updateDisputeStatus("negotiation")}
+              disabled={isLoading}>
               <MessageSquare className="mr-2 h-4 w-4" />
               Iniciar Negociação
             </Button>
@@ -308,9 +349,11 @@ export function DisputeControls({ tenderId, status, activeLot, lots }: DisputeCo
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Selecionar Novo Lote</DialogTitle>
-                  <DialogDescription>Escolha outro lote para continuar a disputa.</DialogDescription>
+                  <DialogDescription>
+                    Escolha outro lote para continuar a disputa.
+                  </DialogDescription>
                 </DialogHeader>
-                <Select value={selectedLot} onValueChange={setSelectedLot}>
+                <Select value={selectedLotId} onValueChange={setSelectedLotId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um lote" />
                   </SelectTrigger>
@@ -326,14 +369,17 @@ export function DisputeControls({ tenderId, status, activeLot, lots }: DisputeCo
                   <Button variant="outline" onClick={() => setOpenLotDialog(false)}>
                     Cancelar
                   </Button>
-                  <Button onClick={selectLot} disabled={!selectedLot || isLoading}>
+                  <Button onClick={selectLot} disabled={!selectedLotId || isLoading}>
                     Selecionar Lote
                   </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
 
-            <Button variant="outline" onClick={() => updateDisputeStatus("waiting")} disabled={isLoading}>
+            <Button
+              variant="outline"
+              onClick={() => updateDisputeStatus("waiting")}
+              disabled={isLoading}>
               <Pause className="mr-2 h-4 w-4" />
               Pausar Disputa
             </Button>
@@ -341,19 +387,25 @@ export function DisputeControls({ tenderId, status, activeLot, lots }: DisputeCo
         )}
 
         {status === "negotiation" && (
-          <Button variant="destructive" onClick={() => updateDisputeStatus("closed")} disabled={isLoading}>
+          <Button
+            variant="destructive"
+            onClick={() => updateDisputeStatus("closed")}
+            disabled={isLoading}>
             <CheckCircle className="mr-2 h-4 w-4" />
             Encerrar Disputa
           </Button>
         )}
 
         {status === "closed" && (
-          <Button variant="outline" onClick={() => updateDisputeStatus("waiting")} disabled={isLoading}>
+          <Button
+            variant="outline"
+            onClick={() => updateDisputeStatus("waiting")}
+            disabled={isLoading}>
             <Play className="mr-2 h-4 w-4" />
             Nova Disputa
           </Button>
         )}
       </div>
     </div>
-  )
+  );
 }
