@@ -7,8 +7,8 @@ import { DisputeHeader } from "@/components/dispute-header";
 import { DisputeChat } from "@/components/dispute-chat";
 import { DisputeControls } from "@/components/dispute-controls";
 import { Eye, Users } from "lucide-react";
-import { DisputeMainContent } from "./dispute-main-content";
-import { DisputeRightPanel } from "./dispute-right-panel";
+import { DisputeLotsList } from "./dispute-lots-list"; // Novo componente central
+import { DisputeRightPanel } from "./dispute-right-panel"; // Painel direito atualizado
 
 interface DisputeRoomProps {
   tender: any;
@@ -188,7 +188,7 @@ export default function DisputeRoom({
       {/* Layout Principal - Usa toda a largura da tela */}
       <div className="flex-1 flex">
         {/* Coluna da Esquerda: Chat - 25% da largura */}
-        <div className="w-1/4 bg-white border-r border-gray-200">
+        <div className="w-1/4 bg-white border-r border-gray-200 flex flex-col">
           <DisputeChat
             tenderId={tender.id}
             activeLotId={activeLot?.id || null}
@@ -200,25 +200,25 @@ export default function DisputeRoom({
           />
         </div>
 
-        {/* Coluna Central: Conteúdo Principal da Disputa - 50% da largura */}
-        <div className="w-1/2 bg-gray-50">
-          <DisputeMainContent
-            tenderId={tender.id}
+        {/* Coluna Central: Lista de Lotes com Lances - 50% da largura */}
+        <div className="w-1/2 bg-gray-50 flex flex-col">
+          <DisputeLotsList
+            lots={lots}
             activeLot={activeLot}
             disputeStatus={disputeStatus}
-            disputeMode={disputeMode}
             isAuctioneer={isAuctioneer}
             isSupplier={isSupplier}
             userId={userId}
             profile={profile}
+            onSelectLot={setActiveLot} // Passa a função para atualizar o lote ativo
           />
         </div>
 
-        {/* Coluna da Direita: Painel de Lances e Propostas - 25% da largura */}
-        <div className="w-1/4 bg-white border-l border-gray-200">
+        {/* Coluna da Direita: Painel de Detalhes do Lote Ativo - 25% da largura */}
+        <div className="w-1/4 bg-white border-l border-gray-200 flex flex-col">
           <DisputeRightPanel
             tenderId={tender.id}
-            activeLotId={activeLot?.id || null}
+            activeLot={activeLot} // Passa o lote ativo para o painel direito
             isAuctioneer={isAuctioneer}
             isSupplier={isSupplier}
             isCitizen={isCitizen}

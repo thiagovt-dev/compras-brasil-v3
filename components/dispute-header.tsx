@@ -1,8 +1,9 @@
 "use client";
 
 import type React from "react";
+
+import { Clock, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Building, FileText, User } from "lucide-react";
 
 interface DisputeHeaderProps {
   tender: any;
@@ -12,7 +13,7 @@ interface DisputeHeaderProps {
     icon: React.ReactNode;
     label: string;
     description: string;
-    variant: "default" | "secondary";
+    variant: "default" | "secondary" | "destructive" | "outline";
   };
   supplierIdentifier: string | null;
   disputeMode: string;
@@ -26,121 +27,48 @@ export function DisputeHeader({
   supplierIdentifier,
   disputeMode,
 }: DisputeHeaderProps) {
-  const getDisputeModeLabel = (mode: string) => {
-    switch (mode) {
-      case "open":
-        return "Modo Aberto";
-      case "closed":
-        return "Modo Fechado";
-      case "open_closed":
-        return "Modo Aberto-Fechado";
-      case "closed_open":
-        return "Modo Fechado-Aberto";
-      case "random":
-        return "Modo Randômico";
-      default:
-        return "Modo Aberto";
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "waiting":
-        return "bg-yellow-500";
-      case "open":
-        return "bg-green-500";
-      case "negotiation":
-        return "bg-blue-500";
-      case "closed":
-        return "bg-red-500";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "waiting":
-        return "Aguardando Início";
-      case "open":
-        return "Disputa Aberta";
-      case "negotiation":
-        return "Em Negociação";
-      case "closed":
-        return "Encerrada";
-      default:
-        return "Indefinido";
-    }
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   };
 
   return (
-    <div className="bg-blue-600 text-white shadow-lg">
-      <div className="px-6 py-4">
-        <div className="flex justify-between items-center">
-          {/* Informações da Licitação - Lado Esquerdo */}
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <FileText className="h-6 w-6" />
-              <div>
-                <h1 className="text-2xl font-bold">
-                  Processo Licitatório Nº {tender.tender_number}
-                </h1>
-                <p className="text-lg text-blue-100">Pregão Eletrônico Nº {tender.tender_number}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-blue-100">
-              <Building className="h-5 w-5" />
-              <span className="text-lg">Unidade Única: {tender.agency?.name}</span>
-            </div>
+    <header className="bg-blue-700 text-white p-4 shadow-md">
+      <div className="container mx-auto flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold">Licitação Digital Nº: {tender.number}</h1>
+          <Badge variant="secondary" className="bg-blue-600 text-white text-sm px-3 py-1">
+            Pregão Eletrônico {tender.type}
+          </Badge>
+          <span className="text-sm text-blue-200">
+            Unidade: {tender.agency_name} - {tender.city}
+          </span>
+        </div>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            <span className="text-lg font-semibold">{formatTime(currentTime)}</span>
           </div>
-
-          {/* Status e Informações - Centro */}
-          <div className="flex flex-col items-center gap-3">
-            <div className="flex items-center gap-3">
-              <div
-                className={`px-4 py-2 rounded-full ${getStatusColor(
-                  disputeStatus
-                )} text-white font-semibold text-lg`}>
-                {getStatusLabel(disputeStatus)}
-              </div>
-              <Badge
-                variant="outline"
-                className="bg-white/10 text-white border-white/20 text-base px-3 py-1">
-                {getDisputeModeLabel(disputeMode)}
-              </Badge>
-            </div>
-            {supplierIdentifier && (
-              <Badge
-                variant="outline"
-                className="bg-white/10 text-white border-white/20 text-base px-3 py-1 flex items-center gap-2">
-                <User className="h-4 w-4" />
-                Você é o {supplierIdentifier}
-              </Badge>
-            )}
-          </div>
-
-          {/* Relógio - Lado Direito */}
-          <div className="flex flex-col items-end">
-            <div className="bg-white/10 rounded-lg p-4 border border-white/20">
-              <div className="flex items-center gap-3 text-white">
-                <Clock className="h-6 w-6" />
-                <div className="text-right">
-                  <div className="text-3xl font-mono font-bold">
-                    {currentTime.toLocaleTimeString("pt-BR", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                    })}
-                  </div>
-                  <div className="text-sm text-blue-100">
-                    {currentTime.toLocaleDateString("pt-BR")}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <Badge variant={userInfo.variant} className="flex items-center gap-2 text-sm px-3 py-1">
+            {userInfo.icon}
+            <span>{userInfo.label}</span>
+          </Badge>
+          {supplierIdentifier && (
+            <Badge
+              variant="default"
+              className="flex items-center gap-2 text-sm px-3 py-1 bg-blue-500 text-white">
+              <Users className="h-4 w-4" />
+              <span>Você é o {supplierIdentifier}</span>
+            </Badge>
+          )}
         </div>
       </div>
-    </div>
+      <div className="container mx-auto mt-2 flex items-center justify-between text-sm text-blue-100">
+        <span>Intervalo mínimo: R$ 0,10</span>
+        <span>Formato de lance: Unitário</span>
+        <Badge variant="secondary" className="bg-blue-600 text-white text-sm px-3 py-1">
+          Modo {disputeMode === "open" ? "aberto" : "fechado"}
+        </Badge>
+      </div>
+    </header>
   );
 }
