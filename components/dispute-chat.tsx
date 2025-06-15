@@ -219,6 +219,51 @@ export function DisputeChat({
     }
   };
 
+  const exportChat = async () => {
+    try {
+      const { data } = await supabase
+        .from("dispute_messages")
+        .select(
+          `
+         *,
+         profiles:user_id(name, email)
+       `
+        )
+        .eq("tender_id", tenderId)
+        .order("created_at", { ascending: true });
+
+      if (data) {
+        const chatContent = data
+          .map((msg: any) => {
+            const timestamp = new Date(msg.created_at).toLocaleString("pt-BR");
+            const userName = msg.profiles?.name || msg.profiles?.email || "Sistema";
+            return `[${timestamp}] ${userName}: ${msg.content}`;
+          })
+          .join("\n");
+
+        const blob = new Blob([chatContent], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `chat-disputa-${tenderId}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        toast({
+          title: "Chat exportado",
+          description: "O histórico do chat foi exportado com sucesso.",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao exportar chat:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível exportar o chat.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString("pt-BR", {
@@ -266,7 +311,12 @@ export function DisputeChat({
                   className="h-8 w-8 p-0">
                   <Settings className="h-4 w-4" />
                 </Button>
-                <Button size="sm" variant="outline" title="Exportar Chat" className="h-8 w-8 p-0">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={exportChat}
+                  title="Exportar Chat"
+                  className="h-8 w-8 p-0">
                   <Download className="h-4 w-4" />
                 </Button>
               </>
@@ -326,7 +376,7 @@ export function DisputeChat({
                   ? "Chat desabilitado para fornecedores"
                   : "Digite sua mensagem..."
               }
-              disabled={isLoading || (!isAuctioneer && !chatEnabled)}
+              disabled={isLoading || !newMessage.trim() || (!isAuctioneer && !chatEnabled)}
               className="flex-1 h-12 text-base"
             />
             <Button
