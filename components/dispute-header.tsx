@@ -1,9 +1,7 @@
 "use client";
 
 import type React from "react";
-
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Clock, Building, FileText, User } from "lucide-react";
 
 interface DisputeHeaderProps {
@@ -28,21 +26,6 @@ export function DisputeHeader({
   supplierIdentifier,
   disputeMode,
 }: DisputeHeaderProps) {
-  const getStatusInfo = (status: string) => {
-    switch (status) {
-      case "waiting":
-        return { label: "Aguardando Início", variant: "outline" as const, color: "text-gray-600" };
-      case "open":
-        return { label: "Disputa Aberta", variant: "default" as const, color: "text-green-600" };
-      case "negotiation":
-        return { label: "Em Negociação", variant: "secondary" as const, color: "text-blue-600" };
-      case "closed":
-        return { label: "Encerrada", variant: "destructive" as const, color: "text-red-600" };
-      default:
-        return { label: "Indefinido", variant: "outline" as const, color: "text-gray-600" };
-    }
-  };
-
   const getDisputeModeLabel = (mode: string) => {
     switch (mode) {
       case "open":
@@ -56,63 +39,105 @@ export function DisputeHeader({
       case "random":
         return "Modo Randômico";
       default:
-        return "Modo Desconhecido";
+        return "Modo Aberto";
     }
   };
 
-  const statusInfo = getStatusInfo(disputeStatus);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "waiting":
+        return "bg-yellow-500";
+      case "open":
+        return "bg-green-500";
+      case "negotiation":
+        return "bg-blue-500";
+      case "closed":
+        return "bg-red-500";
+      default:
+        return "bg-gray-500";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "waiting":
+        return "Aguardando Início";
+      case "open":
+        return "Disputa Aberta";
+      case "negotiation":
+        return "Em Negociação";
+      case "closed":
+        return "Encerrada";
+      default:
+        return "Indefinido";
+    }
+  };
 
   return (
     <div className="bg-blue-600 text-white shadow-lg">
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-          {/* Informações da Licitação */}
+      <div className="px-6 py-4">
+        <div className="flex justify-between items-center">
+          {/* Informações da Licitação - Lado Esquerdo */}
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <FileText className="h-5 w-5" />
-              <h1 className="text-lg font-bold">Processo Licitatório Nº {tender.tender_number}</h1>
-              <span className="text-blue-200 text-sm">
-                Pregão Eletrônico Nº {tender.tender_number}
-              </span>
+            <div className="flex items-center gap-3 mb-2">
+              <FileText className="h-6 w-6" />
+              <div>
+                <h1 className="text-2xl font-bold">
+                  Processo Licitatório Nº {tender.tender_number}
+                </h1>
+                <p className="text-lg text-blue-100">Pregão Eletrônico Nº {tender.tender_number}</p>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-blue-100">
-              <Building className="h-4 w-4" />
-              <span>Unidade Única: {tender.agency?.name}</span>
+            <div className="flex items-center gap-2 text-blue-100">
+              <Building className="h-5 w-5" />
+              <span className="text-lg">Unidade Única: {tender.agency?.name}</span>
             </div>
           </div>
 
-          {/* Status e Relógio */}
-          <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
+          {/* Status e Informações - Centro */}
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex items-center gap-3">
+              <div
+                className={`px-4 py-2 rounded-full ${getStatusColor(
+                  disputeStatus
+                )} text-white font-semibold text-lg`}>
+                {getStatusLabel(disputeStatus)}
+              </div>
+              <Badge
+                variant="outline"
+                className="bg-white/10 text-white border-white/20 text-base px-3 py-1">
+                {getDisputeModeLabel(disputeMode)}
+              </Badge>
+            </div>
             {supplierIdentifier && (
               <Badge
                 variant="outline"
-                className="bg-white/10 text-white border-white/20 flex items-center gap-1">
+                className="bg-white/10 text-white border-white/20 text-base px-3 py-1 flex items-center gap-2">
                 <User className="h-4 w-4" />
                 Você é o {supplierIdentifier}
               </Badge>
             )}
-            <Badge variant="outline" className="bg-white/10 text-white border-white/20">
-              {getDisputeModeLabel(disputeMode)}
-            </Badge>
-            <Card className="bg-white/10 border-white/20">
-              <CardContent className="p-2">
-                <div className="flex items-center gap-2 text-white">
-                  <Clock className="h-4 w-4" />
-                  <div className="text-center">
-                    <div className="text-base font-mono font-bold">
-                      {currentTime.toLocaleTimeString("pt-BR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        second: "2-digit",
-                      })}
-                    </div>
-                    <div className="text-xs text-blue-100">
-                      {currentTime.toLocaleDateString("pt-BR")}
-                    </div>
+          </div>
+
+          {/* Relógio - Lado Direito */}
+          <div className="flex flex-col items-end">
+            <div className="bg-white/10 rounded-lg p-4 border border-white/20">
+              <div className="flex items-center gap-3 text-white">
+                <Clock className="h-6 w-6" />
+                <div className="text-right">
+                  <div className="text-3xl font-mono font-bold">
+                    {currentTime.toLocaleTimeString("pt-BR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    })}
+                  </div>
+                  <div className="text-sm text-blue-100">
+                    {currentTime.toLocaleDateString("pt-BR")}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
       </div>

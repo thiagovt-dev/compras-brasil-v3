@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Play, Pause, MessageSquare, CheckCircle, Settings } from "lucide-react";
+import { Play, Pause, MessageSquare, CheckCircle, Settings, ArrowLeft } from "lucide-react";
 
 interface DisputeControlsProps {
   tenderId: string;
@@ -42,8 +42,8 @@ export function DisputeControls({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedLotId, setSelectedLotId] = useState<string>(activeLot?.id || "");
   const [openLotDialog, setOpenLotDialog] = useState(false);
-  const [disputeMode, setDisputeMode] = useState<string>("open_closed"); // Default to Aberto-Fechado
-  const [disputeTime, setDisputeTime] = useState<number>(15); // Initial time for open phase
+  const [disputeMode, setDisputeMode] = useState<string>("open_closed");
+  const [disputeTime, setDisputeTime] = useState<number>(15);
 
   const supabase = createClientSupabaseClient();
   const { toast } = useToast();
@@ -59,7 +59,6 @@ export function DisputeControls({
 
       if (error) throw error;
 
-      // Enviar mensagem no sistema
       await supabase.from("dispute_messages").insert({
         tender_id: tenderId,
         lot_id: activeLot?.id || null,
@@ -91,7 +90,6 @@ export function DisputeControls({
     setIsLoading(true);
 
     try {
-      // Atualizar disputa principal
       const { error: disputeError } = await supabase
         .from("tender_disputes")
         .update({
@@ -103,14 +101,12 @@ export function DisputeControls({
 
       if (disputeError) throw disputeError;
 
-      // Criar/atualizar status do lote
       const { error: lotError } = await supabase.from("tender_lot_disputes").upsert({
         tender_id: tenderId,
         lot_id: selectedLotId,
         status: "open",
         dispute_mode: disputeMode,
         time_limit: disputeTime,
-        // For random mode, set a random end time
         random_end_time:
           disputeMode === "random"
             ? new Date(Date.now() + Math.random() * 30 * 60 * 1000).toISOString()
@@ -121,7 +117,6 @@ export function DisputeControls({
 
       const selectedLotData = lots.find((lot) => lot.id === selectedLotId);
 
-      // Enviar mensagem no sistema
       await supabase.from("dispute_messages").insert({
         tender_id: tenderId,
         lot_id: selectedLotId,
@@ -182,7 +177,6 @@ export function DisputeControls({
         description: `Lote "${selectedLotData?.name}" selecionado para disputa.`,
       });
 
-      // Enviar mensagem no sistema
       await supabase.from("dispute_messages").insert({
         tender_id: tenderId,
         lot_id: selectedLotId,
@@ -253,28 +247,30 @@ export function DisputeControls({
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border">
-      <div className="flex flex-wrap gap-2">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-4">
         {status === "waiting" && (
           <Dialog open={openLotDialog} onOpenChange={setOpenLotDialog}>
             <DialogTrigger asChild>
-              <Button disabled={isLoading}>
-                <Play className="mr-2 h-4 w-4" />
+              <Button disabled={isLoading} size="lg" className="text-lg px-6">
+                <Play className="mr-2 h-5 w-5" />
                 Iniciar Disputa
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Iniciar Disputa</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-xl">Iniciar Disputa</DialogTitle>
+                <DialogDescription className="text-base">
                   Configure os parâmetros da disputa antes de iniciar.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="lot-select">Selecionar Lote</Label>
+                  <Label htmlFor="lot-select" className="text-base">
+                    Selecionar Lote
+                  </Label>
                   <Select value={selectedLotId} onValueChange={setSelectedLotId}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-12">
                       <SelectValue placeholder="Selecione um lote" />
                     </SelectTrigger>
                     <SelectContent>
@@ -288,9 +284,11 @@ export function DisputeControls({
                 </div>
 
                 <div>
-                  <Label htmlFor="dispute-mode">Modo de Disputa</Label>
+                  <Label htmlFor="dispute-mode" className="text-base">
+                    Modo de Disputa
+                  </Label>
                   <Select value={disputeMode} onValueChange={setDisputeMode}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-12">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -303,9 +301,11 @@ export function DisputeControls({
                   </Select>
                 </div>
 
-                {disputeMode !== "random" && ( // Only show time for non-random modes
+                {disputeMode !== "random" && (
                   <div>
-                    <Label htmlFor="dispute-time">Tempo Inicial (minutos)</Label>
+                    <Label htmlFor="dispute-time" className="text-base">
+                      Tempo Inicial (minutos)
+                    </Label>
                     <Input
                       id="dispute-time"
                       type="number"
@@ -313,15 +313,22 @@ export function DisputeControls({
                       max="60"
                       value={disputeTime}
                       onChange={(e) => setDisputeTime(Number.parseInt(e.target.value))}
+                      className="h-12"
                     />
                   </div>
                 )}
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setOpenLotDialog(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setOpenLotDialog(false)}
+                  className="text-base px-6">
                   Cancelar
                 </Button>
-                <Button onClick={startDispute} disabled={!selectedLotId || isLoading}>
+                <Button
+                  onClick={startDispute}
+                  disabled={!selectedLotId || isLoading}
+                  className="text-base px-6">
                   Iniciar Disputa
                 </Button>
               </DialogFooter>
@@ -334,27 +341,29 @@ export function DisputeControls({
             <Button
               variant="default"
               onClick={() => updateDisputeStatus("negotiation")}
-              disabled={isLoading}>
-              <MessageSquare className="mr-2 h-4 w-4" />
+              disabled={isLoading}
+              size="lg"
+              className="text-lg px-6">
+              <MessageSquare className="mr-2 h-5 w-5" />
               Iniciar Negociação
             </Button>
 
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" disabled={isLoading}>
-                  <Settings className="mr-2 h-4 w-4" />
+                <Button variant="outline" disabled={isLoading} size="lg" className="text-lg px-6">
+                  <Settings className="mr-2 h-5 w-5" />
                   Trocar Lote
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Selecionar Novo Lote</DialogTitle>
-                  <DialogDescription>
+                  <DialogTitle className="text-xl">Selecionar Novo Lote</DialogTitle>
+                  <DialogDescription className="text-base">
                     Escolha outro lote para continuar a disputa.
                   </DialogDescription>
                 </DialogHeader>
                 <Select value={selectedLotId} onValueChange={setSelectedLotId}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12">
                     <SelectValue placeholder="Selecione um lote" />
                   </SelectTrigger>
                   <SelectContent>
@@ -366,10 +375,16 @@ export function DisputeControls({
                   </SelectContent>
                 </Select>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setOpenLotDialog(false)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setOpenLotDialog(false)}
+                    className="text-base px-6">
                     Cancelar
                   </Button>
-                  <Button onClick={selectLot} disabled={!selectedLotId || isLoading}>
+                  <Button
+                    onClick={selectLot}
+                    disabled={!selectedLotId || isLoading}
+                    className="text-base px-6">
                     Selecionar Lote
                   </Button>
                 </DialogFooter>
@@ -379,8 +394,10 @@ export function DisputeControls({
             <Button
               variant="outline"
               onClick={() => updateDisputeStatus("waiting")}
-              disabled={isLoading}>
-              <Pause className="mr-2 h-4 w-4" />
+              disabled={isLoading}
+              size="lg"
+              className="text-lg px-6">
+              <Pause className="mr-2 h-5 w-5" />
               Pausar Disputa
             </Button>
           </>
@@ -390,8 +407,10 @@ export function DisputeControls({
           <Button
             variant="destructive"
             onClick={() => updateDisputeStatus("closed")}
-            disabled={isLoading}>
-            <CheckCircle className="mr-2 h-4 w-4" />
+            disabled={isLoading}
+            size="lg"
+            className="text-lg px-6">
+            <CheckCircle className="mr-2 h-5 w-5" />
             Encerrar Disputa
           </Button>
         )}
@@ -400,12 +419,23 @@ export function DisputeControls({
           <Button
             variant="outline"
             onClick={() => updateDisputeStatus("waiting")}
-            disabled={isLoading}>
-            <Play className="mr-2 h-4 w-4" />
+            disabled={isLoading}
+            size="lg"
+            className="text-lg px-6">
+            <Play className="mr-2 h-5 w-5" />
             Nova Disputa
           </Button>
         )}
       </div>
+
+      <Button
+        variant="ghost"
+        onClick={() => window.history.back()}
+        size="lg"
+        className="text-lg px-6">
+        <ArrowLeft className="mr-2 h-5 w-5" />
+        Voltar para Detalhes da Licitação
+      </Button>
     </div>
   );
 }

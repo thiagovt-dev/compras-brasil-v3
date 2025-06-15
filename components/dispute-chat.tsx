@@ -1,10 +1,8 @@
 "use client";
 
 import type React from "react";
-
 import { useState, useEffect, useRef } from "react";
 import { createClientSupabaseClient } from "@/lib/supabase/client";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -48,14 +46,12 @@ export function DisputeChat({
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [chatEnabled, setChatEnabled] = useState(true); // Default to enabled
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [chatEnabled, setChatEnabled] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supabase = createClientSupabaseClient();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Carregar mensagens iniciais
     const fetchMessages = async () => {
       try {
         const query = supabase
@@ -78,7 +74,6 @@ export function DisputeChat({
           .eq("tender_id", tenderId)
           .order("created_at", { ascending: true });
 
-        // Se não for pregoeiro, filtrar mensagens privadas
         if (!isAuctioneer) {
           query.or(`is_private.eq.false,and(is_private.eq.true,recipient_id.eq.${userId})`);
         }
@@ -117,7 +112,6 @@ export function DisputeChat({
 
     fetchMessages();
 
-    // Inscrever-se para atualizações em tempo real
     const subscription = supabase
       .channel("dispute_messages_changes")
       .on(
@@ -131,12 +125,10 @@ export function DisputeChat({
         async (payload) => {
           const newMessage = payload.new as any;
 
-          // Se não for pregoeiro e a mensagem for privada para outro usuário, não mostrar
           if (!isAuctioneer && newMessage.is_private && newMessage.recipient_id !== userId) {
             return;
           }
 
-          // Buscar informações do usuário
           const { data: userData } = await supabase
             .from("profiles")
             .select("name, email")
@@ -153,11 +145,6 @@ export function DisputeChat({
 
           setMessages((prev) => [...prev, messageWithUser]);
           scrollToBottom();
-
-          // Tocar som se habilitado
-          if (soundEnabled && newMessage.user_id !== userId) {
-            // Aqui você pode adicionar um som de notificação
-          }
         }
       )
       .subscribe();
@@ -165,7 +152,7 @@ export function DisputeChat({
     return () => {
       subscription.unsubscribe();
     };
-  }, [tenderId, isAuctioneer, userId, supabase, toast, soundEnabled]);
+  }, [tenderId, isAuctioneer, userId, supabase, toast]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -176,7 +163,6 @@ export function DisputeChat({
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Only pregoeiro can send messages by default, or if chat is explicitly enabled for suppliers
     if (!newMessage.trim() || isCitizen || (!isAuctioneer && !chatEnabled)) return;
 
     setIsLoading(true);
@@ -213,7 +199,6 @@ export function DisputeChat({
       const newStatus = !chatEnabled;
       setChatEnabled(newStatus);
 
-      // Enviar mensagem do sistema
       await supabase.from("dispute_messages").insert({
         tender_id: tenderId,
         lot_id: activeLotId,
@@ -231,51 +216,6 @@ export function DisputeChat({
       });
     } catch (error) {
       console.error("Erro ao alterar status do chat:", error);
-    }
-  };
-
-  const exportChat = async () => {
-    try {
-      const { data } = await supabase
-        .from("dispute_messages")
-        .select(
-          `
-          *,
-          profiles:user_id(name, email)
-        `
-        )
-        .eq("tender_id", tenderId)
-        .order("created_at", { ascending: true });
-
-      if (data) {
-        const chatContent = data
-          .map((msg: any) => {
-            const timestamp = new Date(msg.created_at).toLocaleString("pt-BR");
-            const userName = msg.profiles?.name || msg.profiles?.email || "Sistema";
-            return `[${timestamp}] ${userName}: ${msg.content}`;
-          })
-          .join("\n");
-
-        const blob = new Blob([chatContent], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `chat-disputa-${tenderId}.txt`;
-        a.click();
-        URL.revokeObjectURL(url);
-
-        toast({
-          title: "Chat exportado",
-          description: "O histórico do chat foi exportado com sucesso.",
-        });
-      }
-    } catch (error) {
-      console.error("Erro ao exportar chat:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível exportar o chat.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -298,18 +238,23 @@ export function DisputeChat({
     if (message.type === "system") return "Sistema";
     if (message.user_id === userId) return "Você";
     if (isAuctioneer) return message.user?.name || message.user?.email || "Fornecedor";
-    return `Fornecedor ${message.user_id.substring(0, 8).toUpperCase()}`; // Anonymize for others
+    return `Fornecedor ${message.user_id.substring(0, 8).toUpperCase()}`;
   };
 
   return (
-    <Card className="h-[600px] flex flex-col">
-      <CardHeader className="px-4 py-3 border-b">
+    <div className="h-full flex flex-col bg-white">
+      {/* Header do Chat */}
+      <div className="bg-gray-50 border-b border-gray-200 p-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-medium flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
-            Mensagens
-            {!chatEnabled && <Badge variant="destructive">Desabilitado</Badge>}
-          </CardTitle>
+          <div className="flex items-center gap-3">
+            <MessageSquare className="h-6 w-6 text-blue-600" />
+            <h3 className="text-xl font-semibold text-gray-900">Mensagens</h3>
+            {!chatEnabled && (
+              <Badge variant="destructive" className="text-sm">
+                Desabilitado
+              </Badge>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             {isAuctioneer && (
               <>
@@ -317,21 +262,23 @@ export function DisputeChat({
                   size="sm"
                   variant="outline"
                   onClick={toggleChatEnabled}
-                  title={chatEnabled ? "Desabilitar Chat" : "Habilitar Chat"}>
+                  title={chatEnabled ? "Desabilitar Chat" : "Habilitar Chat"}
+                  className="h-8 w-8 p-0">
                   <Settings className="h-4 w-4" />
                 </Button>
-                <Button size="sm" variant="outline" onClick={exportChat} title="Exportar Chat">
+                <Button size="sm" variant="outline" title="Exportar Chat" className="h-8 w-8 p-0">
                   <Download className="h-4 w-4" />
                 </Button>
               </>
             )}
           </div>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="flex-1 overflow-y-auto p-4 space-y-3">
+      {/* Área de Mensagens */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
+          <div className="flex items-center justify-center h-full text-gray-500 text-lg">
             Nenhuma mensagem ainda.
           </div>
         ) : (
@@ -339,13 +286,13 @@ export function DisputeChat({
             <div
               key={message.id}
               className={`flex gap-3 ${
-                message.type === "system" ? "bg-blue-50 p-3 rounded-md" : ""
+                message.type === "system" ? "bg-blue-50 p-3 rounded-lg" : ""
               } ${
-                message.is_private ? "bg-yellow-50 p-3 rounded-md border-l-4 border-yellow-400" : ""
+                message.is_private ? "bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400" : ""
               }`}>
-              <Avatar className="h-8 w-8">
+              <Avatar className="h-10 w-10">
                 <AvatarFallback
-                  className={message.type === "system" ? "bg-blue-500 text-white" : ""}>
+                  className={message.type === "system" ? "bg-blue-500 text-white" : "bg-gray-200"}>
                   {message.type === "system"
                     ? "S"
                     : getInitials(message.user?.name || "", message.user?.email || "")}
@@ -353,46 +300,44 @@ export function DisputeChat({
               </Avatar>
               <div className="flex-1 space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm">
+                  <span className="font-semibold text-gray-900">
                     {getUserDisplayName(message)}
                     {message.is_private && " (Privado)"}
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatTime(message.created_at)}
-                  </span>
+                  <span className="text-sm text-gray-500">{formatTime(message.created_at)}</span>
                 </div>
-                <p className="text-sm">{message.content}</p>
+                <p className="text-gray-700">{message.content}</p>
               </div>
             </div>
           ))
         )}
         <div ref={messagesEndRef} />
-      </CardContent>
+      </div>
 
-      {!isCitizen &&
-        (isAuctioneer || chatEnabled) && ( // Only show input if not citizen AND (is auctioneer OR chat is enabled)
-          <CardFooter className="p-3 border-t">
-            <form onSubmit={sendMessage} className="flex w-full gap-2">
-              <Input
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder={
-                  !chatEnabled && !isAuctioneer
-                    ? "Chat desabilitado para fornecedores"
-                    : "Digite sua mensagem..."
-                }
-                disabled={isLoading || (!isAuctioneer && !chatEnabled)}
-                className="flex-1"
-              />
-              <Button
-                type="submit"
-                disabled={isLoading || !newMessage.trim() || (!isAuctioneer && !chatEnabled)}
-                size="sm">
-                <Send className="h-4 w-4" />
-              </Button>
-            </form>
-          </CardFooter>
-        )}
-    </Card>
+      {/* Input de Mensagem */}
+      {!isCitizen && (isAuctioneer || chatEnabled) && (
+        <div className="border-t border-gray-200 p-4">
+          <form onSubmit={sendMessage} className="flex gap-3">
+            <Input
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder={
+                !chatEnabled && !isAuctioneer
+                  ? "Chat desabilitado para fornecedores"
+                  : "Digite sua mensagem..."
+              }
+              disabled={isLoading || (!isAuctioneer && !chatEnabled)}
+              className="flex-1 h-12 text-base"
+            />
+            <Button
+              type="submit"
+              disabled={isLoading || !newMessage.trim() || (!isAuctioneer && !chatEnabled)}
+              className="h-12 px-6">
+              <Send className="h-5 w-5" />
+            </Button>
+          </form>
+        </div>
+      )}
+    </div>
   );
 }

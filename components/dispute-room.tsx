@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { createClientSupabaseClient } from "@/lib/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { DisputeHeader } from "@/components/dispute-header";
 import { DisputeChat } from "@/components/dispute-chat";
@@ -30,11 +28,11 @@ export default function DisputeRoom({
   profile,
 }: DisputeRoomProps) {
   const [disputeStatus, setDisputeStatus] = useState<string>("waiting");
-  const [activeLot, setActiveLot] = useState<any>(null); // Store active lot object
+  const [activeLot, setActiveLot] = useState<any>(null);
   const [lots, setLots] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [disputeMode, setDisputeMode] = useState<string>("open"); // Default mode
+  const [disputeMode, setDisputeMode] = useState<string>("open");
 
   const supabase = createClientSupabaseClient();
   const { toast } = useToast();
@@ -49,10 +47,8 @@ export default function DisputeRoom({
   }, []);
 
   useEffect(() => {
-    // Carregar dados iniciais
     const loadInitialData = async () => {
       try {
-        // Carregar status da disputa
         const { data: dispute } = await supabase
           .from("tender_disputes")
           .select("*")
@@ -67,21 +63,18 @@ export default function DisputeRoom({
             setActiveLot(foundLot || null);
           }
         } else {
-          // If no dispute record, create one for auctioneer
           if (isAuctioneer) {
             const { error: createError } = await supabase.from("tender_disputes").insert({
               tender_id: tender.id,
               status: "waiting",
               active_lot_id: null,
               created_by: userId,
-              dispute_mode: "open", // Default mode
+              dispute_mode: "open",
             });
             if (createError) throw createError;
           }
         }
 
-        // Carregar lotes com propostas (simplificado para o exemplo)
-        // Em um cenário real, você buscaria as propostas aqui ou em um componente filho
         setLots(tender.lots || []);
       } catch (error) {
         console.error("Erro ao carregar dados iniciais da disputa:", error);
@@ -97,7 +90,6 @@ export default function DisputeRoom({
 
     loadInitialData();
 
-    // Inscrever-se para atualizações em tempo real do status da disputa
     const disputeSubscription = supabase
       .channel("tender_disputes_changes")
       .on(
@@ -129,14 +121,11 @@ export default function DisputeRoom({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <Card className="max-w-4xl mx-auto">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-xl text-gray-600">Carregando sala de disputa...</p>
+        </div>
       </div>
     );
   }
@@ -144,7 +133,7 @@ export default function DisputeRoom({
   const getUserTypeInfo = () => {
     if (isAuctioneer) {
       return {
-        icon: <Users className="h-4 w-4" />,
+        icon: <Users className="h-5 w-5" />,
         label: "Pregoeiro",
         description: "Você pode gerenciar esta disputa",
         variant: "default" as const,
@@ -152,14 +141,14 @@ export default function DisputeRoom({
     }
     if (isSupplier) {
       return {
-        icon: <Users className="h-4 w-4" />,
+        icon: <Users className="h-5 w-5" />,
         label: "Fornecedor",
         description: "Você pode participar desta disputa",
         variant: "default" as const,
       };
     }
     return {
-      icon: <Eye className="h-4 w-4" />,
+      icon: <Eye className="h-5 w-5" />,
       label: "Observador",
       description: "Você pode acompanhar esta disputa",
       variant: "secondary" as const,
@@ -167,15 +156,13 @@ export default function DisputeRoom({
   };
 
   const userInfo = getUserTypeInfo();
-
-  // Generate a simple supplier identifier for display
   const supplierIdentifier = isSupplier
     ? `FORNECEDOR ${userId.substring(0, 8).toUpperCase()}`
     : null;
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header da Sala de Disputa */}
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header da Sala de Disputa - Ocupa toda a largura */}
       <DisputeHeader
         tender={tender}
         disputeStatus={disputeStatus}
@@ -185,9 +172,9 @@ export default function DisputeRoom({
         disputeMode={disputeMode}
       />
 
-      <div className="container mx-auto p-4 space-y-4">
-        {/* Controles do Pregoeiro */}
-        {isAuctioneer && (
+      {/* Controles do Pregoeiro */}
+      {isAuctioneer && (
+        <div className="bg-white border-b border-gray-200 px-6 py-4">
           <DisputeControls
             tenderId={tender.id}
             status={disputeStatus}
@@ -195,55 +182,49 @@ export default function DisputeRoom({
             lots={lots}
             userId={userId}
           />
-        )}
+        </div>
+      )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          {/* Coluna da Esquerda: Chat */}
-          <div className="lg:col-span-1">
-            <DisputeChat
-              tenderId={tender.id}
-              activeLotId={activeLot?.id || null}
-              isAuctioneer={isAuctioneer}
-              isSupplier={isSupplier}
-              isCitizen={isCitizen}
-              userId={userId}
-              status={disputeStatus}
-            />
-          </div>
-
-          {/* Coluna Central: Conteúdo Principal da Disputa */}
-          <div className="lg:col-span-3">
-            <DisputeMainContent
-              tenderId={tender.id}
-              activeLot={activeLot}
-              disputeStatus={disputeStatus}
-              disputeMode={disputeMode}
-              isAuctioneer={isAuctioneer}
-              isSupplier={isSupplier}
-              userId={userId}
-              profile={profile}
-            />
-          </div>
-
-          {/* Coluna da Direita: Painel de Lances e Propostas */}
-          <div className="lg:col-span-1">
-            <DisputeRightPanel
-              tenderId={tender.id}
-              activeLotId={activeLot?.id || null}
-              isAuctioneer={isAuctioneer}
-              isSupplier={isSupplier}
-              isCitizen={isCitizen}
-              userId={userId}
-              disputeStatus={disputeStatus}
-            />
-          </div>
+      {/* Layout Principal - Usa toda a largura da tela */}
+      <div className="flex-1 flex">
+        {/* Coluna da Esquerda: Chat - 25% da largura */}
+        <div className="w-1/4 bg-white border-r border-gray-200">
+          <DisputeChat
+            tenderId={tender.id}
+            activeLotId={activeLot?.id || null}
+            isAuctioneer={isAuctioneer}
+            isSupplier={isSupplier}
+            isCitizen={isCitizen}
+            userId={userId}
+            status={disputeStatus}
+          />
         </div>
 
-        {/* Botão para voltar */}
-        <div className="flex justify-center pt-4">
-          <Button variant="outline" onClick={() => window.history.back()}>
-            Voltar para Detalhes da Licitação
-          </Button>
+        {/* Coluna Central: Conteúdo Principal da Disputa - 50% da largura */}
+        <div className="w-1/2 bg-gray-50">
+          <DisputeMainContent
+            tenderId={tender.id}
+            activeLot={activeLot}
+            disputeStatus={disputeStatus}
+            disputeMode={disputeMode}
+            isAuctioneer={isAuctioneer}
+            isSupplier={isSupplier}
+            userId={userId}
+            profile={profile}
+          />
+        </div>
+
+        {/* Coluna da Direita: Painel de Lances e Propostas - 25% da largura */}
+        <div className="w-1/4 bg-white border-l border-gray-200">
+          <DisputeRightPanel
+            tenderId={tender.id}
+            activeLotId={activeLot?.id || null}
+            isAuctioneer={isAuctioneer}
+            isSupplier={isSupplier}
+            isCitizen={isCitizen}
+            userId={userId}
+            disputeStatus={disputeStatus}
+          />
         </div>
       </div>
     </div>
