@@ -121,7 +121,7 @@ CREATE POLICY "Suppliers can create bids" ON tender_bids
     EXISTS (
       SELECT 1 FROM profiles 
       WHERE profiles.id = auth.uid() 
-      AND profiles.role = 'supplier'
+      AND profiles.profile_type = 'supplier'
     )
   );
 
