@@ -20,7 +20,7 @@ export default async function SupplierLiveSessionsPage() {
     .eq("id", session.user.id)
     .single();
 
-  if (profile?.role !== "supplier") {
+  if (profile?.profile_type !== "supplier") {
     redirect("/dashboard"); // Or a more appropriate redirect for unauthorized roles
   }
 

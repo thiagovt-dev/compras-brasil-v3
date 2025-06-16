@@ -141,7 +141,7 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  <SidebarMenuItem>
+                  {/* <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/dashboard/supplier/live-sessions")}
@@ -152,7 +152,7 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
                         <span className="font-medium text-lg">Sessões ao Vivo</span>
                       </Link>
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  </SidebarMenuItem> */}
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
@@ -195,7 +195,7 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  <SidebarMenuItem>
+                  {/* <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/dashboard/agency/live-sessions")}
@@ -206,7 +206,7 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
                         <span className="font-medium text-lg">Sessões ao Vivo</span>
                       </Link>
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  </SidebarMenuItem> */}
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
