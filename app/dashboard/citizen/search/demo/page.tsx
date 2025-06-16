@@ -1,19 +1,13 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Search, Filter, FileText, Building, RefreshCw } from "lucide-react";
+import { useState } from "react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Search, Filter, FileText, Building, RefreshCw } from "lucide-react"
 
 // Mock data for tenders
 const tenders = [
@@ -35,8 +29,7 @@ const tenders = [
   {
     id: "2",
     title: "Contratação de serviços de limpeza",
-    description:
-      "Contratação de empresa especializada para prestação de serviços de limpeza e conservação predial.",
+    description: "Contratação de empresa especializada para prestação de serviços de limpeza e conservação predial.",
     number: "Pregão Eletrônico nº 002/2025",
     date: "002/2025",
     type: "Pregão",
@@ -50,8 +43,7 @@ const tenders = [
   {
     id: "3",
     title: "Reforma de prédio público",
-    description:
-      "Execução de obras de reforma e modernização do prédio sede do Tribunal Regional Federal.",
+    description: "Execução de obras de reforma e modernização do prédio sede do Tribunal Regional Federal.",
     number: "Concorrência nº 001/2025",
     date: "001/2025",
     type: "Concorrência",
@@ -62,21 +54,15 @@ const tenders = [
     openingDate: "03/06/2025 às 09:00",
     exclusiveMeEpp: false,
   },
-];
+]
 
 const quickFilters = [
   { id: "suspended", label: "Apenas suspensos", count: 0, color: "orange" },
   { id: "proposals", label: "Apenas propostas", count: 3, color: "blue" },
   { id: "favorites", label: "Apenas favoritos", count: 0, color: "blue" },
-];
+]
 
-const tenderTypes = [
-  "Todos",
-  "Pregão Eletrônico",
-  "Concorrência Eletrônica",
-  "Dispensa Eletrônica",
-  "Inexigibilidade",
-];
+const tenderTypes = ["Todos", "Pregão Eletrônico", "Concorrência Eletrônica", "Dispensa Eletrônica", "Inexigibilidade"]
 
 const tenderStages = [
   "Todos",
@@ -87,15 +73,9 @@ const tenderStages = [
   "Homologada",
   "Revogada",
   "Anulada",
-];
+]
 
-const categories = [
-  "Todas",
-  "Aquisição de bens",
-  "Serviços comuns",
-  "Serviços comuns de engenharia",
-  "Obras",
-];
+const categories = ["Todas", "Aquisição de bens", "Serviços comuns", "Serviços comuns de engenharia", "Obras"]
 
 const agencies = [
   "Todos",
@@ -103,30 +83,30 @@ const agencies = [
   "Prefeitura Municipal de São Paulo",
   "Tribunal Regional Federal",
   "Secretaria de Saúde",
-];
+]
 
 export default function CitizenTenderSearchPage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [activeQuickFilters, setActiveQuickFilters] = useState<string[]>([]);
-  const [selectedAgency, setSelectedAgency] = useState("Todos");
-  const [selectedType, setSelectedType] = useState("Todos");
-  const [selectedStage, setSelectedStage] = useState("Todos");
-  const [selectedCategory, setSelectedCategory] = useState("Todas");
+  const [searchTerm, setSearchTerm] = useState("")
+  const [activeQuickFilters, setActiveQuickFilters] = useState<string[]>([])
+  const [selectedAgency, setSelectedAgency] = useState("Todos")
+  const [selectedType, setSelectedType] = useState("Todos")
+  const [selectedStage, setSelectedStage] = useState("Todos")
+  const [selectedCategory, setSelectedCategory] = useState("Todas")
 
   const toggleQuickFilter = (filterId: string) => {
     setActiveQuickFilters((prev) =>
-      prev.includes(filterId) ? prev.filter((id) => id !== filterId) : [...prev, filterId]
-    );
-  };
+      prev.includes(filterId) ? prev.filter((id) => id !== filterId) : [...prev, filterId],
+    )
+  }
 
   const clearFilters = () => {
-    setActiveQuickFilters([]);
-    setSelectedAgency("Todos");
-    setSelectedType("Todos");
-    setSelectedStage("Todos");
-    setSelectedCategory("Todas");
-    setSearchTerm("");
-  };
+    setActiveQuickFilters([])
+    setSelectedAgency("Todos")
+    setSelectedType("Todos")
+    setSelectedStage("Todos")
+    setSelectedCategory("Todas")
+    setSearchTerm("")
+  }
 
   const getStatusBadge = (status: string, color: string) => {
     const colorClasses = {
@@ -134,29 +114,25 @@ export default function CitizenTenderSearchPage() {
       green: "bg-green-600 text-white",
       orange: "bg-orange-600 text-white",
       red: "bg-red-600 text-white",
-    };
+    }
 
-    return (
-      <Badge className={`${colorClasses[color as keyof typeof colorClasses]} px-3 py-1`}>
-        {status}
-      </Badge>
-    );
-  };
+    return <Badge className={`${colorClasses[color as keyof typeof colorClasses]} px-3 py-1`}>{status}</Badge>
+  }
 
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "Pregão":
-        return "⚖️";
+        return "⚖️"
       case "Concorrência":
-        return "🏛️";
+        return "🏛️"
       case "Dispensa":
-        return "📄";
+        return "📄"
       case "Inexigibilidade":
-        return "📋";
+        return "📋"
       default:
-        return "📋";
+        return "📋"
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -191,14 +167,13 @@ export default function CitizenTenderSearchPage() {
                         ? "bg-orange-500 hover:bg-orange-600 text-white border-orange-500"
                         : "border-orange-500 text-orange-600 hover:bg-orange-50"
                       : activeQuickFilters.includes(filter.id)
-                      ? "bg-blue-500 hover:bg-blue-600 text-white border-blue-500"
-                      : "border-blue-500 text-blue-600 hover:bg-blue-50"
+                        ? "bg-blue-500 hover:bg-blue-600 text-white border-blue-500"
+                        : "border-blue-500 text-blue-600 hover:bg-blue-50"
                   }`}
-                  onClick={() => toggleQuickFilter(filter.id)}>
+                  onClick={() => toggleQuickFilter(filter.id)}
+                >
                   <div
-                    className={`w-2 h-2 rounded-full ${
-                      filter.color === "orange" ? "bg-orange-500" : "bg-blue-500"
-                    }`}
+                    className={`w-2 h-2 rounded-full ${filter.color === "orange" ? "bg-orange-500" : "bg-blue-500"}`}
                   />
                   {filter.label}
                 </Button>
@@ -295,13 +270,11 @@ export default function CitizenTenderSearchPage() {
           {/* Quick Filter Tags */}
           {activeQuickFilters.length > 0 && (
             <div className="mb-6">
-              <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                Filtros rápidos:
-              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">Filtros rápidos:</div>
               <div className="flex flex-wrap gap-2">
                 {activeQuickFilters.map((filterId) => {
-                  const filter = quickFilters.find((f) => f.id === filterId);
-                  if (!filter) return null;
+                  const filter = quickFilters.find((f) => f.id === filterId)
+                  if (!filter) return null
 
                   return (
                     <Badge
@@ -311,10 +284,11 @@ export default function CitizenTenderSearchPage() {
                         filter.color === "orange"
                           ? "bg-orange-100 text-orange-700 border-orange-200"
                           : "bg-blue-100 text-blue-700 border-blue-200"
-                      } px-3 py-1`}>
+                      } px-3 py-1`}
+                    >
                       {filter.label} {filter.count}
                     </Badge>
-                  );
+                  )
                 })}
               </div>
             </div>
@@ -344,9 +318,7 @@ export default function CitizenTenderSearchPage() {
                               <Building className="h-4 w-4 text-blue-600" />
                               <h3 className="font-medium text-gray-900">{tender.title}</h3>
                             </div>
-                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                              {tender.description}
-                            </p>
+                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">{tender.description}</p>
                             <div className="text-xs text-gray-500 mb-2">
                               {tender.number} • {tender.agency}
                             </div>
@@ -359,9 +331,7 @@ export default function CitizenTenderSearchPage() {
                           <div className="ml-4 flex flex-col items-end gap-2">
                             {getStatusBadge(tender.status, tender.statusColor)}
                             {tender.exclusiveMeEpp && (
-                              <Badge
-                                variant="outline"
-                                className="bg-blue-50 text-blue-600 border-blue-200">
+                              <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">
                                 Exclusivo ME/EPP
                               </Badge>
                             )}
@@ -386,16 +356,12 @@ export default function CitizenTenderSearchPage() {
           {tenders.length === 0 && (
             <div className="text-center py-12">
               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Nenhuma licitação encontrada
-              </h3>
-              <p className="text-gray-600">
-                Tente ajustar os filtros ou realizar uma nova pesquisa.
-              </p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma licitação encontrada</h3>
+              <p className="text-gray-600">Tente ajustar os filtros ou realizar uma nova pesquisa.</p>
             </div>
           )}
         </div>
       </div>
     </div>
-  );
+  )
 }
