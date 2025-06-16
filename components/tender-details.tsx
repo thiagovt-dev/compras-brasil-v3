@@ -103,11 +103,18 @@ const TenderDetails = ({
             <div className="flex items-center gap-3">
               {canAccessDisputeRoom && tender.status === "published" && (
                 <Button
-                  onClick={() => router.push(`/tenders/${tender.id}/session/dispute`)}
+                  asChild
                   variant={canParticipateInDispute ? "default" : "outline"}
-                  className="bg-blue-600 hover:bg-blue-700 text-white">
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <a
+                  href={`/demo/dispute`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >
                   {getDisputeButtonIcon()}
                   {getDisputeButtonText()}
+                  </a>
                 </Button>
               )}
             </div>
@@ -125,7 +132,8 @@ const TenderDetails = ({
                 <Gavel className="h-4 w-4 text-white" />
               </div>
               <h2 className="text-xl font-semibold text-gray-900">
-                {tender.tender_type} - {tender.agency?.name}
+                {/* {tender.tender_type} -  */}
+                {tender.agency?.name}
               </h2>
             </div>
 
@@ -238,10 +246,17 @@ const TenderDetails = ({
 
               {canAccessDisputeRoom && tender.status === "published" && (
                 <Button
-                  onClick={() => router.push(`/tenders/${tender.id}/session/dispute`)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
+                  asChild
+                  className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+                >
+                  <a
+                  href={`/demo/dispute`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >
                   <Users className="h-4 w-4" />
                   Assistir disputa
+                  </a>
                 </Button>
               )}
             </div>
