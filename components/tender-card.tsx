@@ -9,25 +9,27 @@ interface TenderCardProps {
   tender: {
     id: string;
     title: string;
-    tender_number: string;
-    modality: string;
-    category: string;
-    agency_id: string;
-    tender_type: string;
+    tender_number?: string;
+    number?: string;
+    modality?: string;
+    category?: string;
+    agency_id?: string;
+    tender_type?: string;
     agency?: {
       name: string;
     };
-    opening_date: string;
-    closing_date: string;
+    opening_date?: string;
+    closing_date?: string;
     status: string;
     value?: number;
-    is_value_secret: boolean;
-    created_at: string;
+    is_value_secret?: boolean;
+    created_at?: string;
   };
   showAgency?: boolean;
+  userRole?: string;
 }
 
-export function TenderCard({ tender, showAgency = true }: TenderCardProps) {
+export function TenderCard({ tender, showAgency = true, userRole }: TenderCardProps) {
   const getModalityLabel = (modality: string) => {
     const modalityMap: Record<string, string> = {
       pregao_eletronico: "Pregão Eletrônico",
@@ -98,6 +100,17 @@ export function TenderCard({ tender, showAgency = true }: TenderCardProps) {
     }).format(value);
   };
 
+  // Determine the correct link based on user role
+  const getDetailLink = () => {
+    if (userRole === "citizen") {
+      return `/dashboard/citizen/search/${tender.id}`;
+    } else if (userRole === "supplier") {
+      return `/dashboard/supplier/tenders/${tender.id}`;
+    } else {
+      return `/dashboard/tenders/${tender.id}`;
+    }
+  };
+
   return (
     <Card className="h-full">
       <CardHeader className="pb-2">
@@ -106,14 +119,16 @@ export function TenderCard({ tender, showAgency = true }: TenderCardProps) {
           {getStatusBadge(tender.status)}
         </div>
         <div className="text-[1rem] text-muted-foreground">
-          <span className="font-medium">Nº {tender.tender_number}</span>
+          <span className="font-medium">Nº {tender.tender_number || tender.number}</span>
         </div>
       </CardHeader>
       <CardContent className="pb-2 space-y-2">
-        <div className="flex items-center gap-2 text-[1rem]">
-          <Tag className="h-4 w-4 text-muted-foreground" />
-          <span>{getModalityLabel(tender.tender_type)}</span>
-        </div>
+        {tender.tender_type && (
+          <div className="flex items-center gap-2 text-[1rem]">
+            <Tag className="h-4 w-4 text-muted-foreground" />
+            <span>{getModalityLabel(tender.tender_type)}</span>
+          </div>
+        )}
 
         {showAgency && tender.agency && (
           <div className="flex items-center gap-2 text-[1rem]">
@@ -122,15 +137,19 @@ export function TenderCard({ tender, showAgency = true }: TenderCardProps) {
           </div>
         )}
 
-        <div className="flex items-center gap-2 text-[1rem]">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <span>Abertura: {formatDate(tender.opening_date)}</span>
-        </div>
+        {tender.opening_date && (
+          <div className="flex items-center gap-2 text-[1rem]">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span>Abertura: {formatDate(tender.opening_date)}</span>
+          </div>
+        )}
 
-        <div className="flex items-center gap-2 text-[1rem]">
-          <Clock className="h-4 w-4 text-muted-foreground" />
-          <span>Propostas até: {formatDate(tender.closing_date)}</span>
-        </div>
+        {tender.closing_date && (
+          <div className="flex items-center gap-2 text-[1rem]">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <span>Propostas até: {formatDate(tender.closing_date)}</span>
+          </div>
+        )}
 
         {!tender.is_value_secret && tender.value && (
           <div className="flex items-center gap-2 text-[1rem]">
@@ -146,7 +165,7 @@ export function TenderCard({ tender, showAgency = true }: TenderCardProps) {
       </CardContent>
       <CardFooter>
         <Link
-          href={`/dashboard/tenders/${tender.id}`}
+          href={getDetailLink()}
           className="text-[1rem] text-primary hover:underline flex items-center gap-1">
           <FileText className="h-4 w-4" />
           Ver detalhes
