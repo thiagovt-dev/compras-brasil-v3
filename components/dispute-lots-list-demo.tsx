@@ -135,6 +135,36 @@ export function DisputeLotsListDemo({
   const countdownRefs = useRef<Record<string, NodeJS.Timeout | null>>({});
   const { toast } = useToast();
 
+  // Função para formatação de moeda
+  const formatCurrency = (value: string) => {
+    // Remove todos os caracteres não numéricos
+    const numericValue = value.replace(/\D/g, '');
+    
+    if (!numericValue) return '';
+    
+    // Converte para número e formata
+    const number = parseFloat(numericValue) / 100;
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(number);
+  };
+
+  // Função para converter valor formatado para número
+  const parseCurrencyToNumber = (formattedValue: string): number => {
+    const numericString = formattedValue
+      .replace(/[R$\s]/g, '')
+      .replace(/\./g, '')
+      .replace(',', '.');
+    return parseFloat(numericString) || 0;
+  };
+
+  // Função para tratar a mudança no input de lance
+  const handleBidInputChange = (lotId: string, value: string) => {
+    const formattedValue = formatCurrency(value);
+    setNewBidValues((prev) => ({ ...prev, [lotId]: formattedValue }));
+  };
+
   // Simular mudanças no melhor lance baseado no modo de disputa
   useEffect(() => {
     console.log("DisputeLotsListDemo: disputeMode changed to", disputeMode);
@@ -196,8 +226,8 @@ export function DisputeLotsListDemo({
     setShowConfirmDialog(null);
     setIsSubmitting((prev) => ({ ...prev, [lotId]: true }));
 
-    const bidValue = Number.parseFloat(newBidValues[lotId]?.replace(",", ".") || "");
-    if (isNaN(bidValue)) {
+    const bidValue = parseCurrencyToNumber(newBidValues[lotId] || "");
+    if (isNaN(bidValue) || bidValue <= 0) {
       toast({ title: "Erro", description: "Valor de lance inválido.", variant: "destructive" });
       setIsSubmitting((prev) => ({ ...prev, [lotId]: false }));
       return;
@@ -230,7 +260,7 @@ export function DisputeLotsListDemo({
 
   const handleEffectiveBid = (lotId: string) => {
     try {
-      const bidValue = Number.parseFloat(newBidValues[lotId]?.replace(",", ".") || "");
+      const bidValue = parseCurrencyToNumber(newBidValues[lotId] || "");
       setBestBids((prev) => ({
         ...prev,
         [lotId]: {
@@ -272,7 +302,7 @@ export function DisputeLotsListDemo({
 
   const getSuggestedBids = (lotId: string) => {
     const currentBest = bestBids[lotId]?.value;
-    if (!currentBest) return ["7,50", "7,00", "6,50"];
+    if (!currentBest) return ["R$ 7,50", "R$ 7,00", "R$ 6,50"];
 
     const suggestions = [
       (currentBest - 0.05).toFixed(2),
@@ -280,14 +310,19 @@ export function DisputeLotsListDemo({
       (currentBest - 0.2).toFixed(2),
     ];
 
-    return suggestions.map((s) => s.replace(".", ","));
+    return suggestions.map((s) => 
+      new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+      }).format(parseFloat(s))
+    );
   };
 
   const handleSuggestedBidClick = (lotId: string, value: string) => {
     setNewBidValues((prev) => ({ ...prev, [lotId]: value }));
     toast({
       title: "Valor Sugerido Aplicado",
-      description: `Valor R$ ${value} aplicado ao campo de lance.`,
+      description: `Valor ${value} aplicado ao campo de lance.`,
     });
   };
 
@@ -417,7 +452,7 @@ export function DisputeLotsListDemo({
                               size="sm"
                               className="h-8 text-xs"
                               onClick={() => handleSuggestedBidClick(lot.id, suggestedValue)}>
-                              R$ {suggestedValue}
+                              {suggestedValue}
                             </Button>
                           ))}
                         </div>
@@ -426,13 +461,12 @@ export function DisputeLotsListDemo({
                         <div className="flex items-center gap-3">
                           <Input
                             type="text"
-                            placeholder={`R$ ${suggestedBids[0]}`}
+                            placeholder={suggestedBids[0]}
                             value={newBidValues[lot.id] || ""}
-                            onChange={(e) =>
-                              setNewBidValues((prev) => ({ ...prev, [lot.id]: e.target.value }))
-                            }
+                            onChange={(e) => handleBidInputChange(lot.id, e.target.value)}
                             disabled={isLotSubmitting}
                             className="flex-1 text-xl text-center h-12 text-gray-900 font-semibold"
+                            maxLength={15}
                           />
                           <Button
                             onClick={() => setShowConfirmDialog(lot.id)}
@@ -444,8 +478,12 @@ export function DisputeLotsListDemo({
                         </div>
 
                         <p className="text-center text-gray-500 text-sm">
-                          Melhor atual: {formatValue(bestBidForLot?.value || 0, false)} • Mínimo: R${" "}
-                          {(bestBidForLot?.value - 0.01 || 0).toFixed(2).replace(".", ",")}
+                          Melhor atual: {formatValue(bestBidForLot?.value || 0, false)} • Mínimo: {
+                            new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                            }).format((bestBidForLot?.value - 0.01) || 0)
+                          }
                         </p>
                       </div>
                     )}
@@ -476,7 +514,7 @@ export function DisputeLotsListDemo({
             <DialogDescription className="text-lg">
               Você está prestes a enviar um lance de{" "}
               <span className="font-bold text-blue-600 text-xl">
-                R$ {newBidValues[showConfirmDialog || ""]}
+                {newBidValues[showConfirmDialog || ""]}
               </span>
               <br />
               <br />
