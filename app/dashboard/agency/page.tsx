@@ -82,7 +82,7 @@ export default function AgencyDashboard() {
                     <h3 className="font-medium">{tender.title}</h3>
                     <div className="flex items-center gap-2 mt-1">
                       <p className="text-[1rem] text-muted-foreground">{tender.number}</p>
-                      <Badge variant={getBadgeVariant(tender.status)}>{tender.status}</Badge>
+                      <Badge variant="outline">{tender.status}</Badge>
                     </div>
                   </div>
                   <Link href={`/dashboard/agency/active-tenders/${tender.id}`}>
@@ -115,7 +115,7 @@ export default function AgencyDashboard() {
                     <h3 className="font-medium">{tender.title}</h3>
                     <div className="flex items-center gap-2 mt-1">
                       <p className="text-[1rem] text-muted-foreground">{tender.number}</p>
-                      <Badge variant={getCompletedBadgeVariant(tender.result)}>
+                      <Badge variant="default">
                         {tender.result}
                       </Badge>
                     </div>
