@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { DisputeHeader } from "@/components/dispute-header";
-import { Eye, Users } from "lucide-react";
+import { Eye, Users, Play } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { DisputeLotsListDemo } from "./dispute-lots-list-demo";
 import { DisputeRightPanelDemo } from "./dispute-right-panel-demo";
 import { DisputeChatDemo } from "./dispute-chat-demo";
 import { DisputeModeSelectorDemo } from "./dispute-mode-selector-demo";
-import { DisputeTimerDemo } from "./dispute-timer-demo";
 import { DisputeModeIndicator } from "./dispute-mode-indicator";
 
 interface DisputeRoomDemoProps {
@@ -100,6 +101,20 @@ const mockLotItems: Record<string, any[]> = {
   ],
 };
 
+// Status individuais por lote (movido para componente pai)
+const initialLotStatuses: Record<string, string> = {
+  "lot-001": "open",
+  "lot-002": "waiting", 
+  "lot-003": "open",
+  "lot-004": "waiting",
+  "lot-005": "finished",
+  "lot-006": "open",
+  "lot-007": "waiting",
+  "lot-008": "open",
+  "lot-009": "waiting",
+  "lot-010": "finished",
+};
+
 export default function DisputeRoomDemo({
   tender,
   isAuctioneer,
@@ -113,7 +128,7 @@ export default function DisputeRoomDemo({
   const [activeLot, setActiveLot] = useState<any>(tender.lots[0]);
   const [lots, setLots] = useState<any[]>(tender.lots);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [timerActive, setTimerActive] = useState(true);
+  const [lotStatuses, setLotStatuses] = useState<Record<string, string>>(initialLotStatuses);
 
   const { toast } = useToast();
 
@@ -129,8 +144,6 @@ export default function DisputeRoomDemo({
   const handleModeChange = (newMode: string) => {
     console.log("DisputeRoomDemo: Changing mode to", newMode);
     setDisputeMode(newMode);
-    setTimerActive(false);
-    setTimeout(() => setTimerActive(true), 100); // Reset timer
 
     toast({
       title: "Modo de Disputa Alterado",
@@ -151,22 +164,60 @@ export default function DisputeRoomDemo({
     return modeNames[mode] || mode;
   };
 
-  useEffect(() => {
-    console.log("DisputeRoomDemo: Current disputeMode is", disputeMode);
-  }, [disputeMode]);
-
-  const handleTimerEnd = () => {
+  // Funções para gerenciar status dos lotes
+  const handleTimerEnd = (lotId: string) => {
+    setLotStatuses(prev => ({ ...prev, [lotId]: "finished" }));
     toast({
       title: "Tempo Encerrado",
-      description: "O tempo da disputa foi encerrado.",
+      description: `O tempo da disputa do lote ${lotId} foi encerrado.`,
     });
   };
 
-  const handleTimerExtension = () => {
+  const handleFinalizeLot = (lotId: string) => {
+    setLotStatuses(prev => ({ ...prev, [lotId]: "finished" }));
     toast({
-      title: "Disputa Prorrogada",
-      description: "A disputa foi prorrogada automaticamente.",
+      title: "Lote Finalizado",
+      description: `Pregoeiro finalizou a disputa do lote ${lotId}.`,
     });
+  };
+
+  const handleStartLot = (lotId: string) => {
+    if (isAuctioneer) {
+      setLotStatuses(prev => ({ ...prev, [lotId]: "open" }));
+      toast({
+        title: "Lote Iniciado",
+        description: `Disputa do lote ${lotId} foi iniciada.`,
+      });
+    }
+  };
+
+  const handleStartAllLots = () => {
+    if (isAuctioneer) {
+      const updatedStatuses = { ...lotStatuses };
+      let startedCount = 0;
+      
+      Object.keys(updatedStatuses).forEach(lotId => {
+        if (updatedStatuses[lotId] === "waiting") {
+          updatedStatuses[lotId] = "open";
+          startedCount++;
+        }
+      });
+      
+      setLotStatuses(updatedStatuses);
+      
+      if (startedCount > 0) {
+        toast({
+          title: "Lotes Iniciados",
+          description: `${startedCount} lote(s) em espera foram iniciados simultaneamente.`,
+        });
+      } else {
+        toast({
+          title: "Nenhum Lote Iniciado",
+          description: "Não há lotes em espera para serem iniciados.",
+          variant: "default",
+        });
+      }
+    }
   };
 
   const getUserTypeInfo = () => {
@@ -197,6 +248,11 @@ export default function DisputeRoomDemo({
   const userInfo = getUserTypeInfo();
   const supplierIdentifier = isSupplier ? `FORNECEDOR ${mockUserProfile.supplierNumber}` : null;
 
+  // Calcular estatísticas dos lotes
+  const activeLotCount = Object.values(lotStatuses).filter(status => status === "open").length;
+  const finishedLotCount = Object.values(lotStatuses).filter(status => status === "finished").length;
+  const waitingLotCount = Object.values(lotStatuses).filter(status => status === "waiting").length;
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header da Sala de Disputa */}
@@ -209,7 +265,7 @@ export default function DisputeRoomDemo({
         disputeMode={disputeMode}
       />
 
-      {/* Controles do Pregoeiro e Timer */}
+      {/* Controles do Pregoeiro - SEM timer global */}
       <div className="bg-white border-b border-gray-200 px-6 py-4 space-y-4">
         {/* Indicador Visual do Modo */}
         <DisputeModeIndicator mode={disputeMode} />
@@ -222,20 +278,45 @@ export default function DisputeRoomDemo({
               isAuctioneer={isAuctioneer}
             />
 
-            <DisputeTimerDemo
-              mode={disputeMode}
-              isActive={timerActive}
-              onTimeEnd={handleTimerEnd}
-              onExtension={handleTimerExtension}
-              isAuctioneer={isAuctioneer}
-            />
+            {/* Informações dos lotes */}
+            <div className="flex items-center gap-3">
+              <Badge variant="default" className="text-sm">
+                {activeLotCount} lotes ativos
+              </Badge>
+              <Badge variant="outline" className="text-sm">
+                {waitingLotCount} aguardando
+              </Badge>
+              <Badge variant="secondary" className="text-sm">
+                {finishedLotCount} finalizados
+              </Badge>
+            </div>
+
+            {/* Timer do lote ativo (opcional) */}
+            {activeLot && lotStatuses[activeLot.id] === "open" && (
+              <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-lg border border-blue-200">
+                <span className="text-sm text-blue-700 font-medium">
+                  Lote {activeLot.number} ativo
+                </span>
+              </div>
+            )}
           </div>
 
-          {isAuctioneer && (
+          <div className="flex items-center gap-4">
+            {isAuctioneer && waitingLotCount > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleStartAllLots}
+                className="h-8">
+                <Play className="h-4 w-4 mr-2" />
+                Iniciar Todos os Lotes ({waitingLotCount})
+              </Button>
+            )}
+
             <div className="text-sm text-gray-600">
               <span className="font-medium">Demonstração:</span> Todos os recursos são simulados
             </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -267,6 +348,11 @@ export default function DisputeRoomDemo({
             userId={mockUserProfile.id}
             profile={mockUserProfile}
             onSelectLot={setActiveLot}
+            // Passar as funções de controle para o componente de lotes
+            lotStatuses={lotStatuses}
+            onTimerEnd={handleTimerEnd}
+            onFinalizeLot={handleFinalizeLot}
+            onStartLot={handleStartLot}
           />
         </div>
 

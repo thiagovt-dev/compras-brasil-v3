@@ -100,7 +100,7 @@ export default function AgencyDashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Licitações Recentes</CardTitle>
-              <Link href="/dashboard/agency/completed-tenders">
+              <Link href="/dashboard/agency/active-tenders">
                 <Button variant="ghost" size="sm">
                   Ver todas
                 </Button>
@@ -115,12 +115,10 @@ export default function AgencyDashboard() {
                     <h3 className="font-medium">{tender.title}</h3>
                     <div className="flex items-center gap-2 mt-1">
                       <p className="text-[1rem] text-muted-foreground">{tender.number}</p>
-                      <Badge variant="default">
-                        {tender.result}
-                      </Badge>
+                      <Badge variant="default">{tender.result}</Badge>
                     </div>
                   </div>
-                  <Link href={`/dashboard/agency/completed-tenders/${tender.id}`}>
+                  <Link href={`/dashboard/tenders/${tender.id}`}>
                     <Button variant="outline" size="sm">
                       Detalhes
                     </Button>

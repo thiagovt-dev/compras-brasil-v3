@@ -3,23 +3,29 @@
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Play, RotateCcw } from "lucide-react";
+import { Clock, Play, RotateCcw, Square, Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface DisputeTimerDemoProps {
+  lotId: string;
   mode: string;
   isActive: boolean;
-  onTimeEnd: () => void;
-  onExtension?: () => void;
+  onTimeEnd: (lotId: string) => void;
+  onExtension?: (lotId: string) => void;
+  onFinalize?: (lotId: string) => void;
   isAuctioneer: boolean;
+  lotStatus: string;
 }
 
 export function DisputeTimerDemo({
+  lotId,
   mode,
   isActive,
   onTimeEnd,
   onExtension,
+  onFinalize,
   isAuctioneer,
+  lotStatus,
 }: DisputeTimerDemoProps) {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [phase, setPhase] = useState<string>("initial");
@@ -46,7 +52,7 @@ export function DisputeTimerDemo({
 
   // Inicializar timer quando modo ou ativação mudar
   useEffect(() => {
-    if (isActive) {
+    if (isActive && lotStatus === "open") {
       const initialTime = getInitialTime(mode);
       setTimeLeft(initialTime);
       setPhase("initial");
@@ -55,13 +61,13 @@ export function DisputeTimerDemo({
     } else {
       setIsRunning(false);
     }
-  }, [mode, isActive]);
+  }, [mode, isActive, lotStatus]);
 
   // Countdown timer
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
 
-    if (isRunning && timeLeft > 0) {
+    if (isRunning && timeLeft > 0 && lotStatus === "open") {
       interval = setInterval(() => {
         setTimeLeft((time) => {
           const newTime = time - 1;
@@ -73,7 +79,7 @@ export function DisputeTimerDemo({
             phase === "initial"
           ) {
             toast({
-              title: "Tempo Inicial Encerrado",
+              title: `Tempo Inicial Encerrado - Lote ${lotId}`,
               description: "Iniciando período de prorrogação automática (2 min).",
             });
             setPhase("extension");
@@ -86,7 +92,7 @@ export function DisputeTimerDemo({
             if (mode === "open_restart" && phase === "initial") {
               setCanRestart(true);
             }
-            onTimeEnd();
+            onTimeEnd(lotId);
           }
 
           return newTime;
@@ -97,7 +103,7 @@ export function DisputeTimerDemo({
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isRunning, timeLeft, mode, phase, onTimeEnd, toast]);
+  }, [isRunning, timeLeft, mode, phase, onTimeEnd, lotId, toast, lotStatus]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -121,7 +127,7 @@ export function DisputeTimerDemo({
   };
 
   const getTimerColor = () => {
-    if (!isRunning) return "bg-gray-500";
+    if (!isRunning || lotStatus !== "open") return "bg-gray-500";
     if (timeLeft <= 60) return "bg-red-500"; // Último minuto
     if (timeLeft <= 120) return "bg-orange-500"; // Últimos 2 minutos
     return "bg-green-500";
@@ -135,9 +141,21 @@ export function DisputeTimerDemo({
       setPhase("restart");
       toast({
         title: "Disputa Reiniciada",
-        description: "Pregoeiro reiniciou a disputa por mais 10 minutos.",
+        description: `Pregoeiro reiniciou a disputa do lote ${lotId} por mais 10 minutos.`,
       });
-      onExtension?.();
+      onExtension?.(lotId);
+    }
+  };
+
+  const handleFinalize = () => {
+    if (isAuctioneer && lotStatus === "open") {
+      setIsRunning(false);
+      setTimeLeft(0);
+      toast({
+        title: "Disputa Finalizada",
+        description: `Pregoeiro finalizou a disputa do lote ${lotId}. Vencedor será o último lance válido.`,
+      });
+      onFinalize?.(lotId);
     }
   };
 
@@ -146,12 +164,25 @@ export function DisputeTimerDemo({
       setTimeLeft(2 * 60); // Reset para 2 minutos
       toast({
         title: "Prorrogação Simulada",
-        description: "Simulando lance nos últimos 2 minutos - nova prorrogação!",
+        description: `Simulando lance nos últimos 2 minutos do lote ${lotId} - nova prorrogação!`,
       });
     }
   };
 
-  if (!isActive) {
+  // Status do lote
+  if (lotStatus === "finished") {
+    return (
+      <div className="flex items-center gap-2">
+        <Badge className="bg-green-600 text-white flex items-center gap-2 px-3 py-1">
+          <Trophy className="h-4 w-4" />
+          <span className="font-mono">Finalizado</span>
+        </Badge>
+        <Badge variant="outline">Disputa Encerrada</Badge>
+      </div>
+    );
+  }
+
+  if (lotStatus === "waiting" || !isActive) {
     return (
       <Badge variant="outline" className="flex items-center gap-2">
         <Clock className="h-4 w-4" />
@@ -175,7 +206,7 @@ export function DisputeTimerDemo({
         </Badge>
       )}
 
-      {isAuctioneer && (
+      {isAuctioneer && lotStatus === "open" && (
         <div className="flex items-center gap-2">
           {canRestart && (
             <Button size="sm" onClick={handleRestart} className="h-8">
@@ -190,6 +221,17 @@ export function DisputeTimerDemo({
               Simular Lance
             </Button>
           )}
+
+          <Button 
+            size="sm" 
+            variant="destructive" 
+            onClick={handleFinalize} 
+            className="h-8"
+            title="Finalizar disputa e declarar vencedor"
+          >
+            <Square className="h-4 w-4 mr-1" />
+            Finalizar
+          </Button>
         </div>
       )}
     </div>

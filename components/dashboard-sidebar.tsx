@@ -474,7 +474,7 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  <SidebarMenuItem>
+                  {/* <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/dashboard/integrations/brasil")}
@@ -484,7 +484,7 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
                         <span className="font-medium text-lg">Integração +Brasil</span>
                       </Link>
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  </SidebarMenuItem> */}
                 </>
               )}
             </SidebarMenu>

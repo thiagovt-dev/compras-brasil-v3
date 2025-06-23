@@ -22,6 +22,7 @@ const TenderDetails = ({
   isSupplierParticipant = false,
   isCitizen = false,
   userProfile,
+  usingMockData = false,
 }: {
   tender: any;
   showProposals: boolean;
@@ -31,6 +32,7 @@ const TenderDetails = ({
   isSupplierParticipant: boolean;
   isCitizen: boolean;
   userProfile: any;
+  usingMockData?: boolean;
 }) => {
   const router = useRouter();
 
@@ -97,7 +99,10 @@ const TenderDetails = ({
               </Button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Processo</h1>
-                <p className="text-sm text-gray-500">Pesquisa / {tender.tender_number}</p>
+                <p className="text-sm text-gray-500">
+                  Pesquisa / {tender.tender_number}
+                  {usingMockData && " (Demonstração)"}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -105,15 +110,10 @@ const TenderDetails = ({
                 <Button
                   asChild
                   variant={canParticipateInDispute ? "default" : "outline"}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  <a
-                  href={`/demo/dispute`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  >
-                  {getDisputeButtonIcon()}
-                  {getDisputeButtonText()}
+                  className="bg-blue-600 hover:bg-blue-700 text-white">
+                  <a href={`/demo/dispute`} target="_blank" rel="noopener noreferrer">
+                    {getDisputeButtonIcon()}
+                    {getDisputeButtonText()}
                   </a>
                 </Button>
               )}
@@ -124,6 +124,16 @@ const TenderDetails = ({
 
       {/* Main Content */}
       <div className="max-w-none px-6 py-6">
+        {/* Indicador de dados mockados */}
+        {usingMockData && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+            <p className="text-base text-amber-800">
+              <strong>Modo Demonstração:</strong> Esta licitação não foi encontrada no sistema. 
+              Exibindo dados de exemplo para demonstração das funcionalidades.
+            </p>
+          </div>
+        )}
+
         {/* Process Header */}
         <Card className="mb-6">
           <CardContent className="p-6">
@@ -132,8 +142,12 @@ const TenderDetails = ({
                 <Gavel className="h-4 w-4 text-white" />
               </div>
               <h2 className="text-xl font-semibold text-gray-900">
-                {/* {tender.tender_type} -  */}
                 {tender.agency?.name}
+                {usingMockData && (
+                  <Badge variant="secondary" className="ml-3">
+                    Demo
+                  </Badge>
+                )}
               </h2>
             </div>
 
@@ -158,12 +172,12 @@ const TenderDetails = ({
                   <label className="text-sm font-medium text-gray-600">
                     Critério de julgamento:
                   </label>
-                  <p className="text-base text-gray-900">{tender.judgment_criteria}</p>
+                  <p className="text-base text-gray-900">{tender.judgment_criteria || "Menor Preço"}</p>
                 </div>
 
                 <div>
                   <label className="text-sm font-medium text-gray-600">Método de disputa:</label>
-                  <p className="text-base text-gray-900">{tender.dispute_mode}</p>
+                  <p className="text-base text-gray-900">{tender.dispute_mode || "Aberto"}</p>
                 </div>
 
                 <div>
@@ -175,7 +189,9 @@ const TenderDetails = ({
 
                 <div>
                   <label className="text-sm font-medium text-gray-600">Pregoeiro(a):</label>
-                  <p className="text-base text-gray-900">Nome do Pregoeiro</p>
+                  <p className="text-base text-gray-900">
+                    {usingMockData ? "João Silva Santos" : "Nome do Pregoeiro"}
+                  </p>
                 </div>
 
                 <div>
@@ -239,7 +255,7 @@ const TenderDetails = ({
 
             {/* Action Buttons */}
             <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
-              <Button variant="outline" className="flex items-center gap-2">
+              <Button variant="outline" className="flex items-center gap-2" disabled={usingMockData}>
                 <Heart className="h-4 w-4" />
                 Favoritar
               </Button>
@@ -247,15 +263,10 @@ const TenderDetails = ({
               {canAccessDisputeRoom && tender.status === "published" && (
                 <Button
                   asChild
-                  className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-                >
-                  <a
-                  href={`/demo/dispute`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  >
-                  <Users className="h-4 w-4" />
-                  Assistir disputa
+                  className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
+                  <a href={`/demo/dispute`} target="_blank" rel="noopener noreferrer">
+                    <Users className="h-4 w-4" />
+                    Assistir disputa
                   </a>
                 </Button>
               )}
@@ -275,7 +286,7 @@ const TenderDetails = ({
             </CardHeader>
             <CardContent>
               <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-                <TenderClarifications tenderId={tender.id} />
+                <TenderClarifications tenderId={tender.id} usingMockData={usingMockData} />
               </Suspense>
             </CardContent>
           </Card>
@@ -290,7 +301,7 @@ const TenderDetails = ({
             </CardHeader>
             <CardContent>
               <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-                <TenderDocuments tender={tender} />
+                <TenderDocuments tender={tender} usingMockData={usingMockData} />
               </Suspense>
             </CardContent>
           </Card>
@@ -306,7 +317,7 @@ const TenderDetails = ({
           </CardHeader>
           <CardContent>
             <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-              <TenderLots tender={tender} />
+              <TenderLots tender={tender} usingMockData={usingMockData} />
             </Suspense>
           </CardContent>
         </Card>
@@ -318,12 +329,12 @@ const TenderDetails = ({
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="impugnations">Impugnações</TabsTrigger>
                 <TabsTrigger value="notices">Avisos</TabsTrigger>
-                {showProposals && <TabsTrigger value="proposals">Propostas</TabsTrigger>}
+                <TabsTrigger value="proposals">Propostas</TabsTrigger>
               </TabsList>
 
               <TabsContent value="impugnations" className="p-6">
                 <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-                  <TenderImpugnations tenderId={tender.id} />
+                  <TenderImpugnations tenderId={tender.id} usingMockData={usingMockData} />
                 </Suspense>
               </TabsContent>
 
@@ -334,17 +345,17 @@ const TenderDetails = ({
                 </div>
               </TabsContent>
 
-              {showProposals && (
-                <TabsContent value="proposals" className="p-6">
-                  <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-                    <TenderProposals
-                      tenderId={tender.id}
-                      lots={tender.lots || []}
-                      isAgencyUser={isAgencyUser}
-                    />
-                  </Suspense>
-                </TabsContent>
-              )}
+              <TabsContent value="proposals" className="p-6">
+                <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+                  <TenderProposals
+                    tenderId={tender.id}
+                    lots={tender.lots || []}
+                    isAgencyUser={isAgencyUser}
+                    isAuctioneer={isAuctioneer}
+                    usingMockData={usingMockData}
+                  />
+                </Suspense>
+              </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
