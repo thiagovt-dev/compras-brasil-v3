@@ -386,7 +386,7 @@ export default function RegisterAgencyPage() {
           console.log(`📋 Dados do usuário ${userInfo.email}:`, userData);
 
           // Usar o método signUp do auth-context
-          const signUpResult = await signUp(userInfo.email, tempPassword, userData);
+          const signUpResult = await signUp(userInfo.email, '123456', userData);
 
           console.log(`📤 Resultado signUp para ${userInfo.email}:`, signUpResult);
 
@@ -418,6 +418,7 @@ export default function RegisterAgencyPage() {
           });
         }
       }
+
 
       // Contar sucessos e falhas
       const successfulUsers = userResults.filter((result) => result.success);

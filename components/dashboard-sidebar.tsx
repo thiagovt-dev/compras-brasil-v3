@@ -227,7 +227,7 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  <SidebarMenuItem>
+                  {/* <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/dashboard/admin/monitoring")}
@@ -237,7 +237,7 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
                         <span className="font-medium text-lg">Monitoramento</span>
                       </Link>
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  </SidebarMenuItem> */}
                 </>
               )}
             </SidebarMenu>

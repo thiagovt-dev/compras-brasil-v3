@@ -20,7 +20,7 @@ export default function AdminDashboard() {
             <CardDescription>Visualize e gerencie todas as licitações ativas</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/dashboard/admin/active-tenders">
+            <Link href="/dashboard/tenders/active-tenders">
               <Button className="w-full bg-green-700 hover:bg-green-800">
                 <Clock className="mr-2 h-4 w-4" />
                 Gerenciar
@@ -35,7 +35,7 @@ export default function AdminDashboard() {
             <CardDescription>Acesse o histórico de licitações finalizadas</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/dashboard/admin/completed-tenders">
+            <Link href="/dashboard/tenders/active-tenders">
               <Button className="w-full bg-green-700 hover:bg-green-800">
                 <CheckCircle className="mr-2 h-4 w-4" />
                 Visualizar

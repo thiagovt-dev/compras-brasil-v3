@@ -1,8 +1,10 @@
-export const dynamic = "force-dynamic";
+"use client";
 
-import { redirect } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import TenderDetails from "@/components/tender-details";
-import { createServerClient } from "@/lib/supabase/server";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
+import { Loader2 } from "lucide-react";
 
 interface TenderDetailPageProps {
   params: {
@@ -180,88 +182,174 @@ const generateMockTenderTeam = (tenderId: string, userId: string | undefined) =>
   return team;
 };
 
-export default async function TenderDetailPage({ params }: TenderDetailPageProps) {
-  const tenderId = params.id;
+export default function TenderDetailPage() {
+  const params = useParams();
+  const tenderId = params.id as string;
+  
+  const [isLoading, setIsLoading] = useState(true);
+  const [session, setSession] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [currentTender, setCurrentTender] = useState<any>(null);
+  const [currentTenderTeam, setCurrentTenderTeam] = useState<any[]>([]);
+  const [supplierParticipation, setSupplierParticipation] = useState<any>(null);
+  const [usingMockData, setUsingMockData] = useState(false);
 
-  console.log("Tender ID:", tenderId);
+  const supabase = createClientSupabaseClient();
 
-  const supabase = createServerClient();
+  useEffect(() => {
+    const loadTenderData = async () => {
+      try {
+        setIsLoading(true);
+        
+        console.log("Tender ID:", tenderId);
 
-  // Check if user is authenticated
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+        // Check if user is authenticated
+        const {
+          data: { session: userSession },
+        } = await supabase.auth.getSession();
+        
+        console.log("User Session:", userSession);
+        setSession(userSession);
 
-  // Get user profile
-  let profile = null;
-  if (session) {
-    const { data } = await supabase.from("profiles").select("*").eq("id", session.user.id).single();
-    profile = data;
+        // Get user profile
+        let userProfile = null;
+        if (userSession) {
+          const { data } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", userSession.user.id)
+            .single();
+          userProfile = data;
+          setProfile(userProfile);
+        }
+
+        console.log("User Profile:", userProfile);
+
+        // Try to get tender details from database
+        const { data: tender, error } = await supabase
+          .from("tenders")
+          .select(
+            `
+              *,
+              agency:agencies(*),
+              lots:tender_lots(
+                *,
+                items:tender_items(*)
+              )
+            `
+          )
+          .eq("id", tenderId)
+          .single();
+
+        let tenderData = tender;
+        let tenderTeam: any[] = [];
+        let mockDataFlag = false;
+
+        // If tender not found or error, use mock data
+        if (error || !tender) {
+          console.log("Licitação não encontrada, usando dados mockados para ID:", tenderId);
+          tenderData = generateMockTender(tenderId);
+          tenderTeam = generateMockTenderTeam(tenderId, userSession?.user.id);
+          mockDataFlag = true;
+          setUsingMockData(true);
+        } else {
+          // Get real tender team data
+          const { data: realTenderTeam } = await supabase
+            .from("tender_team")
+            .select("user_id, role")
+            .eq("tender_id", tenderId);
+          
+          tenderTeam = realTenderTeam || [];
+        }
+
+        // Check supplier participation
+        let supplierData = null;
+        if (!mockDataFlag && userSession?.user.id) {
+          const { data } = await supabase
+            .from("tender_suppliers")
+            .select("*")
+            .eq("tender_id", tenderId)
+            .eq("user_id", userSession.user.id)
+            .single();
+          supplierData = data;
+        } else if (mockDataFlag && userProfile?.profile_type === "supplier") {
+          // Mock supplier participation for demo
+          supplierData = {
+            id: "mock-participation-1",
+            tender_id: tenderId,
+            user_id: userSession?.user.id,
+            status: "active",
+            created_at: new Date().toISOString(),
+          };
+        }
+
+        // Add mock data flag to tender object
+        if (mockDataFlag) {
+          tenderData.is_mock = true;
+        }
+
+        // Set all state
+        setCurrentTender(tenderData);
+        setCurrentTenderTeam(tenderTeam);
+        setSupplierParticipation(supplierData);
+        setUsingMockData(mockDataFlag);
+
+      } catch (error) {
+        console.error("Erro ao carregar dados da licitação:", error);
+        
+        // Fallback para dados mock em caso de erro
+        const mockTender = generateMockTender(tenderId);
+        const mockTeam = generateMockTenderTeam(tenderId, session?.user.id);
+        
+        mockTender.is_mock = true;
+        setCurrentTender(mockTender);
+        setCurrentTenderTeam(mockTeam);
+        setUsingMockData(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (tenderId) {
+      loadTenderData();
+    }
+  }, [tenderId, supabase]);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">Carregando detalhes da licitação...</p>
+        </div>
+      </div>
+    );
   }
 
-  // Try to get tender details from database
-  const { data: tender, error } = await supabase
-    .from("tenders")
-    .select(
-      `
-        *,
-        agency:agencies(*),
-        lots:tender_lots(
-          *,
-          items:tender_items(*)
-        )
-      `
-    )
-    .eq("id", tenderId)
-    .single();
-
-  let currentTender = tender;
-  let currentTenderTeam: any[] = [];
-  let usingMockData = false;
-
-  // If tender not found or error, use mock data
-  if (error || !tender) {
-    console.log("Licitação não encontrada, usando dados mockados para ID:", tenderId);
-    currentTender = generateMockTender(tenderId);
-    currentTenderTeam = generateMockTenderTeam(tenderId, session?.user.id);
-    usingMockData = true;
-  } else {
-    // Get real tender team data
-    const { data: tenderTeam } = await supabase
-      .from("tender_team")
-      .select("user_id, role")
-      .eq("tender_id", tenderId);
-    
-    currentTenderTeam = tenderTeam || [];
+  // Show error state if no tender data
+  if (!currentTender) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">Não foi possível carregar os dados da licitação.</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Tentar Novamente
+          </button>
+        </div>
+      </div>
+    );
   }
 
-  // Check if user is auctioneer
+  // Calculate user permissions
   const isAuctioneer = currentTenderTeam?.some(
     (member) =>
       member.user_id === session?.user.id &&
       (member.role === "auctioneer" || member.role === "contracting_agent")
   );
-
-  // Check supplier participation
-  let supplierParticipation = null;
-  if (!usingMockData && session?.user.id) {
-    const { data } = await supabase
-      .from("tender_suppliers")
-      .select("*")
-      .eq("tender_id", tenderId)
-      .eq("user_id", session.user.id)
-      .single();
-    supplierParticipation = data;
-  } else if (usingMockData && profile?.profile_type === "supplier") {
-    // Mock supplier participation for demo
-    supplierParticipation = {
-      id: "mock-participation-1",
-      tender_id: tenderId,
-      user_id: session?.user.id,
-      status: "active",
-      created_at: new Date().toISOString(),
-    };
-  }
 
   const isSupplierParticipant = !!supplierParticipation;
   const isAgencyUser = profile?.profile_type === "agency";
@@ -270,11 +358,6 @@ export default async function TenderDetailPage({ params }: TenderDetailPageProps
   const isCitizen = profile?.profile_type === "citizen" || !profile?.profile_type;
   const isOwner = session?.user.id === currentTender.created_by;
   const showProposals = (isAgencyUser && isOwner) || isAdminUser || isAuctioneer;
-
-  // Add mock data flag to tender object
-  if (usingMockData) {
-    currentTender.is_mock = true;
-  }
 
   return (
     <TenderDetails
