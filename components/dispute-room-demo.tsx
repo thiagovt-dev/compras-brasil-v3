@@ -11,6 +11,7 @@ import { DisputeRightPanelDemo } from "./dispute-right-panel-demo";
 import { DisputeChatDemo } from "./dispute-chat-demo";
 import { DisputeModeSelectorDemo } from "./dispute-mode-selector-demo";
 import { DisputeModeIndicator } from "./dispute-mode-indicator";
+import { DisputeAuctioneerControls } from "./dispute-auctioneer-controls";
 
 interface DisputeRoomDemoProps {
   tender: any;
@@ -104,7 +105,7 @@ const mockLotItems: Record<string, any[]> = {
 // Status individuais por lote (movido para componente pai)
 const initialLotStatuses: Record<string, string> = {
   "lot-001": "open",
-  "lot-002": "waiting", 
+  "lot-002": "waiting",
   "lot-003": "open",
   "lot-004": "waiting",
   "lot-005": "finished",
@@ -129,6 +130,9 @@ export default function DisputeRoomDemo({
   const [lots, setLots] = useState<any[]>(tender.lots);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [lotStatuses, setLotStatuses] = useState<Record<string, string>>(initialLotStatuses);
+  const [chatMessages, setChatMessages] = useState<
+    Array<{ message: string; type: "system" | "auctioneer" }>
+  >([]);
 
   const { toast } = useToast();
 
@@ -166,7 +170,7 @@ export default function DisputeRoomDemo({
 
   // Funções para gerenciar status dos lotes
   const handleTimerEnd = (lotId: string) => {
-    setLotStatuses(prev => ({ ...prev, [lotId]: "finished" }));
+    setLotStatuses((prev) => ({ ...prev, [lotId]: "finished" }));
     toast({
       title: "Tempo Encerrado",
       description: `O tempo da disputa do lote ${lotId} foi encerrado.`,
@@ -174,7 +178,7 @@ export default function DisputeRoomDemo({
   };
 
   const handleFinalizeLot = (lotId: string) => {
-    setLotStatuses(prev => ({ ...prev, [lotId]: "finished" }));
+    setLotStatuses((prev) => ({ ...prev, [lotId]: "finished" }));
     toast({
       title: "Lote Finalizado",
       description: `Pregoeiro finalizou a disputa do lote ${lotId}.`,
@@ -183,7 +187,7 @@ export default function DisputeRoomDemo({
 
   const handleStartLot = (lotId: string) => {
     if (isAuctioneer) {
-      setLotStatuses(prev => ({ ...prev, [lotId]: "open" }));
+      setLotStatuses((prev) => ({ ...prev, [lotId]: "open" }));
       toast({
         title: "Lote Iniciado",
         description: `Disputa do lote ${lotId} foi iniciada.`,
@@ -195,16 +199,16 @@ export default function DisputeRoomDemo({
     if (isAuctioneer) {
       const updatedStatuses = { ...lotStatuses };
       let startedCount = 0;
-      
-      Object.keys(updatedStatuses).forEach(lotId => {
+
+      Object.keys(updatedStatuses).forEach((lotId) => {
         if (updatedStatuses[lotId] === "waiting") {
           updatedStatuses[lotId] = "open";
           startedCount++;
         }
       });
-      
+
       setLotStatuses(updatedStatuses);
-      
+
       if (startedCount > 0) {
         toast({
           title: "Lotes Iniciados",
@@ -249,9 +253,22 @@ export default function DisputeRoomDemo({
   const supplierIdentifier = isSupplier ? `FORNECEDOR ${mockUserProfile.supplierNumber}` : null;
 
   // Calcular estatísticas dos lotes
-  const activeLotCount = Object.values(lotStatuses).filter(status => status === "open").length;
-  const finishedLotCount = Object.values(lotStatuses).filter(status => status === "finished").length;
-  const waitingLotCount = Object.values(lotStatuses).filter(status => status === "waiting").length;
+  const activeLotCount = Object.values(lotStatuses).filter((status) => status === "open").length;
+  const finishedLotCount = Object.values(lotStatuses).filter(
+    (status) => status === "finished"
+  ).length;
+  const waitingLotCount = Object.values(lotStatuses).filter(
+    (status) => status === "waiting"
+  ).length;
+
+  const handleChatMessage = (message: string, type: "system" | "auctioneer") => {
+    setChatMessages((prev) => [...prev, { message, type }]);
+    toast({
+      title: type === "system" ? "Sistema" : "Pregoeiro",
+      description: message,
+      duration: 3000,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -269,6 +286,14 @@ export default function DisputeRoomDemo({
       <div className="bg-white border-b border-gray-200 px-6 py-4 space-y-4">
         {/* Indicador Visual do Modo */}
         <DisputeModeIndicator mode={disputeMode} />
+
+        {/* ADICIONAR AQUI: Classificação de Fornecedores para Pregoeiros */}
+        {/* CONTROLES COMPLETOS DO PREGOEIRO */}
+        {isAuctioneer && (
+          <div className="border-t pt-4">
+            <DisputeAuctioneerControls lots={lots} onChatMessage={handleChatMessage} />
+          </div>
+        )}
 
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
@@ -303,11 +328,7 @@ export default function DisputeRoomDemo({
 
           <div className="flex items-center gap-4">
             {isAuctioneer && waitingLotCount > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleStartAllLots}
-                className="h-8">
+              <Button variant="outline" size="sm" onClick={handleStartAllLots} className="h-8">
                 <Play className="h-4 w-4 mr-2" />
                 Iniciar Todos os Lotes ({waitingLotCount})
               </Button>
@@ -324,6 +345,7 @@ export default function DisputeRoomDemo({
       <div className="flex-1 flex">
         {/* Coluna da Esquerda: Chat - 25% */}
         <div className="w-1/4 bg-white border-r border-gray-200 flex flex-col">
+          {/* Atualizar o DisputeChatDemo para receber as mensagens do sistema */}
           <DisputeChatDemo
             tenderId={tender.id}
             activeLotId={activeLot?.id || null}
@@ -333,6 +355,7 @@ export default function DisputeRoomDemo({
             userId={mockUserProfile.id}
             profile={mockUserProfile}
             status={disputeStatus}
+            systemMessages={chatMessages}
           />
         </div>
 

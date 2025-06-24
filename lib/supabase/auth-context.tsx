@@ -154,6 +154,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
       })
 
+      console.log("🔐 Tentando sign in com email:", email)
+
       if (error) {
         throw error
       }

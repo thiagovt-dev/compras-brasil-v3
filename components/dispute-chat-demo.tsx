@@ -24,6 +24,8 @@ interface DisputeChatDemoProps {
     supplierNumber?: number;
   };
   status: string;
+  // Adicionar a propriedade systemMessages
+  systemMessages?: Array<{ message: string; type: "system" | "auctioneer" }>;
 }
 
 type Message = {
@@ -50,6 +52,7 @@ export function DisputeChatDemo({
   userId,
   profile,
   status,
+  systemMessages = [], // Valor padrão como array vazio
 }: DisputeChatDemoProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -62,13 +65,13 @@ export function DisputeChatDemo({
   // Simular mensagens iniciais e novas mensagens
   useEffect(() => {
     // Carregar mensagens iniciais (simuladas)
-    setMessages([
+    const initialMessages = [
       {
         id: "msg-demo-001",
         user_id: "auctioneer-demo-001",
         content: "Bem-vindos à sala de disputa de demonstração!",
         created_at: new Date(Date.now() - 120000).toISOString(),
-        type: "system",
+        type: "system" as const,
         is_private: false,
         profiles: { name: "Sistema", role: "system" },
       },
@@ -77,7 +80,7 @@ export function DisputeChatDemo({
         user_id: "auctioneer-demo-001",
         content: "Pregoeiro iniciando a sessão. Boa sorte a todos os participantes!",
         created_at: new Date(Date.now() - 110000).toISOString(),
-        type: "chat",
+        type: "chat" as const,
         is_private: false,
         profiles: { name: "Maria Santos", role: "auctioneer" },
       },
@@ -86,7 +89,7 @@ export function DisputeChatDemo({
         user_id: "supplier-demo-001",
         content: "Olá a todos! Fornecedor ABC presente.",
         created_at: new Date(Date.now() - 90000).toISOString(),
-        type: "chat",
+        type: "chat" as const,
         is_private: false,
         profiles: { name: "Fornecedor 15", role: "supplier" },
       },
@@ -95,7 +98,7 @@ export function DisputeChatDemo({
         user_id: "supplier-demo-002",
         content: "Fornecedor XYZ também online.",
         created_at: new Date(Date.now() - 60000).toISOString(),
-        type: "chat",
+        type: "chat" as const,
         is_private: false,
         profiles: { name: "Fornecedor 22", role: "supplier" },
       },
@@ -104,11 +107,13 @@ export function DisputeChatDemo({
         user_id: "auctioneer-demo-001",
         content: "O chat está habilitado para lances e perguntas. Vamos começar!",
         created_at: new Date(Date.now() - 30000).toISOString(),
-        type: "chat",
+        type: "chat" as const,
         is_private: false,
         profiles: { name: "Maria Santos", role: "auctioneer" },
       },
-    ]);
+    ];
+
+    setMessages(initialMessages);
 
     // Simular novas mensagens de outros usuários
     const interval = setInterval(() => {
@@ -166,6 +171,26 @@ export function DisputeChatDemo({
     return () => clearInterval(interval);
   }, []);
 
+  // Adicionar mensagens do sistema quando systemMessages mudar
+  useEffect(() => {
+    if (systemMessages && systemMessages.length > 0) {
+      const newSystemMessages = systemMessages.map((sysMsg, index) => ({
+        id: `system-msg-${Date.now()}-${index}`,
+        user_id: "system",
+        content: sysMsg.message,
+        created_at: new Date().toISOString(),
+        type: sysMsg.type === "system" ? "system" as const : "chat" as const,
+        is_private: false,
+        profiles: { 
+          name: sysMsg.type === "system" ? "Sistema" : "Pregoeiro", 
+          role: sysMsg.type === "system" ? "system" : "auctioneer" 
+        },
+      }));
+
+      setMessages((prev) => [...prev, ...newSystemMessages]);
+    }
+  }, [systemMessages]);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -179,6 +204,7 @@ export function DisputeChatDemo({
     }, 100);
   };
 
+  // ...existing code... (resto do componente permanece igual)
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
 
