@@ -1,0 +1,730 @@
+Resumo
+O sistema deverá ser desenvolvido com linguagem que possibilite fácil manutenção e futuros novos
+desenvolvimentos para criar novas funções ou adaptar as funções antigas em razão de eventuais mudanças
+legislativas ou de estratégia comercial. Ainda que possibilite acesso simultâneo a centenas de usuários.
+O sistema deverá ser desenvolvido para possibilitar a utilização de inteligência artificial e a criação de uma
+assistente virtual com nome a ser definido para dar apoio aos fornecedores e aos órgãos públicos.
+O sistema deverá ser integrado com o +Brasil. Antes de concluir o sistema precisamos iniciar essa integração
+junto ao Ministério da Economia.
+
+Acesso ao sistema
+Acesso ao sistema com login e senha. O login deverá ser por meio de CPF e senha e imagens captcha (?)
+Novos usuários deverão ser cadastrados, devendo ser solicitado: nome completo, CPF compatível com o nome,
+endereço, e-mail e telefone e escolhido a senha pelo usuário. A senha deverá ter requisitos mínimos de
+segurança.
+
+Usuários possíveis:
+Cidadão – usuário que fez o primeiro cadastro e não cadastrou nenhum fornecedor
+Fornecedor –
+Órgão Público, que se divide em: i) Pregoeiro/Agente de Contratação, ii) Autoridade Superior e iii) Equipe de
+Apoio.
+Interno canal de compras: i) Administrador, Suporte e Cadastro.
+
+Tela inicial do sistema
+A tela deverá ser de fácil compreensão onde o usuário tem acesso aos seus dados cadastrados, podendo ser
+facilmente atualizados.
+Se o usuário tem cadastrado vários fornecedores deve ter uma opção fácil para que ele escolha com qual
+fornecedor ele vai acessar o sistema (isso pode após o login, igual o comprasnet. Coloca login e senha, na
+próxima tela aparece todos os fornecedores vinculados aquele usuário e ele seleciona qual fornecedor irá
+acessar ou conforme exemplo abaixo:
+
+Visão Cidadão:
+Pesquisar licitações: onde consulta todas as licitações de forma organizada com diversos filtros de pesquisa
+exemplo:
+
+Cadastrar Fornecedor – menu para que ele cadastre ou atualize os fornecedores cadastrados
+●​ O sistema deverá ter opção de cadastramento de fornecedor nacional ou estrangeiro
+●​ No caso de fornecedor nacional o usuário deverá cadastrar o fornecedor e preencher todos os dados
+básicos da empresa como: razão social, CNPJ, inscrição estadual com opção de isento, endereço, e-mail,
+telefone e site, sendo o site opcional.
+●​ No caso de fornecedor estrangeiro deverá cadastrar e preencher as informações de: Razão Social ou
+Equivalente: Numero de Regitro ou equivalente: Endereço: email: telefone: site (opcional)
+●​ O usuário deverá informar as linhas de fornecimento da empresa
+●​ O usuário deverá cadastrar o(s) representante (s) legal(is) da empresa, estes representantes devem estar
+previamente cadastrados no sistema como “usuário” (caso o usuário não seja cadastrado enviar convite)
+e cada um deles poderá participar da licitação dessa empresa, mas sem risco de o sistema duplicar
+proposta etc, devendo o sistema gravar qual usuário fez cada etapa pelo fornecedor.
+●​ O usuário deverá anexar documentos para validação da equipe interna do Canal de Compras Brasil
+como: contrato social (última alteração consolidada), procuração (se o usuário não for administrador da
+empresa), documento pessoal do representante e termo de adesão assinada pela empresa ( o sistema
+deve ter opção de assinar digital com o token do usuário). Após o preenchimento e anexar esses
+documentos e concluir o cadastro, o sistema deverá enviar esse pedido de cadastro para um usuário
+interno do canal de compras que será responsável por receber os cadastros, avaliar os documentos e
+aprovar ou não o cadastro. Uma vez não aprovado, o cadastro volta para o usuário com as observações
+para correção e reenvio até que seja aprovado.
+Cadastrar órgão público: idem ao fornecedor, mas os documentos do órgão deverá ser o ato normativo.
+(todos os cadastros deverá seguir um padrão, sempre com caixa alta em todos os dados ou apenas a primeira
+letra para evitar futura bagunça no sistema)
+Os cadastros INICIAIS de usuários com autoridade superior etc, deve ser feita pela equipe interna do canal de
+compras que depois será atualizado pelos usuários já existentes.
+
+Visão fornecedor:
+
+Agenda – com as licitações favoritas ou que o fornecedor tenha cadastrado proposta em um calendário e um BI
+como exemplo:
+
+Pesquisar licitações: onde consulta todas as licitações de forma organizada com diversos filtros de pesquisa
+exemplo:
+
+Minhas licitações – consulta das licitações que o fornecedor tenha cadastrado proposta
+Posição financeira – local que pode ter informações do plano, renovação e histórico de contratação, incluindo as
+notas fiscais que devem ser emitidas pelo sistema após a confirmação do pagamento, exemplo:
+
+Aqui ele vai ver se tem um plano vigente. Se não tiver ele poderá aderir a um plano (trimestral, semestral ou
+anual), escolhendo uma forma de pagamento a partir dos meios de pagamentos vinculados no sistema. A nota
+fiscal será emitida automaticamente pelo sistema e anexado nesse campo e enviado no e-mail da empresa
+cadastrado, após a confirmação do pagamento. Meios de pgto: pix, cartão de crédito ou boleto.
+Alertas: O sistema deverá ter um campo de alerta com todas as movimentações do sistema que envolvam os
+processos e o fornecedor, exemplo:
+
+Visão órgão público:
+​
+a) Agenda – com apenas as licitações que aquele pregoeiro ou servidor tá vinculado e com um BI das
+suas licitações, com valor economizado e outros dados interessantes; (se for autoridade superior irá ver
+todas as licitações do órgão, então deve ter uma hierarquia do órgão)
+b) Licitações em andamento– onde visualiza todas as licitações daquele órgão público com status de
+cada licitaçao e deve ter botão escrito “Criar Licitação” para criar licitações novas
+Deve ter filtro de busca por todos os campos igual do fornecedor e com botões de gerenciamento da
+licitação, onde poderá i) abrir disputa (liberado apenas após o horário indicado na licitação), ii)
+suspender licitação com campo de justificativa, após suspender e republicar é necessário clicar em
+editar, alterar o que for necessário e republicar a licitação. Para o fornecedor e usuários externos aquela
+licitação fica com status Suspenso e para o pregoeiro e equipe de apoio fica ‘em edição’ (caso tenha sido
+editada) até que seja republicada.
+c) Licitações Concluídas: aqui ficam as licitações que foram realizadas e já foram encerradas, pode ter
+um BI com o valor economizado, licitações desertas, fracassadas, homologadas, revogadas, anuladas,
+etc.
+d) Suporte – canal de comunicação com o suporte da empresa, com abertura de chamado etc. para que
+o órgão possa solicitar melhorias ou solicitar algo técnico.
+e) Gerenciar Usuários: disponível para Autoridade Superior
+f) Alertas: O sistema deverá ter um campo de alerta com todas as movimentações do sistema que
+envolvam os processos do órgão, inclusive se houve cadastro de impugnação/esclarecimentos
+
+Visão Administrador:
+- Licitações em andamento: mapa com todas as licitações que estão em andamento no sistema
+- Licitações concluídas: todas as licitações concluídas, com BI de resultados, valor economizado, índices
+de sucesso etc.
+- Gerenciar usuários: acessa todos os usuários.
+- Posição financeira: ver histórico de todas as empresas
+- Movimentação usuários: ver todas as movimentações dos usuários
+- Gerenciamento Suporte:
+- Gerenciamento Cadastro:
+Outros botões que forem pertinentes
+
+Visão Suporte:
+- Gerenciamento Suporte: aqui vai receber os pedidos de suporte do sistema e vai responder os
+processos
+
+Visão Cadastro
+- Gerenciamento Cadastro: aqui vai receber os pedidos de cadastro e avaliar os documentos, podendo
+reprovar ou aprovar e criar usuários de órgãos públicos
+
+Licitações:
+A)​ Criar licitação:
+Opção disponível para usuário Pregoeiro, Autoridade Superior e Equipe de Apoio.
+Será disponível campos para preenchimento contendo:
+
+●​ Modalidade: Podendo ser uma das opções abaixo:
+○​ Pregão Eletrônico
+○​ Concorrência Eletrônica
+○​ Dispensa Eletrônica
+●​ Categoria:
+Quando escolher Pregão Eletrônico vai aparecer
+Aquisição de bens
+Serviços comuns
+Serviços comuns de engenharia
+Quando escolher Concorrência Eletrônica vai aparecer como opção
+Aquisição de bens especiais
+Serviços especiais
+Obras
+Serviços especiais de engenharia
+Serviços comuns de engenharia
+
+●​ Número do Edital
+●​ Numero do processo:
+●​ Critério de Julgamento: Podendo ser conforme regras abaixo:
+Se a modalidade cadastrada foi Pregão Eletrônico ou Dispensa Eletrônica, aparecerá
+como opção:
+1)​ Menor Preço por item
+Quando colocado esse a disputa será item a item pelo valor unitário
+2)​ Menor Preço por lote
+Quando colocado esse a disputa será pelo valor total do lote
+
+3)​ Maior Desconto
+Quando colocado esse a disputa será pelo maior desconto, logo a disputa é em
+percentual e quanto maior melhor
+4)​ Menor taxa administrativa
+5)​ Quando colocado esse a disputa será por percentual também, entretanto, a
+disputa é quanto menor melhor, admitindo taxa negativa, ou seja, quando chega
+em zero, o fornecedor poderá dar -1%, -2%, -5% e assim sucessivsmente.
+Se a modalidade cadastrada foi Concorrência Eletrônica, aparecerá como opção:
+1)​ Menor Preço R$
+2)​ Melhor técnica ou conteúdo artístico
+3)​ Técnica e preço R$
+4)​ Maior retorno econômico R$ ou %
+5)​ Maior Desconto (%)
+6)​ Menor taxa administrativa %
+Quando escolhido Concorrência Eletrônica deve aparecer também o item:
+Regime de Execução
+- Contratação Integrada
+- Contratação Semi-integrada
+- Demais hipóteses
+
+●​ Modo de Disputa: Podendo ser uma das opções abaixo:
+1​ Aberto;
+
+2​ Fechado: Não tem disputa, a proposta feita pelo licitante será sigolosa até sua
+abertura, quando aberta terá a classificação final.
+3​ Aberto e Fechado;
+
+4​ Fechado e aberto: As propostas inicia são fechadas e após a classificação
+somente vai pra lance aberto as três primeiras empresas ou as demais até o
+limite de 10% da primeira colocada e depois fase aberta com essas empresas.
+5​ Randômico (usado apenas por empresas publicas e sociedades de
+economia mista, poderemos desenvolver depois, porque não seria o foco
+agora, mas vou deixar informado a regra do negócio).
+Nesse formato, o pregoeiro irá dar comando em cada lote “iniciar o
+randômico” e o sistema de forma aleatória e sem informar ninguém (nem
+o proprio pregoeiro) irá definir o tempo da disputa que será aleatória de 0
+segundos até no máximo 30 minutos.
+Devendo aparecer conforme o critério de julgamento escolhido assim:
+Combinado = aberto e fechado
+
+Para pregão: disputa Aberto, Aberto/Fechado, Fechado/Aberto ou Randômico
+Para concorrência: disputa aberto, fechado, aberto/fechado e Fechado/Aberto.
+Para dispensa eletrônica: disputa simples
+Disputa simples da dispensa (o sistema ficará aberto para proposta e lances até o horário x,
+após esse horário encerra e tem-se a classificação).
+Na dispensa só tem a disputa até o horário determinado, classificação e envio dos
+documentos de habilitação (não tem fase recursal). **Modulo mais simplificado
+
+●​ Decimais dos Preço: Podendo ser uma das opções abaixo:
+1​ 2 Casas;
+2​ 3 Casas;
+3​ 4 Casas.
+(aqui ele vai admitir propostas com quantas casas decimais? Essa é a
+ideia.
+
+●​
+
+Valor Entre Lances; (valor que
+o sistema vai aceitar entre os
+lances) , podendo ser em R$
+ou em %.
+●​ Valor Sigiloso;
+
+Aqui se for selecionado sigifnica que o valor estimado pela Administração não será
+divulgado aos fornecedores e aos cidadãos, ficará sigiloso até o final da disputa
+e deverá ser divulgado após o pregoeiro clicar em “divulgar preço de referência” em
+cada lote.
+●​ Data Limite para Impugnação e Esclarecimentos: data limite informada pelo
+usuário.
+●​ Data limite para recebimento das Propostas: Data que o sistema vai receber as
+propostas, definido pelo usuário, inclusive com horário.
+
+●​ Data de Abertura da Sessão Pública: Data e horário da abertura da sessão pública.
+Se for colocado dispensa eletrônica deverá colocar:
+Data limite para recebimento das Propostas: Data que o sistema vai receber as
+propostas, definido pelo usuário, inclusive com horário.
+Data limite para recebimento de lances: data e horário limite pra recebimento de
+lances
+Data de divulgação do resultado: Data e horário que será divulgado o resultado.
+●​ Documentos de Habilitação (somente para pregão eletrônico ou concorrência
+eletrônica):
+Todos apresentam na fase de proposta OU
+Somente o licitante arrematante apresenta
+Se colocar que todos apresentam na fase de proposta significa que o fornecedor
+deverá colocar todos os seus documentos de habilitação no momento de cadastrar sua
+proposta e a disposição desses documentos será realizado ao pregoeiro após o
+encerramento da disputa e a todos os demais fornecedores e cidadãos após o
+julgamento da habilitação.
+Se colocar só o vencedor, o pregoeiro ou agente de contratação vai solicitar apenas do
+vencedor apos a disputa o envio dentro de um prazo estipulado por ele de envio, cujos
+documentos ficam disponíveis ao pregoeiro e a todos os demais fornecedores e
+cidadãos após o julgamento da habilitação.
+
+●​ Inversão das fases (somente para pregão eletrônico ou concorrência
+eletrônica):
+sim ou não
+Se sim, antes da etapa de classificação, o Agente de Contratação ou a comissão avalia a
+habilitação de todos, e os que forem habilitados vão pra disputa, até ter a classificação final.
+Se não, vai ter a etapa de classificação inicial, o pregoeiro leva pra disputa as propostas
+classificadas (Desclassificando as que não atenderem ao edital), apos a disputa o sistema
+abre para apresentar os documentos de habilitação do primeiro colocado ou já exige que os
+documentos sejam incluídos junto com a proposta conforme opção acima
+
+●​ Check list habilitação (sistema já previamente traz um check list padrão, com opção
+de inclusão de novo documento)
+●​ Segmentos:
+Aqui a ideia é que ao colocar os segmentos, o sistema envie um email informando a
+publicação dessa licitação para todos os fornecedores cadastrados naquele segmento,
+independente de ter plano ativo ou não.
+●​ Objeto do Edital: descrição do objeto do edital exemplo “Contratação de empresa
+especializada na prestação de serviços de tecnologia”.
+
+Avançar etapa seguinte
+●​ Necessário ter realizado o Cadastro de Equipe, pois será necessário s
+elecionar no mínimo:
+○​ Um usuário como Pregoeiro (se for escolhido a modalidade Pregão
+Eletrônico), se for escolhido Concorrência Eletrônica ou Dispensa Eletrônica
+(Agente de Contratação)
+○​ Um usuário como Autoridade Superior;
+○​ Pelo menos um usuário como Equipe de Apoio, podendo ser mais.
+●​ Se for escolhido a categoria “Aquisição de bens e serviços especiais ou
+Serviços especiais de engenharia”, deverá ser escolhida uma comissão de
+contratação, com no mínimo 3 membros .
+●​
+Nesse caso também é definido a Autoridade Superior, então a diferença é
+que a comissão de contratação substitui o pregoeiro/agente de contratação e a
+equipe de apoio.
+
+Avançar etapa seguinte
+Cadastrar Lotes ou itens
+
+2​
+
+LOTES E ITENS”, clique em “Adicionar Lote” ou “Adicionar Item)”
+
+(quando for colocado menor preço por item será disponibilizado apenas
+adicionar item, quando for menor preço por lote será disponibilizado
+apenas Adicionar Lote), será aberto o formulário de cadastro. Realize o
+preenchimento das informações abaixo e clique em “Salvar”.
+●​ Tipo de Itens: Podendo ser uma das opções abaixo:
+○​
+
+Produt
+os;
+
+○​
+
+Serviç
+os.
+●​ Se for produto, disponibilizar a opção de Requer Marca, Modelo e Fabricante;
+●​ Não Permitir Alterar a Descrição; (se marcar essa opção isso significa que o
+fonecedor não poderá alterar a descrição quando enviar sua proposta)
+
+●​
+
+Descrição do
+Lote;
+●​
+
+Em ITEM,
+informe:
+○​ Descrição;
+○​ Quantidade;
+○​ Unidade de Medida;
+○​ Valor Unitário;
+
+○​ Total o sistema deve calcular automaticamente
+Tipo Benefício: Podendo ser uma das opções abaixo:
+Exclusivo ME/EPP: somente empresas que se auto declararem ME/EPP poderão
+cadastrar proposta nesse item/lote.
+Ampla concorrência com benefício para ME/EPP: esse benefício é das micro
+empresas e empresas de pequeno porte que se auto declararem ao cadastrar sua
+proposta. A empresa ME/EPP poderá cobrir o lance da empresa arrematante que não
+for ME/EPP cuja diferença de preços seja de até 5% na modalidade pregão e de até
+10% na modalidade concorrência. Ao detectar empate, o pregoeiro deve clicar em
+realizar desempate ficto e o sistema convocará a ME/EPP para apresentar um novo
+lance em 5 minutos. Esse lance deverá ser inferior ao primeiro lugar. Se for
+intermediário, o sistema não pode aceitar.
+Ampla concorrência sem benefício: todas as empresas podem participar e não há
+benefício para ME/EPP, quem ganhar é o arrematante.
+Regional: esse critério significa que a administração vai indicar as cidades que
+abrangem a regionalidade. Isso signfica que as empresas que se declararem estar
+situadas em alguma dessa cidade terá preferência em até 10%. Nesse caso não tem
+que cobrir o lance. Ela será considerada arrematante do sistema mesmo com valor
+superior em até 10% em relação a empresas de outras cidades.
+Nesse caso, ao final da disputa, ela vai aparecer ex: em 3ª lugar, mas vai aparecer
+como arrematante pelo critério de regionalidade.
+○​
+
+Avançar etapa seguinte
+Incluir Edital, Anexos, Estudo Técnico Preliminar, Termo de Referência
+Campo próprio pra incluir arquivos em todas as extensões possíveis
+
+Ferramentas para editar e reescrever o lote e colocar e salvar. Quando salvar a licitação fica
+“em edição”, até que seja concluída. A última etapa é “publicar”, momento que a licitação fica
+publica para todos os usuários externos.
+Ou agendar a publicação para a data selecionada e o sistema publica automaticamente.
+Essa publicação só pode ser feita pelo pregoeiro/agente de contratação, por algum membro
+da comissão de contratação (quando houver) ou pela Autoridade Superior.
+Após a publicação, todos os fornecedores cadastrados na base de dados que sejam da
+mesma linha de fornecimento desse edital deverá receber um e-mail informando a publicação
+dessa licitação com link para acessar o Edital.
+
+Fases da licitação:
+a)​ Em edição
+b)​ Publicada
+c)​ Aguardando abertura
+d)​ Propostas abertas
+e)​ Em disputa
+f)​ Em andamento
+
+g)​ Homologada/Homologada parcial/Revogada/Anulada
+Fases do item/lote:
+a)​ Deserto (se não houver propostas)
+b)​ Fracassado (se todas as propostas forem desclassificadas)
+c)​ Em disputa
+d)​ Em negociação
+e)​ Em habilitação
+f)​ Declarado vencedor
+g)​ Em recurso
+h)​ Em contrarrazão
+i)​ Em julgamento
+j)​ Homologada/Homologada parcial/Revogada/Anulada
+
+Painel da licitação
+Quando cadastrar a licitação e depois clicar em visualizar licitação, deve ficar disponível um
+botão com dados gerais que foi previamente cadastrado, outro botão com Editais e Anexos,
+outro botão com Impugnaçoes e Esclarecimentos, outro botão Recursos e Contrarrazões (que
+fica disponível apenas se houver recursos em algum lote/item), outro botão que fica disponível
+após a negociação Documentos de Habilitação, com os documentos de habilitação dos
+fornecedores.
+
+Após a publicação do Edital e até a abertura do certame a licitação ficará disponível para essas
+ações:
+
+Fornecedor:
+1.​ cadastrar proposta: cadastrará proposta, o sistema solicitará atendimento a diversas
+declarações específicas, o envio de valor para cada item ou lote que deseja participar,
+preenchendo as informações básicas que o pregoeiro pré exigiu, bem como incluindo
+documentos se o edital exigir.
+2.​ impugnar o edital: durante o período estipulado como limite para receber impugnação
+deverá ter um botão para qualquer empresa e qualquer cidadão (isso é importante)
+apresentar uma impugnação ao edital, devendo o sistema disponibilizar um campo
+digitável com limite grande de caracteres e a inclusão de documento PDF, Word, Power
+Point, Video, enfim, qualquer extensão. E tb terá um campo próprio para o Pregoeiro
+responder a impugnação. Qnd cadastrado, o pregoeiro deve receber um email
+avisando da impugnação e um aviso no sistema. Qnd o pregoeiro responder, todos os
+interessados que cadastraram proposta e a empresa que impugnou deve receber
+e-mail informando que houve resposta. No sistema a impugnação terá status: Não
+respondida ou Respondida.
+
+3.​ pedir esclarecimento ao edital. Idem da impugnação.
+
+Cidadão:
+1 Impugnar o edital ou pedir esclarecimento
+
+Pregoeiro/Autoridade Superior:
+
+1.​ Suspender licitação: botão disponível para o órgão suspender uma licitação, devendo
+abrir um campo de justificativa. Após a suspensão, deve disponibilizar um botão “editar
+licitação”, aí a licitação fica em edição para o órgão, mas para todos externos continua
+como ‘suspensa’. Após os ajustes o pregoeiro deve republicar. Mas se a licitação for
+suspensa após a abertura da sessão pública, não poderá ser editada, devendo aparecer
+botão “Retirar Suspensão” apresentando a justificativa e a mesma volta da fase em que
+se encontrava.
+2.​ Encerrar licitação: botão disponível para caso o órgão queira encerrar a licitação,
+devendo o sistema disponibilizar as opções: anular ou revogar. Devendo abrir campo
+de justificativa de igual forma. Se for revogada, a licitação ficará com status Revogada,
+se anulada, ficará com status Anulada.
+3.​ Responder Impugnação/Esclarecimentos (se houver)
+4.​ Iniciar Sessão Pública: a partir do horário definido para abertura da sessão pública, fica
+disponível esse botão, acionando-o abre outra página com a tela da Sessão Pública,
+que será delimitada abaixo.
+
+SESSÃO PÚBLICA
+Tela que deve ser dinâmica, de fácil entendimento e utilização, onde o Pregoeiro e
+Fornecedores estão logados para realizar de forma transparente todos os atos referentes ao
+julgamento e a seleção da proposta mais vantajosa.
+O fornecedor visualizará apenas o lote ou item que cadastrou sua proposta.
+O cidadão e pregoeiro visualizarão todos os lotes existentes e por óbvio, o cidadão apenas
+visualizará, não pode mandar mensagem nem interagir na sessão, é apenas um expectador.
+Todos devem visualizar o chat de mensagens, classificação, lances, ou seja, todas as
+informações devem ser públicas, com exceção do nome do fornecedor que fica com apelido
+definido pelo sistema até o final da disputa do último item/lote.
+Deverá ter um botão de atualização, além de atualização automática.​
+Chat de mensagens para interação com os fornecedores, devendo ter opção do pregoeiro
+deixar os fornecedores mandar mensagem ou não, mãozinha para o fornecedor pedir pra falar
+caso esteja desabilitado etc.
+
+Visão Pregoeiro
+a)​ O Pregoerio/Agente de Contratação deverá ao Iniciar a Sessão Pública, um botão em
+cada lote ou item, com a seguinte função:
+i)​
+Abrir Propostas (primeiro ato após a abertura da sessão pública)
+
+Ao abrir as propostas, ficará acessível ao pregoeiro (valor das propostas,
+marcas/modelos cadastrados e o apelido do fornecedor (definido pelo sistema)
+para garantir o sigilo das propostas.
+Após abrir as propostas, todas as propostas iniciam Classificada, mas em cada
+proposta deverá ter um botão com opção:
+1.​ Desclassificar
+Esse botão serve para o pregoeiro desclassificar propostas eventualmente
+em desconformidade com o edital, devendo abrir campo de justificativa no
+sistema, sendo que tal justificativa será informada a todos os participantes.
+Somente as propostas que se mantiverem classificadas vao para a próxima
+etapa.
+​
+(se não tiver propostas, o item/lote terá como resultado DESERTO.
+Após abrir as propostas, cada item/lote deverá ter disponível o botão
+abaixo:
+2.​ Abrir manifestação de recursos (pregoeiro vai definir o período de
+manifestação 1 hora 2 horas etc).
+ii)​
+
+Iniciar Disputa
+Após encerrar a disputa, ficará em cada FORNECEDOR ARREMATANTE as
+opções:
+I.​
+Realizar sorteio (se após a disputa mantiver empate entre as
+propostas, o pregoeiro irá utilizar os critérios de desempate que a lei
+traz, sendo a última através de sorteio).
+II.​
+Reinício da disputa (art. 56, §4). Quando a disputa for aberto, o
+pregoeiro poderá fazer nova disputa caso a diferença em relação a
+propota classificada em segundo lugar for de até 5%. Só vale para o 2
+lugar e os demais, o arrematante continuará como arrematante. Só pra
+estabelecer os próximos colocados. Pouquissimo utilizado mas como
+tem previsão legal precisa colocar.
+III.​
+Se tiver empate ME/EPP botão realizar desempate.
+IV.​
+Negociar (iniciará a negociação do item com o fornecedor
+arrematante)
+V.​
+Divulgar preço de referência (se for orçamento sigiloso).
+VI.​
+Desclassificar (será desclassificado o fornecedor arrematante). Todos
+os lances do fornecedor deverá ficar riscado. Ele sairá da primeira
+posição e irá para a posição de desclassificados, tendo o lote/item uma
+nova classificação.
+VII.​
+Pedir documentos complementares/habilitação (pregoeiro poderá
+solicitar documentos de habilitação ou documento complementar
+como diligência, proposta etc) abrindo campo próprio do sistema para
+o fornecedor incluir o que foi pedido pelo pregoeiro no chat de
+mensagens. *com opção do pregoeiro colocar o tempo que ficará
+aberto essa função para o fornecedor.
+
+VIII.​
+IX.​
+
+X.​
+XI.​
+
+Declarar vencedor
+Abrir manifestação de recursos (abrindo opção para o pregoeiro
+colocará o tempo que essa opção ficará disponível para todos os
+participantes em cada lote)
+Adjudicar (opção que fica disponível após declarar vencedor desde que
+não haja manifestação de recurso.
+Encerrar lote/item: com essa opção vai abrir sub-opções com: I)
+homologar, ii) revogar, iii) anular.
+
+No fornecedor desclassificado deverá ter um botão (reclassificar), caso o fornecedor seja
+desclassificado e depois o pregoeiro altere o julgamento seja por decisão judicial ou decisão
+do próprio recurso.
+Ao reclassificar o fornecedor o item/lote volta a ir para julgamento, abrindo novamente
+todos os botões de negociação, recurso etc.
+
+3​ – Fase recursal
+Declarar vencedor: O item será atualizada para o status de “Declarado
+vencedor”
+Durante esse prazo qualquer fornecedor poderá clicar em “Manifestar
+interesse recursal”, ai vai abrir campo para envio de justificativa, se houver.
+Após isso o lote/item fica com status “Em recurso”. Essa fase pode ter uma
+aba do lado de “Impugnação e Esclarecimento”, como “Recursos”
+Durante a fase recursal, o fornecedor que manifestou recurso até prazo de até
+3 dias úteis para postar o seu recurso no campo próprio da licitação.
+Depois disso, o item/lote entra “Em contrarrazão”. Os demais fornecedores
+terão o prazo de 3 dias úteis após o encerramento do prazo do recurso para
+enviar no mesmo campo próprio as suas “contrarrazões”.
+Depois disso, o item/lote entra “Em julgamento”. Depois disso, o
+pregoeiro/equipe de apoio no mesmo campo vai dar sua decisão e julgar o
+recurso
+
+4​ – Julgamento de Recurso
+Após o julgamento do recurso, o pregoeiro poderá:
+a)​ Voltar atrás na decisão e alterar o resultado de cada item.
+
+Lembrar que: tudo que o pregoeiro fizer ele pode depois refazer. Ex:
+desclassificou um fornecedor e depois no recurso viu que estava
+errado, ele deverá retornar o item para aceitação, reclassificar o
+fornecedor desclassificado e dar sequência das fases com ele até
+declarar vencedor e abrir nova fase recursal.
+Ou caso o fornecedor que foi declarado vencedor não atendeu algo e
+foi visto só na fase recursal, ele pode regredir a fase para a aceitação
+do item, e desclassificá-lo, classificando o próximo colocado).
+
+B) Manter a decisão e submeter o processo para a autoridade
+superior encerrar a licitação.
+
+Encerramento da Licitação
+
+O encerramento se dará por decisão da autoridade superior que poderá:
+1) retornar o processo para o Pregoeiro ou Autoridade superior para que
+realize alguma diligência para saneamento de irregularidades,
+ii) revogar o lote,
+iii) anular a licitação,
+iv) adjudicar e homologar cada lote, e todos com campo próprio para
+incluir uma justificativa.
+No sistema, deve ter uma aba com “Decisões do Certame” e lá
+constando as datas e justificativas de cada ato.
+Se a Autoridade Superior revogar ou anular a licitação, deve ser
+informado no chat e colocando que está aberto o prazo recursal contra
+essa decisão.
+Ai fica aberto o campo de recurso para todos os participantes enviarem
+lá suas razões no prazo de 3 dias úteis dessa decisão.
+Não tendo recurso, o processo ficará com status “Revogado” ou
+“Anulado”.
+Ultrapassado o prazo recursal sem manifestação, a licitação foi
+revogada/anulada (msg automatica no chat).
+Se houver recurso
+O FORNECEDOR XXXX, apresentou recurso contra a decisão da
+autoridade superior.
+
+Aí la na aba de recurso, a autoridade superior vai julgar o recurso,
+colocando como “procedente” ou “improcedente”, se for procedente ele
+poderá alterar a decisão dele, dando uma nova decisão, provavelmente
+homologado. Se for improcedente, vai aparecer no chat
+O Recurso do FORNECEDOR xxx para o item 1 foi julgado
+improcedente, sendo mantida a decisão da Autoridade Superior.
+
+Chat de Mensagens:
+O chat de mensagens conterá mensagens automáticas e poderá ser feito
+mensagens pelo pregoeiro ou agente de contratação.
+
+Minha sugestão é que tenha um botão onde o Pregoeiro ou Agente de
+Contratação bloqueie o chat para os fornecedores ou habilite o chat para os
+fornecedores. Se ele bloquear, só ele pode mandar msg, se ele deixar
+habilitado, todos os fornecedores com proposta classificada poderá enviar
+mensagem também .
+
+Mensagens automaticas ex:
+Mensagens automáticas
+Incluir quando o Agente de Contratação anexar arquivos no edital e
+anexos, bem como quando responde esclarecimento e impugnações, ou
+ainda quando suspende a licitação.
+08/01/2024 13:46:55 - Sistema – O Pregoeiro/Agente de Contratação adicionou
+o arquivo (xxxxxxxx.pdf) em 08/01/2024 às 13:46.
+08/01/2024 13:41:46 - Sistema - O Pregoeiro/Agente de Contratação
+respondeu impugnação em campo próprio do sistema.
+08/01/2024 13:41:46 - Sistema - O Pregoeiro/Agente de Contratação
+respondeu pedido de esclarecimento em campo próprio do sistema.
+08/01/2024 13:46:55 - Sistema – O Pregoeiro/Agente de Contratação
+republicou a licitação em 08/01/2024 às 13:46.
+
+Se houver suspensão
+08/01/2024 13:43 - Sistema - O processo foi suspenso em 08/01/2024 às
+13:43.
+
+Quando for republicado
+08/01/2024 13:43 - Sistema - O processo foi republicado em 08/01/2024 às
+13:43.
+
+Quando houver abertura
+16/10/2023 09:01:42 - Sistema - O processo está em fase de análise das
+propostas
+Se houver declassificação
+16/10/2023 09:01:42 - Sistema – A proposta do FOR xxxx para o item xx foi
+desclassificada com a seguinte justificativa: “.................................................”
+16/10/2023 09:01:52 - Sistema - As propostas foram analisadas e o processo
+foi aberto.
+
+19/01/2024 15:05:52 - Sistema - O processo utiliza o intervalo de lances de R$
+0,10.
+25/01/2024 14:20:44 - Sistema - O item 0001 foi aberto para lances.
+25/01/2024 14:20:44 - Sistema - O item 0002 foi aberto para lances.
+....
+(quando o licitante pedir cancelamento do lance):
+25/01/2024 14:40:59 - Sistema - O pedido de cancelamento do lance de R$
+8,70 para o item 0005 foi aprovado pelo Pregoeiro/Agente de Contratação
+
+Disputa aberto:
+O item 0049 está em disputa aberta.
+O item 0049 está em prorrogação automática.
+Disputa aberto/fechado:
+O item 0049 está em disputa aberta.
+O item 0049 está em disputa randômica.
+O item 0049 está em disputa fechado.
+
+Encerramento:
+25/01/2024 15:29:57 - Sistema - O item 0049 foi encerrado.
+
+(quando houver empate)
+25/01/2024 15:29:57 - Sistema - O item 0049 está em situação de empate ficto
+pela LC 123/2006.
+25/01/2024 15:29:57 - Sistema – FORxxx foi convocado a cobrir o lance de
+menor valor para o item 0049 no prazo de até 05 (cinco) minutos.
+Se o fornecedor não dar lance.
+25/01/2024 15:29:57 - Sistema – FORxxx não ofertou lance inferior no prazo
+estabelecido para o item 0049.
+(chamando outra ME)
+25/01/2024 15:29:57 - Sistema – FORxxx foi convocado a cobrir o lance de
+menor valor para o item 0049 no prazo de até 05 (cinco) minutos.
+Se aceitar
+25/01/2024 15:29:57 - Sistema – FORxxx apresentou lance inferior de xxx para
+o item 0049.
+
+Após isso, para todo os itens aparecer essa mensagem (dando
+publicidade de todos os participantes)
+25/01/2024 15:30:19 - Sistema - O item 0001 teve como arrematante PURUS
+COMERCIO E SERVICOS LTDA - EPP/SS com lance de R$ 49,70.
+25/01/2024 15:30:19 - Sistema - O item 0002 teve como arrematante
+CARLETTO GESTÃO DE FROTAS com lance de R$ 60,51
+25/01/2024 15:30:19 - Sistema - O item 0003 teve como arrematante PRIME
+BENEFICIOS com lance de R$ 60,51
+
+Pedindo negociação
+25/01/2024 15:33:03 - Sistema – O Pregoeiro/Agente de Contratação está
+negociando o item 00002 com o detentor da melhor oferta.
+
+Depois de encerrar a negociação e pedindo proposta atualizada
+25/01/2024 15:33:03 - Sistema – O Pregoeiro/Agente de Contratação solicita o
+envio da Proposta Atualizada para o item 00002. O prazo de envio é até às
+17:33 do dia 25/01/2024.
+
+Depois de encerrar a negociação e pedindo documentos de habilitação
+25/01/2024 15:33:03 - Sistema – O Pregoeiro/Agente de Contratação solicita o
+envio dos documentos de habilitação para o item 00002. O prazo de envio é
+até às 17:33 do dia 25/01/2024.
+
+Desclassificando fornecedor
+25/01/2024 15:33:03 - Sistema – O Pregoeiro/Agente de Contratação
+desclassificou o fornecedor PURUS COMERCIO E SERVICOS LTDA - EPP/SS
+para o item 00002, com a seguinte justificativa:
+“.........................................................”
+
+Declarando vencedor
+25/01/2024 15:33:03 - Sistema – O Pregoeiro/Agente de Contratação declarou
+vencedor PURUS COMERCIO E SERVICOS LTDA - EPP/SS para o item
+00002, com a seguinte justificativa: “.........................................................”
+
+Aberta fase recursal
+
+25/01/2024 15:33:03 - Sistema – O Pregoeiro/Agente de Contratação abriu a
+fase recursal para o item 0002. O prazo para manifestação é até às 17:33 do
+dia 25/01/2024.
+
+Fornecedor manifestou recurso (contar 3 dias úteis e o horário de
+encerramento sempre 23:59)
+25/01/2024 15:33:03 - Sistema – O fornecedor PURUS COMERCIO E
+SERVICOS LTDA manifestou intenção de recurso para o item 0002. O prazo
+para envio das razões é até 23:59 do dia 25/01/2024.
+
+Fornecedor apresentou recurso (3 dias uteis tbm)
+25/01/2024 15:33:03 - Sistema – O fornecedor PURUS COMERCIO E
+SERVICOS LTDA apresentou recurso para o item 0002. Os demais licitantes
+ficam convocados para apresentar contrarrazão. O prazo para envio das
+razões é até 23:59 do dia 25/01/2024.
+
+Fornecedor não apresentou recurso
+25/01/2024 15:33:03 - Sistema – O fornecedor PURUS COMERCIO E
+SERVICOS LTDA não apresentou recurso para o item 0002. O item está em
+adjudicação.
+
+Adjudicando o objeto sem recurso ou com recurso (botão disponível Adjudicar
+para a Autoridade Superior apenas)
+25/01/2024 15:33:03 - Sistema – O Pregoeiro/Agente de Contratação adjudicou
+o item 002 para o fornecedor PURUS COMERCIO E SERVICOS LTDA.
+
+Homologando a licitação (sempre a autoridade superior)
+25/01/2024 15:33:03 - Sistema – A autoridade superior homologou o item 002.
+Revogando a licitação (sempre a autoridade superior) (aqui abre recurso para
+os interessados)
+25/01/2024 15:33:03 - Sistema – A autoridade superior revogou o item 002 sob
+a seguinte justificativa “.............”. Está aberto prazo para intenção de recursos
+até xxx do dia xxx.
+
+
