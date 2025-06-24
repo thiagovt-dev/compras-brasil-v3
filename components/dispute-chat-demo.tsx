@@ -68,24 +68,63 @@ export function DisputeChatDemo({
     const initialMessages = [
       {
         id: "msg-demo-001",
-        user_id: "auctioneer-demo-001",
-        content: "Bem-vindos à sala de disputa de demonstração!",
-        created_at: new Date(Date.now() - 120000).toISOString(),
+        user_id: "system-demo-001",
+        content: "24/06/2025 09:01:42 - Sistema - O processo está em fase de análise das propostas",
+        created_at: new Date(Date.now() - 180000).toISOString(),
         type: "system" as const,
         is_private: false,
         profiles: { name: "Sistema", role: "system" },
       },
       {
         id: "msg-demo-002",
+        user_id: "system-demo-001",
+        content:
+          "24/06/2025 09:01:52 - Sistema - As propostas foram analisadas e o processo foi aberto.",
+        created_at: new Date(Date.now() - 170000).toISOString(),
+        type: "system" as const,
+        is_private: false,
+        profiles: { name: "Sistema", role: "system" },
+      },
+      {
+        id: "msg-demo-003",
+        user_id: "system-demo-001",
+        content:
+          "24/06/2025 09:05:52 - Sistema - O processo utiliza o intervalo de lances de R$ 0,10.",
+        created_at: new Date(Date.now() - 160000).toISOString(),
+        type: "system" as const,
+        is_private: false,
+        profiles: { name: "Sistema", role: "system" },
+      },
+      {
+        id: "msg-demo-004",
+        user_id: "system-demo-001",
+        content: "24/06/2025 09:20:44 - Sistema - O item 0001 foi aberto para lances.",
+        created_at: new Date(Date.now() - 150000).toISOString(),
+        type: "system" as const,
+        is_private: false,
+        profiles: { name: "Sistema", role: "system" },
+      },
+      {
+        id: "msg-demo-005",
         user_id: "auctioneer-demo-001",
-        content: "Pregoeiro iniciando a sessão. Boa sorte a todos os participantes!",
-        created_at: new Date(Date.now() - 110000).toISOString(),
+        content:
+          "Bom dia a todos. Iniciaremos a disputa para o lote 001 - Material Escolar Básico.",
+        created_at: new Date(Date.now() - 140000).toISOString(),
         type: "chat" as const,
         is_private: false,
         profiles: { name: "Maria Santos", role: "auctioneer" },
       },
       {
-        id: "msg-demo-003",
+        id: "msg-demo-006",
+        user_id: "system-demo-001",
+        content: "24/06/2025 10:20:00 - Sistema - O item 0001 está em disputa aberta.",
+        created_at: new Date(Date.now() - 120000).toISOString(),
+        type: "system" as const,
+        is_private: false,
+        profiles: { name: "Sistema", role: "system" },
+      },
+      {
+        id: "msg-demo-007",
         user_id: "supplier-demo-001",
         content: "Olá a todos! Fornecedor ABC presente.",
         created_at: new Date(Date.now() - 90000).toISOString(),
@@ -94,7 +133,7 @@ export function DisputeChatDemo({
         profiles: { name: "Fornecedor 15", role: "supplier" },
       },
       {
-        id: "msg-demo-004",
+        id: "msg-demo-008",
         user_id: "supplier-demo-002",
         content: "Fornecedor XYZ também online.",
         created_at: new Date(Date.now() - 60000).toISOString(),
@@ -103,7 +142,7 @@ export function DisputeChatDemo({
         profiles: { name: "Fornecedor 22", role: "supplier" },
       },
       {
-        id: "msg-demo-005",
+        id: "msg-demo-009",
         user_id: "auctioneer-demo-001",
         content: "O chat está habilitado para lances e perguntas. Vamos começar!",
         created_at: new Date(Date.now() - 30000).toISOString(),
@@ -119,13 +158,13 @@ export function DisputeChatDemo({
     const interval = setInterval(() => {
       if (Math.random() < 0.1) {
         const isFromAuctioneer = Math.random() < 0.3; // 30% chance de ser do pregoeiro
-        
+
         if (isFromAuctioneer) {
           const auctioneerMessages = [
             "Aguardando mais propostas para o lote atual.",
             "Lembrem-se que os lances devem ser menores que o atual.",
             "Tempo restante para lances!",
-            "Próximo lote será aberto em breve."
+            "Próximo lote será aberto em breve.",
           ];
           const newMessage = {
             id: `msg-${Date.now()}`,
@@ -142,14 +181,13 @@ export function DisputeChatDemo({
           setMessages((prev) => [...prev, newMessage]);
         } else {
           const randomSupplierId = Math.random() > 0.5 ? "supplier-demo-002" : "supplier-demo-003";
-          const randomSupplierName = randomSupplierId === "supplier-demo-002" 
-            ? "Fornecedor 8" 
-            : "Fornecedor 25";
+          const randomSupplierName =
+            randomSupplierId === "supplier-demo-002" ? "Fornecedor 8" : "Fornecedor 25";
           const supplierMessages = [
             "Aguardando próximo item...",
             "Sistema funcionando perfeitamente!",
             "Pronto para o próximo lance.",
-            "Conexão estável aqui."
+            "Conexão estável aqui.",
           ];
           const newMessage = {
             id: `msg-${Date.now()}`,
@@ -174,16 +212,46 @@ export function DisputeChatDemo({
   // Adicionar mensagens do sistema quando systemMessages mudar
   useEffect(() => {
     if (systemMessages && systemMessages.length > 0) {
+      // Processar somente novas mensagens (não adicionar duplicadas)
+      const formattedMessages = systemMessages.map((msg, index) => {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString("pt-BR");
+        const dateString = now.toLocaleDateString("pt-BR");
+
+        return {
+          id: `system-${Date.now()}-${index}`,
+          user_id: msg.type === "system" ? "system-demo" : "auctioneer-demo-001",
+          content: `${dateString} ${timeString} - Sistema - ${msg.message}`,
+          created_at: now.toISOString(),
+          type: msg.type === "system" ? ("system" as const) : ("chat" as const),
+          is_private: false,
+          profiles: {
+            name: msg.type === "system" ? "Sistema" : "Pregoeiro",
+            role: msg.type === "system" ? "system" : "auctioneer",
+          },
+        };
+      });
+
+      // Adicionar novas mensagens ao chat
+      if (formattedMessages.length > 0) {
+        setMessages((prev) => [...prev, ...formattedMessages]);
+      }
+    }
+  }, [systemMessages]);
+
+  // Adicionar mensagens do sistema quando systemMessages mudar
+  useEffect(() => {
+    if (systemMessages && systemMessages.length > 0) {
       const newSystemMessages = systemMessages.map((sysMsg, index) => ({
         id: `system-msg-${Date.now()}-${index}`,
         user_id: "system",
         content: sysMsg.message,
         created_at: new Date().toISOString(),
-        type: sysMsg.type === "system" ? "system" as const : "chat" as const,
+        type: sysMsg.type === "system" ? ("system" as const) : ("chat" as const),
         is_private: false,
-        profiles: { 
-          name: sysMsg.type === "system" ? "Sistema" : "Pregoeiro", 
-          role: sysMsg.type === "system" ? "system" : "auctioneer" 
+        profiles: {
+          name: sysMsg.type === "system" ? "Sistema" : "Pregoeiro",
+          role: sysMsg.type === "system" ? "system" : "auctioneer",
         },
       }));
 
@@ -238,11 +306,11 @@ export function DisputeChatDemo({
       type: "chat",
       is_private: false,
       profiles: {
-        name: isAuctioneer 
-          ? profile.name 
-          : profile.supplierNumber 
-            ? `Fornecedor ${profile.supplierNumber}` 
-            : profile.name,
+        name: isAuctioneer
+          ? profile.name
+          : profile.supplierNumber
+          ? `Fornecedor ${profile.supplierNumber}`
+          : profile.name,
         role: profile.role,
       },
     };
@@ -263,11 +331,17 @@ export function DisputeChatDemo({
     const newStatus = !chatEnabled;
     setChatEnabled(newStatus);
 
+    const now = new Date();
+    const timeString = now.toLocaleTimeString("pt-BR");
+    const dateString = now.toLocaleDateString("pt-BR");
+
     const systemMessage: Message = {
       id: `msg-demo-${Date.now()}-system`,
       user_id: "system-demo",
-      content: `Chat ${newStatus ? "habilitado" : "desabilitado"} pelo pregoeiro (simulado).`,
-      created_at: new Date().toISOString(),
+      content: newStatus
+        ? `${dateString} ${timeString} - Sistema - O Pregoeiro habilitou o chat para todos os fornecedores com propostas classificadas.`
+        : `${dateString} ${timeString} - Sistema - O Pregoeiro bloqueou o chat. Somente o pregoeiro pode enviar mensagens.`,
+      created_at: now.toISOString(),
       type: "system",
       is_private: false,
       profiles: { name: "Sistema", role: "system" },
@@ -275,8 +349,12 @@ export function DisputeChatDemo({
     setMessages((prev) => [...prev, systemMessage]);
 
     toast({
-      title: newStatus ? "Chat habilitado" : "Chat desabilitado",
-      description: `O chat foi ${newStatus ? "habilitado" : "desabilitado"} para os fornecedores (simulado).`,
+      title: newStatus ? "Chat habilitado" : "Chat bloqueado",
+      description: `O chat foi ${
+        newStatus
+          ? "habilitado para todos os fornecedores"
+          : "bloqueado. Somente o pregoeiro pode enviar mensagens"
+      }.`,
     });
   };
 
@@ -285,8 +363,12 @@ export function DisputeChatDemo({
       .map((msg) => {
         const timestamp = new Date(msg.created_at).toLocaleString("pt-BR");
         const userName = msg.profiles?.name || "Sistema";
-        const userRole = msg.profiles?.role === "auctioneer" ? "[PREGOEIRO]" : 
-                        msg.profiles?.role === "supplier" ? "[FORNECEDOR]" : "[SISTEMA]";
+        const userRole =
+          msg.profiles?.role === "auctioneer"
+            ? "[PREGOEIRO]"
+            : msg.profiles?.role === "supplier"
+            ? "[FORNECEDOR]"
+            : "[SISTEMA]";
         return `[${timestamp}] ${userRole} ${userName}: ${msg.content}`;
       })
       .join("\n");
@@ -370,10 +452,18 @@ export function DisputeChatDemo({
   const getRoleBadge = (message: Message) => {
     if (message.type === "system") return null;
     if (message.profiles?.role === "auctioneer") {
-      return <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-800">PREGOEIRO</Badge>;
+      return (
+        <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-800">
+          PREGOEIRO
+        </Badge>
+      );
     }
     if (message.profiles?.role === "supplier") {
-      return <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">FORNECEDOR</Badge>;
+      return (
+        <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
+          FORNECEDOR
+        </Badge>
+      );
     }
     return null;
   };
@@ -397,11 +487,15 @@ export function DisputeChatDemo({
               <>
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant={chatEnabled ? "outline" : "destructive"}
                   onClick={toggleChatEnabled}
-                  title={chatEnabled ? "Desabilitar Chat" : "Habilitar Chat"}
-                  className="h-8 w-8 p-0">
-                  <Settings className="h-4 w-4" />
+                  title={
+                    chatEnabled
+                      ? "Desabilitar Chat para Fornecedores"
+                      : "Habilitar Chat para Fornecedores"
+                  }
+                  className="h-8">
+                  {chatEnabled ? "Bloquear Chat" : "Desbloquear Chat"}
                 </Button>
                 <Button
                   size="sm"
