@@ -157,6 +157,7 @@ compras-brasil-v3/
 
     - Conectar todos os componentes de demo ao contexto de workflow centralizado
     - Garantir comportamento consistente em todos os cenários simulados
+    - ✅ Corrigido erro de contexto em páginas de demonstração wrapping `DisputeRoomDemo` com `TenderWorkflowProvider` em `/app/demo/dispute/page.tsx`
 
 4.  **Relatórios e Analytics**
 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import DisputeRoom from "@/components/dispute-room";
 import DisputeRoomDemo from "@/components/dispute-room-demo";
+import { TenderWorkflowProvider } from "@/lib/contexts/tender-workflow-context";
 
 // Dados mocados para demonstração
 const mockTender = {
@@ -190,15 +191,17 @@ export default function DemoDisputePage() {
         </div>
       </div>
 
-      {/* Componente da sala de disputa */}
-      <DisputeRoomDemo
-        tender={mockTender}
-        isAuctioneer={userInfo.isAuctioneer}
-        isSupplier={userInfo.isSupplier}
-        isCitizen={userInfo.isCitizen}
-        userId={userInfo.userId}
-        profile={userInfo.profile}
-      />
+      {/* Componente da sala de disputa dentro do TenderWorkflowProvider */}
+      <TenderWorkflowProvider>
+        <DisputeRoomDemo
+          tender={mockTender}
+          isAuctioneer={userInfo.isAuctioneer}
+          isSupplier={userInfo.isSupplier}
+          isCitizen={userInfo.isCitizen}
+          userId={userInfo.userId}
+          profile={userInfo.profile}
+        />
+      </TenderWorkflowProvider>
     </div>
   );
 }
