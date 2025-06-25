@@ -66,6 +66,7 @@ export default function CreateTenderPage() {
     proposalTime: "17:00", // Novo campo para horário
     openingDate: undefined as Date | undefined,
     openingTime: "09:00", // Novo campo para horário
+    publishDate: undefined as Date | undefined, // Novo campo para data de publicação
     documentationMode: "winner",
     phaseInversion: false,
     segments: [],
@@ -76,7 +77,8 @@ export default function CreateTenderPage() {
       supportTeam: [""],
     },
     itemStructure: "multiple-groups", // Novo campo: 'single', 'multiple', 'group', 'multiple-groups'
-    items: [ // Novo array para itens sem grupo
+    items: [
+      // Novo array para itens sem grupo
       {
         id: 1,
         description: "",
@@ -256,7 +258,7 @@ export default function CreateTenderPage() {
     newItems[index] = { ...newItems[index], [field]: value };
     setFormData({ ...formData, items: newItems });
   };
-  
+
   const addSingleItem = () => {
     const newId =
       formData.items.length > 0 ? Math.max(...formData.items.map((item) => item.id)) + 1 : 1;
@@ -275,13 +277,13 @@ export default function CreateTenderPage() {
       ],
     });
   };
-  
+
   const removeSingleItem = (index: number) => {
     const newItems = [...formData.items];
     newItems.splice(index, 1);
     setFormData({ ...formData, items: newItems });
   };
-  
+
   const handleGroupChange = (groupIndex: number, field: string, value: any) => {
     const newGroups = [...formData.groups];
     newGroups[groupIndex] = { ...newGroups[groupIndex], [field]: value };
@@ -362,7 +364,7 @@ export default function CreateTenderPage() {
     newDocuments[index] = { ...newDocuments[index], name };
     setFormData({ ...formData, documents: newDocuments });
   };
-  
+
   const renderStep3Content = () => {
     switch (formData.itemStructure) {
       case "single":
@@ -429,7 +431,7 @@ export default function CreateTenderPage() {
             </div>
           </div>
         );
-  
+
       case "multiple":
         return (
           <div className="space-y-4">
@@ -466,7 +468,9 @@ export default function CreateTenderPage() {
                     <Label>Tipo de Benefício</Label>
                     <Select
                       value={item.benefitType}
-                      onValueChange={(value) => handleSingleItemChange(index, "benefitType", value)}>
+                      onValueChange={(value) =>
+                        handleSingleItemChange(index, "benefitType", value)
+                      }>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -513,7 +517,7 @@ export default function CreateTenderPage() {
             ))}
           </div>
         );
-  
+
       case "group":
         return (
           <div className="space-y-4">
@@ -572,11 +576,7 @@ export default function CreateTenderPage() {
                 <div className="mt-6">
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="font-medium">Itens do Grupo</h4>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addItem(0)}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => addItem(0)}>
                       <Plus className="mr-2 h-4 w-4" /> Adicionar Item
                     </Button>
                   </div>
@@ -643,9 +643,7 @@ export default function CreateTenderPage() {
                           <Label>Unidade de Medida</Label>
                           <Input
                             value={item.unit}
-                            onChange={(e) =>
-                              handleItemChange(0, itemIndex, "unit", e.target.value)
-                            }
+                            onChange={(e) => handleItemChange(0, itemIndex, "unit", e.target.value)}
                             placeholder="Ex: UN, KG, CX"
                           />
                         </div>
@@ -667,7 +665,7 @@ export default function CreateTenderPage() {
             </Card>
           </div>
         );
-  
+
       case "multiple-groups":
       default:
         return (
@@ -714,7 +712,9 @@ export default function CreateTenderPage() {
                       <Label>Descrição do Grupo</Label>
                       <Input
                         value={group.description}
-                        onChange={(e) => handleGroupChange(groupIndex, "description", e.target.value)}
+                        onChange={(e) =>
+                          handleGroupChange(groupIndex, "description", e.target.value)
+                        }
                         placeholder="Descrição"
                       />
                     </div>
@@ -778,7 +778,12 @@ export default function CreateTenderPage() {
                             <Input
                               value={item.description}
                               onChange={(e) =>
-                                handleItemChange(groupIndex, itemIndex, "description", e.target.value)
+                                handleItemChange(
+                                  groupIndex,
+                                  itemIndex,
+                                  "description",
+                                  e.target.value
+                                )
                               }
                               placeholder="Descrição do item"
                             />
@@ -794,7 +799,9 @@ export default function CreateTenderPage() {
                                 <SelectValue placeholder="Selecione" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="exclusive_for_me_epp">Exclusivo ME/EPP</SelectItem>
+                                <SelectItem value="exclusive_for_me_epp">
+                                  Exclusivo ME/EPP
+                                </SelectItem>
                                 <SelectItem value="open_competition_with_benefit_for_me_epp">
                                   Ampla concorrência com benefício para ME/EPP
                                 </SelectItem>
@@ -876,14 +883,14 @@ export default function CreateTenderPage() {
     console.log("Submitting form data:", formData);
     e.preventDefault();
     setIsSubmitting(true);
-  
+
     try {
       if (!user) {
         router.push("/login");
         return;
       }
       console.log("User ID:", user.id);
-      
+
       // Combinar data e horário para criar datetime completo
       const impugnationDateTime =
         formData.impugnationDate && formData.impugnationTime
@@ -891,47 +898,47 @@ export default function CreateTenderPage() {
               `${format(formData.impugnationDate, "yyyy-MM-dd")}T${formData.impugnationTime}:00`
             )
           : null;
-  
+
       const proposalDateTime =
         formData.proposalDate && formData.proposalTime
           ? new Date(`${format(formData.proposalDate, "yyyy-MM-dd")}T${formData.proposalTime}:00`)
           : null;
-  
+
       const openingDateTime =
         formData.openingDate && formData.openingTime
           ? new Date(`${format(formData.openingDate, "yyyy-MM-dd")}T${formData.openingTime}:00`)
           : null;
-  
+
       // Mapear o valor de formData.modality para o valor aceito na coluna tender_type
       const tenderTypeMap: { [key: string]: string } = {
         "pregao-eletronico": "pregao_eletronico",
         "concorrencia-eletronica": "concorrencia",
         "dispensa-eletronica": "tomada_de_precos",
       };
-  
+
       console.log("Opening date and time:", openingDateTime);
-  
+
       // Determinar itens e grupos para submissão baseado na estrutura escolhida
       const itemsToSubmit =
         formData.itemStructure === "single" || formData.itemStructure === "multiple"
           ? formData.items
           : [];
-  
+
       const groupsToSubmit =
         formData.itemStructure === "group" || formData.itemStructure === "multiple-groups"
           ? formData.groups
           : [];
-  
+
       // Calcular valor estimado total
       let totalEstimatedValue = 0;
-  
+
       // Calcular para itens sem grupo
       for (const item of itemsToSubmit) {
         const quantity = parseFloat(item.quantity.replace(",", ".")) || 0;
         const unitPrice = parseFloat(item.unitPrice.replace(",", ".")) || 0;
         totalEstimatedValue += quantity * unitPrice;
       }
-  
+
       // Calcular para grupos e seus itens
       for (const group of groupsToSubmit) {
         for (const item of group.items) {
@@ -940,7 +947,7 @@ export default function CreateTenderPage() {
           totalEstimatedValue += quantity * unitPrice;
         }
       }
-  
+
       // 1. Criar a licitação principal
       const { data: tenderData, error: tenderError } = await supabase
         .from("tenders")
@@ -968,13 +975,13 @@ export default function CreateTenderPage() {
         })
         .select()
         .single();
-  
+
       console.log("Tender data:", tenderData);
       if (tenderError) {
         console.log("Error creating tender:", tenderError);
         throw tenderError;
       }
-  
+
       // 2. Adicionar membros da equipe
       if (formData.team.auctioneer) {
         const { error: auctioneerError } = await supabase.from("tender_team").insert({
@@ -982,26 +989,26 @@ export default function CreateTenderPage() {
           user_id: formData.team.auctioneer,
           role: formData.modality === "pregao-eletronico" ? "auctioneer" : "contracting_agent",
         });
-        
+
         if (auctioneerError) {
           console.log("Error adding auctioneer:", auctioneerError);
           throw auctioneerError;
         }
       }
-  
+
       if (formData.team.authority) {
         const { error: authorityError } = await supabase.from("tender_team").insert({
           tender_id: tenderData.id,
           user_id: formData.team.authority,
           role: "authority",
         });
-        
+
         if (authorityError) {
           console.log("Error adding authority:", authorityError);
           throw authorityError;
         }
       }
-  
+
       // Adicionar equipe de apoio
       for (const memberId of formData.team.supportTeam) {
         if (memberId) {
@@ -1010,14 +1017,14 @@ export default function CreateTenderPage() {
             user_id: memberId,
             role: "support",
           });
-          
+
           if (supportError) {
             console.log("Error adding support team member:", supportError);
             throw supportError;
           }
         }
       }
-  
+
       // 3. Criar grupos para submissão
       for (const group of groupsToSubmit) {
         const { data: groupData, error: groupError } = await supabase
@@ -1033,14 +1040,14 @@ export default function CreateTenderPage() {
           })
           .select()
           .single();
-  
+
         if (groupError) {
           console.log("Error creating group:", groupError);
           throw groupError;
         }
-  
+
         console.log("Group data:", groupData);
-  
+
         // Criar itens para este grupo
         for (const item of group.items) {
           const { error: itemError } = await supabase.from("tender_items").insert({
@@ -1053,7 +1060,7 @@ export default function CreateTenderPage() {
             estimated_unit_price: Number.parseFloat(item.unitPrice) || 0,
             benefit_type: item.benefitType,
           });
-  
+
           console.log("Item data:", item);
           if (itemError) {
             console.log("Error creating item:", itemError);
@@ -1061,7 +1068,7 @@ export default function CreateTenderPage() {
           }
         }
       }
-  
+
       // 4. Tratar itens sem grupo (criar um grupo padrão)
       if (itemsToSubmit.length > 0) {
         // Criar um grupo padrão para itens avulsos
@@ -1078,12 +1085,12 @@ export default function CreateTenderPage() {
           })
           .select()
           .single();
-  
+
         if (groupError) {
           console.log("Error creating default group:", groupError);
           throw groupError;
         }
-  
+
         // Adicionar itens ao grupo padrão
         for (const item of itemsToSubmit) {
           const { error: itemError } = await supabase.from("tender_items").insert({
@@ -1096,7 +1103,7 @@ export default function CreateTenderPage() {
             estimated_unit_price: Number.parseFloat(item.unitPrice) || 0,
             benefit_type: item.benefitType,
           });
-  
+
           console.log("Single Item data:", item);
           if (itemError) {
             console.log("Error creating single item:", itemError);
@@ -1104,22 +1111,20 @@ export default function CreateTenderPage() {
           }
         }
       }
-  
+
       // 5. Link documents to the tender
       for (const doc of formData.documents) {
-        if (doc.file_path) {  
+        if (doc.file_path) {
           try {
-            const { error: docInsertError } = await supabase
-              .from("documents")
-              .insert({
-                name: doc.name,
-                file_path: doc.file_path,
-                file_type: doc.file?.type || "application/octet-stream",
-                file_size: doc.file?.size || 0,
-                entity_id: tenderData.id,  // Já fornece o ID da licitação
-                entity_type: "tender",
-              });
-            
+            const { error: docInsertError } = await supabase.from("documents").insert({
+              name: doc.name,
+              file_path: doc.file_path,
+              file_type: doc.file?.type || "application/octet-stream",
+              file_size: doc.file?.size || 0,
+              entity_id: tenderData.id, // Já fornece o ID da licitação
+              entity_type: "tender",
+            });
+
             if (docInsertError) {
               console.log("Error inserting document:", docInsertError);
             }
@@ -1129,7 +1134,7 @@ export default function CreateTenderPage() {
         }
         console.log("Document data:", doc);
       }
-  
+
       // 6. Criar registro de resultados inicial
       const { error: resultError } = await supabase.from("tender_results").insert({
         tender_id: tenderData.id,
@@ -1145,12 +1150,12 @@ export default function CreateTenderPage() {
         total_suppliers: 0,
         status: "pending",
       });
-  
+
       if (resultError) {
         console.error("Failed to create tender results:", resultError);
         throw new Error("Failed to create tender results record");
       }
-  
+
       toast({
         title: "Licitação criada com sucesso",
         description: `A licitação foi publicada com valor estimado de ${totalEstimatedValue.toLocaleString(
@@ -1161,7 +1166,7 @@ export default function CreateTenderPage() {
           }
         )}`,
       });
-  
+
       // Redirect to the active tenders page
       setTimeout(() => {
         router.push("/dashboard/agency/active-tenders");
@@ -1845,11 +1850,21 @@ export default function CreateTenderPage() {
                               variant="outline"
                               className="w-full justify-start text-left font-normal">
                               <CalendarIcon className="mr-2 h-4 w-4" />
-                              <span>Selecionar data</span>
+                              {formData.publishDate ? (
+                                format(formData.publishDate, "dd/MM/yyyy", { locale: ptBR })
+                              ) : (
+                                <span>Selecionar data</span>
+                              )}
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0">
-                            <Calendar mode="single" initialFocus locale={ptBR} />
+                            <Calendar
+                              mode="single"
+                              selected={formData.publishDate}
+                              onSelect={(date) => handleChange("publishDate", date)}
+                              initialFocus
+                              locale={ptBR}
+                            />
                           </PopoverContent>
                         </Popover>
                       </div>

@@ -10,16 +10,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Eye, 
-  Users, 
-  MessageSquare, 
-  Info, 
+import {
+  Eye,
+  Users,
+  MessageSquare,
+  Info,
   Clock,
   Package,
   DollarSign,
   Gavel,
-  User
+  User,
 } from "lucide-react";
 import { DisputeRightPanelDemo } from "./dispute-right-panel-demo";
 
@@ -47,19 +47,19 @@ const mockLots = [
     id: "lot-001",
     name: "Material de Escritório",
     description: "Papel, canetas, grampeadores e materiais diversos",
-    estimatedValue: 15000.00,
+    estimatedValue: 15000.0,
   },
   {
-    id: "lot-002", 
+    id: "lot-002",
     name: "Equipamentos de Informática",
     description: "Computadores, monitores e periféricos",
-    estimatedValue: 25000.00,
+    estimatedValue: 25000.0,
   },
   {
     id: "lot-003",
-    name: "Material de Limpeza", 
+    name: "Material de Limpeza",
     description: "Produtos de higiene e limpeza em geral",
-    estimatedValue: 8000.00,
+    estimatedValue: 8000.0,
   },
 ];
 
@@ -70,6 +70,7 @@ const mockLotProposals: Record<string, any[]> = {
       id: "prop-001",
       supplier_id: "supplier-001",
       supplier_name: "FORNECEDOR 15",
+      name: "FORNECEDOR 15",
       company_name: "Tech Solutions LTDA",
       value: 2890.0,
       status: "classified",
@@ -79,6 +80,7 @@ const mockLotProposals: Record<string, any[]> = {
       id: "prop-002",
       supplier_id: "supplier-002",
       supplier_name: "FORNECEDOR 22",
+      name: "FORNECEDOR 22",
       company_name: "Inovação Digital ME",
       value: 2900.0,
       status: "classified",
@@ -88,6 +90,7 @@ const mockLotProposals: Record<string, any[]> = {
       id: "prop-003",
       supplier_id: "supplier-003",
       supplier_name: "FORNECEDOR 8",
+      name: "FORNECEDOR 8",
       company_name: "Sistemas Avançados S.A.",
       value: 2904.0,
       status: "classified",
@@ -99,6 +102,7 @@ const mockLotProposals: Record<string, any[]> = {
       id: "prop-004",
       supplier_id: "supplier-004",
       supplier_name: "FORNECEDOR 5",
+      name: "FORNECEDOR 5",
       company_name: "Fornecedora Premium LTDA",
       value: 110.0,
       status: "classified",
@@ -108,6 +112,7 @@ const mockLotProposals: Record<string, any[]> = {
       id: "prop-005",
       supplier_id: "supplier-005",
       supplier_name: "FORNECEDOR 18",
+      name: "FORNECEDOR 18",
       company_name: "Distribuidora Central ME",
       value: 115.0,
       status: "classified",
@@ -119,6 +124,7 @@ const mockLotProposals: Record<string, any[]> = {
       id: "prop-006",
       supplier_id: "supplier-006",
       supplier_name: "FORNECEDOR 1",
+      name: "FORNECEDOR 1",
       company_name: "Comercial Norte S.A.",
       value: 48.0,
       status: "classified",
@@ -128,6 +134,7 @@ const mockLotProposals: Record<string, any[]> = {
       id: "prop-007",
       supplier_id: "supplier-007",
       supplier_name: "FORNECEDOR 7",
+      name: "FORNECEDOR 7",
       company_name: "Suprimentos Sul LTDA",
       value: 49.5,
       status: "classified",
@@ -142,62 +149,76 @@ const mockLotItems: Record<string, any[]> = {
     {
       id: "item-001",
       description: "Caderno universitário 200 folhas",
+      reference: "• 5000 unidade",
       quantity: 5000,
       unit: "unidade",
       estimated_unit_price: 8.5,
       estimated_total_price: 42500.0,
+      value: 42500.0,
     },
     {
       id: "item-002",
       description: "Lápis preto nº 2",
+      reference: "• 10000 unidade",
       quantity: 10000,
       unit: "unidade",
       estimated_unit_price: 1.2,
       estimated_total_price: 12000.0,
+      value: 12000.0,
     },
     {
       id: "item-003",
       description: "Caneta esferográfica azul",
+      reference: "• 3000 unidade",
       quantity: 3000,
       unit: "unidade",
       estimated_unit_price: 2.5,
       estimated_total_price: 7500.0,
+      value: 7500.0,
     },
   ],
   "lot-002": [
     {
       id: "item-004",
       description: "Computador Desktop",
+      reference: "• 50 unidade",
       quantity: 50,
       unit: "unidade",
       estimated_unit_price: 2500.0,
       estimated_total_price: 125000.0,
+      value: 125000.0,
     },
     {
       id: "item-005",
       description: "Monitor LED 21 polegadas",
+      reference: "• 50 unidade",
       quantity: 50,
       unit: "unidade",
       estimated_unit_price: 800.0,
       estimated_total_price: 40000.0,
+      value: 40000.0,
     },
   ],
   "lot-003": [
     {
       id: "item-006",
       description: "Detergente neutro 5L",
+      reference: "• 200 unidade",
       quantity: 200,
       unit: "unidade",
       estimated_unit_price: 12.5,
       estimated_total_price: 2500.0,
+      value: 2500.0,
     },
     {
       id: "item-007",
       description: "Papel higiênico 30m",
+      reference: "• 1000 rolo",
       quantity: 1000,
       unit: "rolo",
       estimated_unit_price: 3.8,
       estimated_total_price: 3800.0,
+      value: 3800.0,
     },
   ],
 };
@@ -214,13 +235,15 @@ export default function DisputeRoomDemo({
   const [disputeMode, setDisputeMode] = useState("open");
   const [activeLot, setActiveLot] = useState(mockLots[0]);
   const [lots] = useState(mockLots);
-  
+
   // Estado para controlar quais lotes foram finalizados e devem mostrar controles
   const [finalizedLots, setFinalizedLots] = useState<Set<string>>(new Set());
-  
+
   // Estado para armazenar mensagens do sistema que serão enviadas para o chat
-  const [systemMessages, setSystemMessages] = useState<Array<{ message: string; type: "system" | "auctioneer" }>>([]);
-  
+  const [systemMessages, setSystemMessages] = useState<
+    Array<{ message: string; type: "system" | "auctioneer" }>
+  >([]);
+
   // Inicializar lotes com status variados para demonstração
   const [lotStatuses, setLotStatuses] = useState<Record<string, string>>({
     "lot-001": "open", // Em disputa
@@ -233,13 +256,13 @@ export default function DisputeRoomDemo({
   // Função chamada quando a disputa é finalizada pelo timer
   const handleDisputeCompleted = (lotId: string) => {
     console.log("🎯 handleDisputeCompleted chamada para lote:", lotId);
-    
+
     // Adicionar o lote específico à lista de finalizados
     setFinalizedLots((prev) => new Set([...prev, lotId]));
-    
+
     // Atualizar status do lote para finalizado
     setLotStatuses((prev) => ({ ...prev, [lotId]: "finished" }));
-    
+
     toast({
       title: "Disputa Finalizada - Controles Disponíveis",
       description: `A disputa do lote ${lotId} foi finalizada. Controles do pregoeiro agora disponíveis.`,
@@ -249,7 +272,7 @@ export default function DisputeRoomDemo({
 
   const handleFinalizeLot = (lotId: string) => {
     console.log("🎯 handleFinalizeLot chamada para lote:", lotId);
-    
+
     // Esta função agora será chamada pelo timer
     handleDisputeCompleted(lotId);
   };
@@ -268,9 +291,9 @@ export default function DisputeRoomDemo({
 
   const handleChatMessage = (message: string, type: "system" | "auctioneer") => {
     console.log("Chat message:", message, "Type:", type);
-    
+
     // Adicionar a mensagem ao estado para ser enviada ao chat
-    setSystemMessages(prev => [...prev, { message, type }]);
+    setSystemMessages((prev) => [...prev, { message, type }]);
   };
 
   return (

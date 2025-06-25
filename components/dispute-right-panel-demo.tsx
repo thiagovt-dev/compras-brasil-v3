@@ -72,9 +72,7 @@ export function DisputeRightPanelDemo({
                   {lotItems.map((item) => (
                     <div key={item.id} className="p-3 bg-gray-50 rounded-lg border">
                       <p className="font-medium text-gray-900">{item.description}</p>
-                      <p className="text-sm text-gray-600">
-                        Referência: {item.reference} • {item.quantity} {item.unit}
-                      </p>
+                      <p className="text-sm text-gray-600">Referência: {item.reference}</p>
                       <p className="font-bold text-gray-700 mt-1">{formatCurrency(item.value)}</p>
                     </div>
                   ))}
