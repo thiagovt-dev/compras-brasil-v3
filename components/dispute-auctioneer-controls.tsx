@@ -15,13 +15,6 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -44,6 +37,7 @@ import {
   useTenderWorkflow,
   LotStatus as WorkflowLotStatus,
 } from "@/lib/contexts/tender-workflow-context";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 interface DisputeAuctioneerControlsProps {
   lots: any[];
@@ -115,6 +109,9 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
 
   // Transformar os dados de fornecedores do contexto para o formato esperado pela UI
   useEffect(() => {
+    console.log("Debug - lotStatuses do contexto:", lotStatuses);
+    console.log("Debug - lots recebidos:", lots);
+    
     const formattedSuppliers: Record<string, any[]> = {};
 
     // Para cada lote, agrupar os fornecedores
@@ -413,9 +410,12 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
 
   const getAvailableActions = (lotId: string, localStatus: LotStatus) => {
     const actions = [];
-    const workflowStatus = lotStatuses[lotId];
+    const workflowStatus = lotStatuses[lotId] || "waiting"; // valor padrão se não estiver definido
 
-    switch (status) {
+    // Debug: vamos ver os valores
+    console.log("Debug - lotId:", lotId, "localStatus:", localStatus, "workflowStatus:", workflowStatus);
+
+    switch (localStatus) {
       case "waiting_to_open":
         actions.push({
           key: "open_proposals",
@@ -505,6 +505,7 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
         break;
     }
 
+    console.log("Debug - actions found:", actions.length, actions);
     return actions;
   };
 
