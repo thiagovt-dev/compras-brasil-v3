@@ -66,7 +66,6 @@ export default function CreateTenderPage() {
     proposalTime: "17:00", // Novo campo para horário
     openingDate: undefined as Date | undefined,
     openingTime: "09:00", // Novo campo para horário
-    publishDate: undefined as Date | undefined, // Novo campo para data de publicação
     documentationMode: "winner",
     phaseInversion: false,
     segments: [],
@@ -77,8 +76,7 @@ export default function CreateTenderPage() {
       supportTeam: [""],
     },
     itemStructure: "multiple-groups", // Novo campo: 'single', 'multiple', 'group', 'multiple-groups'
-    items: [
-      // Novo array para itens sem grupo
+    items: [ // Novo array para itens sem grupo
       {
         id: 1,
         description: "",
@@ -1847,21 +1845,11 @@ export default function CreateTenderPage() {
                               variant="outline"
                               className="w-full justify-start text-left font-normal">
                               <CalendarIcon className="mr-2 h-4 w-4" />
-                              {formData.publishDate ? (
-                                format(formData.publishDate, "dd/MM/yyyy", { locale: ptBR })
-                              ) : (
-                                <span>Selecionar data</span>
-                              )}
+                              <span>Selecionar data</span>
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0">
-                            <Calendar
-                              mode="single"
-                              selected={formData.publishDate}
-                              onSelect={(date) => handleChange("publishDate", date)}
-                              initialFocus
-                              locale={ptBR}
-                            />
+                            <Calendar mode="single" initialFocus locale={ptBR} />
                           </PopoverContent>
                         </Popover>
                       </div>
