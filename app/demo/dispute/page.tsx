@@ -133,7 +133,7 @@ export default function DemoDisputePage() {
             ...mockProfile,
             name: "Carlos Observador",
             role: "citizen",
-            company_name: null,
+            company_name: "Cidadão Observador", // Mudança: não deixar null
           },
         };
       default:

@@ -21,6 +21,7 @@ import {
   Gavel,
   User
 } from "lucide-react";
+import { DisputeRightPanelDemo } from "./dispute-right-panel-demo";
 
 interface DisputeRoomDemoProps {
   tender: any;
@@ -61,6 +62,145 @@ const mockLots = [
     estimatedValue: 8000.00,
   },
 ];
+
+// Dados mocados para propostas dos lotes
+const mockLotProposals: Record<string, any[]> = {
+  "lot-001": [
+    {
+      id: "prop-001",
+      supplier_id: "supplier-001",
+      supplier_name: "FORNECEDOR 15",
+      company_name: "Tech Solutions LTDA",
+      value: 2890.0,
+      status: "classified",
+      position: 1,
+    },
+    {
+      id: "prop-002",
+      supplier_id: "supplier-002",
+      supplier_name: "FORNECEDOR 22",
+      company_name: "Inovação Digital ME",
+      value: 2900.0,
+      status: "classified",
+      position: 2,
+    },
+    {
+      id: "prop-003",
+      supplier_id: "supplier-003",
+      supplier_name: "FORNECEDOR 8",
+      company_name: "Sistemas Avançados S.A.",
+      value: 2904.0,
+      status: "classified",
+      position: 3,
+    },
+  ],
+  "lot-002": [
+    {
+      id: "prop-004",
+      supplier_id: "supplier-004",
+      supplier_name: "FORNECEDOR 5",
+      company_name: "Fornecedora Premium LTDA",
+      value: 110.0,
+      status: "classified",
+      position: 1,
+    },
+    {
+      id: "prop-005",
+      supplier_id: "supplier-005",
+      supplier_name: "FORNECEDOR 18",
+      company_name: "Distribuidora Central ME",
+      value: 115.0,
+      status: "classified",
+      position: 2,
+    },
+  ],
+  "lot-003": [
+    {
+      id: "prop-006",
+      supplier_id: "supplier-006",
+      supplier_name: "FORNECEDOR 1",
+      company_name: "Comercial Norte S.A.",
+      value: 48.0,
+      status: "classified",
+      position: 1,
+    },
+    {
+      id: "prop-007",
+      supplier_id: "supplier-007",
+      supplier_name: "FORNECEDOR 7",
+      company_name: "Suprimentos Sul LTDA",
+      value: 49.5,
+      status: "classified",
+      position: 2,
+    },
+  ],
+};
+
+// Dados mocados para itens dos lotes
+const mockLotItems: Record<string, any[]> = {
+  "lot-001": [
+    {
+      id: "item-001",
+      description: "Caderno universitário 200 folhas",
+      quantity: 5000,
+      unit: "unidade",
+      estimated_unit_price: 8.5,
+      estimated_total_price: 42500.0,
+    },
+    {
+      id: "item-002",
+      description: "Lápis preto nº 2",
+      quantity: 10000,
+      unit: "unidade",
+      estimated_unit_price: 1.2,
+      estimated_total_price: 12000.0,
+    },
+    {
+      id: "item-003",
+      description: "Caneta esferográfica azul",
+      quantity: 3000,
+      unit: "unidade",
+      estimated_unit_price: 2.5,
+      estimated_total_price: 7500.0,
+    },
+  ],
+  "lot-002": [
+    {
+      id: "item-004",
+      description: "Computador Desktop",
+      quantity: 50,
+      unit: "unidade",
+      estimated_unit_price: 2500.0,
+      estimated_total_price: 125000.0,
+    },
+    {
+      id: "item-005",
+      description: "Monitor LED 21 polegadas",
+      quantity: 50,
+      unit: "unidade",
+      estimated_unit_price: 800.0,
+      estimated_total_price: 40000.0,
+    },
+  ],
+  "lot-003": [
+    {
+      id: "item-006",
+      description: "Detergente neutro 5L",
+      quantity: 200,
+      unit: "unidade",
+      estimated_unit_price: 12.5,
+      estimated_total_price: 2500.0,
+    },
+    {
+      id: "item-007",
+      description: "Papel higiênico 30m",
+      quantity: 1000,
+      unit: "rolo",
+      estimated_unit_price: 3.8,
+      estimated_total_price: 3800.0,
+    },
+  ],
+};
 
 export default function DisputeRoomDemo({
   tender,
@@ -202,10 +342,13 @@ export default function DisputeRoomDemo({
               <User className="h-5 w-5 text-gray-500" />
               <div>
                 <div className="font-medium text-sm">
-                  {isSupplier ? `Fornecedor #${mockUserProfile.supplierNumber}` : "Cidadão"}
+                  {isSupplier
+                    ? `Fornecedor #${profile?.supplierNumber || mockUserProfile.supplierNumber}`
+                    : "Cidadão"}
                 </div>
                 <div className="text-xs text-gray-600">
-                  {mockUserProfile.name} - {mockUserProfile.company_name}
+                  {profile?.name || mockUserProfile.name} -{" "}
+                  {profile?.company_name || mockUserProfile.company_name}
                 </div>
               </div>
               <Badge variant={isSupplier ? "default" : "secondary"}>
@@ -218,95 +361,22 @@ export default function DisputeRoomDemo({
 
       {/* Layout Principal */}
       <div className="flex-1 flex">
-        {/* Coluna Esquerda: Informações da Licitação */}
-        <div className="w-1/4 bg-white border-r border-gray-200 p-6">
-          <div className="space-y-6">
-            {/* Informações Gerais */}
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-3">Informações da Licitação</h3>
-              <div className="space-y-2 text-sm">
-                <div>
-                  <span className="text-gray-500">Número:</span>
-                  <span className="ml-2 font-medium">{tender?.number || "001/2024"}</span>
-                </div>
-                <div>
-                  <span className="text-gray-500">Órgão:</span>
-                  <span className="ml-2">{tender?.agency || "Prefeitura Municipal"}</span>
-                </div>
-                <div>
-                  <span className="text-gray-500">Modalidade:</span>
-                  <span className="ml-2">Pregão Eletrônico</span>
-                </div>
-                <div>
-                  <span className="text-gray-500">Status:</span>
-                  <Badge className="ml-2 bg-green-600">Em Disputa</Badge>
-                </div>
-              </div>
-            </div>
-
-            {/* Resumo dos Lotes */}
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-3">Resumo dos Lotes</h3>
-              <div className="space-y-2">
-                {lots.map((lot, index) => {
-                  const status = lotStatuses[lot.id];
-                  const isFinalized = finalizedLots.has(lot.id);
-
-                  return (
-                    <div
-                      key={lot.id}
-                      className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
-                      <div className="flex items-center gap-2">
-                        <Package className="h-4 w-4 text-gray-400" />
-                        <span>Lote {index + 1}</span>
-                      </div>
-                      <Badge
-                        variant={
-                          isFinalized ? "default" : status === "open" ? "destructive" : "secondary"
-                        }
-                        className={
-                          isFinalized ? "bg-orange-500" : status === "open" ? "bg-green-600" : ""
-                        }>
-                        {isFinalized
-                          ? "Finalizado"
-                          : status === "open"
-                          ? "Em Disputa"
-                          : "Aguardando"}
-                      </Badge>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Estatísticas */}
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-3">Estatísticas</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-blue-50 p-3 rounded-lg text-center">
-                  <div className="text-lg font-bold text-blue-600">15</div>
-                  <div className="text-xs text-blue-600">Fornecedores</div>
-                </div>
-                <div className="bg-green-50 p-3 rounded-lg text-center">
-                  <div className="text-lg font-bold text-green-600">247</div>
-                  <div className="text-xs text-green-600">Lances</div>
-                </div>
-                <div className="bg-purple-50 p-3 rounded-lg text-center">
-                  <div className="text-lg font-bold text-purple-600">{finalizedLots.size}</div>
-                  <div className="text-xs text-purple-600">Finalizados</div>
-                </div>
-                <div className="bg-orange-50 p-3 rounded-lg text-center">
-                  <div className="text-lg font-bold text-orange-600">
-                    {lots.length - finalizedLots.size}
-                  </div>
-                  <div className="text-xs text-orange-600">Ativos</div>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Coluna da Esquerda: Chat - 25% */}
+        <div className="w-1/4 bg-white border-r border-gray-200 flex flex-col">
+          <DisputeChatDemo
+            isAuctioneer={isAuctioneer}
+            isSupplier={isSupplier}
+            isCitizen={isCitizen}
+            userId={profile?.id || mockUserProfile.id}
+            profile={profile || mockUserProfile}
+            tenderId={tender?.id || "demo"}
+            activeLotId={activeLot?.id || null}
+            status={disputeStatus}
+            systemMessages={systemMessages}
+          />
         </div>
 
-        {/* Coluna Central: Lista de Lotes com Lances */}
+        {/* Coluna Central: Lista de Lotes com Lances - 50% da largura */}
         <div className="w-1/2 bg-gray-50 flex flex-col">
           <DisputeLotsListDemo
             lots={lots}
@@ -326,18 +396,12 @@ export default function DisputeRoomDemo({
           />
         </div>
 
-        {/* Coluna Direita: Chat */}
-        <div className="w-1/4 bg-white border-l border-gray-200">
-          <DisputeChatDemo
-            isAuctioneer={isAuctioneer}
-            isSupplier={isSupplier}
-            isCitizen={isCitizen}
-            userId={mockUserProfile.id}
-            profile={mockUserProfile}
-            tenderId={tender?.id || "demo"}
-            activeLotId={activeLot?.id || null}
-            status={disputeStatus}
-            systemMessages={systemMessages}
+        {/* Coluna da Direita: Painel de Detalhes do Lote Ativo - 25% da largura */}
+        <div className="w-1/4 bg-white border-l border-gray-200 flex flex-col">
+          <DisputeRightPanelDemo
+            activeLot={activeLot}
+            lotProposals={activeLot ? mockLotProposals[activeLot.id] || [] : []}
+            lotItems={activeLot ? mockLotItems[activeLot.id] || [] : []}
           />
         </div>
       </div>
