@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,12 +15,18 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import {
   Eye,
   FileText,
-  Gavel,
   MessageSquare,
   Clock,
   Trophy,
@@ -33,151 +39,132 @@ import {
   Package,
   Scale,
 } from "lucide-react";
-import {
-  useTenderWorkflow,
-  LotStatus as WorkflowLotStatus,
-} from "@/lib/contexts/tender-workflow-context";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 interface DisputeAuctioneerControlsProps {
   lots: any[];
   onChatMessage: (message: string, type: "system" | "auctioneer") => void;
+  showControls?: boolean;
+  onDisputeFinalized?: (lotId: string) => void;
 }
 
-// Mapeamento de estados do workflow para estados locais (para compatibilidade com interface existente)
 type LotStatus =
   | "waiting_to_open"
   | "proposals_opened"
   | "resource_manifestation"
-  | "in_dispute"
   | "dispute_ended"
   | "winner_declared"
   | "finished";
 
-// Mapeamento entre status do workflow e status local
-const mapWorkflowToLocalStatus = (status: WorkflowLotStatus): LotStatus => {
-  const statusMap: Record<WorkflowLotStatus, LotStatus> = {
-    waiting: "waiting_to_open",
-    open: "in_dispute",
-    paused: "in_dispute",
-    finished: "dispute_ended",
-    negotiation: "dispute_ended",
-    disqualified: "proposals_opened",
-    winner_declared: "winner_declared",
-    resource_phase: "resource_manifestation",
-    adjudicated: "finished",
-    homologated: "finished",
-    revoked: "finished",
-    canceled: "finished",
-  };
-  return statusMap[status];
-};
-
-// Fornecedor status mapping helpers
 type SupplierStatus = "classified" | "disqualified" | "winner" | "eliminated";
 
-export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctioneerControlsProps) {
-  // Usar o contexto centralizado de workflow da licitação
-  const {
-    tenderStatus,
-    lotStatuses,
-    activeLotId,
-    setActiveLotId,
-    systemMessages,
-    addSystemMessage,
-    openProposals,
-    startDispute,
-    endDispute,
-    startNegotiation,
-    declareWinner,
-    openResourcePhase,
-    resources,
-    updateLotStatus,
-    suppliers,
-    updateSupplierStatus,
-  } = useTenderWorkflow();
+// Dados mocados dos fornecedores por lote
+const mockSuppliersData: Record<string, any[]> = {
+  "lot-001": [
+    {
+      id: "s1",
+      name: "FORNECEDOR 15",
+      company: "Tech Solutions LTDA",
+      value: 2890.0,
+      status: "classified" as SupplierStatus,
+    },
+    {
+      id: "s2",
+      name: "FORNECEDOR 22",
+      company: "Inovação Digital ME",
+      value: 2900.0,
+      status: "classified" as SupplierStatus,
+    },
+    {
+      id: "s3",
+      name: "FORNECEDOR 8",
+      company: "Sistemas Avançados S.A.",
+      value: 2904.0,
+      status: "classified" as SupplierStatus,
+    },
+  ],
+  "lot-002": [
+    {
+      id: "s5",
+      name: "FORNECEDOR 5",
+      company: "Fornecedora Premium LTDA",
+      value: 110.0,
+      status: "classified" as SupplierStatus,
+    },
+    {
+      id: "s6",
+      name: "FORNECEDOR 18",
+      company: "Distribuidora Central ME",
+      value: 115.0,
+      status: "classified" as SupplierStatus,
+    },
+  ],
+  "lot-003": [
+    {
+      id: "s7",
+      name: "FORNECEDOR 1",
+      company: "Comercial Norte S.A.",
+      value: 48.0,
+      status: "classified" as SupplierStatus,
+    },
+    {
+      id: "s8",
+      name: "FORNECEDOR 7",
+      company: "Suprimentos Sul LTDA",
+      value: 49.5,
+      status: "classified" as SupplierStatus,
+    },
+  ],
+};
 
-  // Estados locais para controle de diálogos e formulários
+export function DisputeAuctioneerControls({ 
+  lots, 
+  onChatMessage,
+  showControls = false,
+  onDisputeFinalized
+}: DisputeAuctioneerControlsProps) {
+  // Inicializar com status "dispute_ended" como se a disputa já tivesse acontecido
+  const [lotStatuses, setLotStatuses] = useState<Record<string, LotStatus>>(
+    lots.reduce((acc, lot) => ({ ...acc, [lot.id]: "dispute_ended" as LotStatus }), {})
+  );
+  const [suppliersData, setSuppliersData] = useState(mockSuppliersData);
   const [selectedLot, setSelectedLot] = useState<string | null>(null);
   const [dialogType, setDialogType] = useState<string | null>(null);
   const [justification, setJustification] = useState("");
   const [timeLimit, setTimeLimit] = useState("1");
   const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
 
-  // Mapear os fornecedores por lote para compatibilidade com a UI existente
-  const suppliersData: Record<string, any[]> = {};
-
-  // Transformar os dados de fornecedores do contexto para o formato esperado pela UI
-  useEffect(() => {
-    console.log("Debug - lotStatuses do contexto:", lotStatuses);
-    console.log("Debug - lots recebidos:", lots);
-    
-    const formattedSuppliers: Record<string, any[]> = {};
-
-    // Para cada lote, agrupar os fornecedores
-    lots.forEach((lot) => {
-      formattedSuppliers[lot.id] = suppliers
-        .filter((s) => s.lotId === lot.id)
-        .map((s) => ({
-          id: s.id,
-          name: s.name,
-          company: s.company,
-          value: s.value,
-          status: s.status as SupplierStatus,
-        }));
-    });
-
-    // Atualizar o estado local de fornecedores formatados
-    Object.assign(suppliersData, formattedSuppliers);
-  }, [suppliers, lots]);
-
-  // Efeito para sincronizar mensagens do sistema com o chat
-  useEffect(() => {
-    if (systemMessages.length > 0) {
-      const lastMessage = systemMessages[systemMessages.length - 1];
-      onChatMessage(lastMessage.content, "system");
-    }
-  }, [systemMessages, onChatMessage]);
-
   const { toast } = useToast();
 
-  const getStatusInfo = (status: WorkflowLotStatus) => {
-    const statusMap: Record<string, any> = {
-      waiting: {
+  // Não renderizar se showControls for false
+  if (!showControls) {
+    return null;
+  }
+
+  const getStatusInfo = (status: LotStatus) => {
+    const statusMap = {
+      waiting_to_open: {
         label: "Aguardando Abertura",
         color: "bg-gray-500",
         icon: Clock,
         description: "Clique em 'Abrir Propostas' para iniciar a análise das propostas recebidas",
       },
-      open: {
-        label: "Em Disputa",
-        color: "bg-green-500",
-        icon: Gavel,
-        description: "Disputa de lances em andamento entre fornecedores classificados",
+      proposals_opened: {
+        label: "Propostas Abertas",
+        color: "bg-blue-500",
+        icon: Eye,
+        description: "Analise as propostas e classifique/desclassifique os fornecedores",
       },
-      paused: {
-        label: "Disputa Pausada",
+      resource_manifestation: {
+        label: "Manifestação de Recursos",
         color: "bg-yellow-500",
-        icon: Clock,
-        description: "Disputa pausada temporariamente",
+        icon: MessageSquare,
+        description: "Período aberto para manifestação de recursos pelos fornecedores",
       },
-      finished: {
+      dispute_ended: {
         label: "Disputa Encerrada",
         color: "bg-purple-500",
         icon: Trophy,
-        description: "Disputa finalizada. Proceda com negociação ou declaração de vencedor",
-      },
-      negotiation: {
-        label: "Em Negociação",
-        color: "bg-blue-500",
-        icon: DollarSign,
-        description: "Negociando valores com o arrematante",
-      },
-      disqualified: {
-        label: "Fornecedor Desclassificado",
-        color: "bg-red-500",
-        icon: XCircle,
-        description: "Fornecedor desclassificado da disputa",
+        description: "Disputa finalizada. Proceda com declaração de vencedor",
       },
       winner_declared: {
         label: "Vencedor Declarado",
@@ -185,47 +172,22 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
         icon: CheckCircle,
         description: "Vencedor declarado. Processo pode seguir para fase recursal",
       },
-      resource_phase: {
-        label: "Fase Recursal",
-        color: "bg-yellow-600",
-        icon: Scale,
-        description: "Em fase recursal - manifestação, recursos, contrarrazões",
-      },
-      adjudicated: {
-        label: "Adjudicado",
-        color: "bg-emerald-500",
-        icon: Gavel,
-        description: "Lote adjudicado ao vencedor",
-      },
-      homologated: {
-        label: "Homologado",
-        color: "bg-teal-700",
+      finished: {
+        label: "Finalizado",
+        color: "bg-gray-700",
         icon: CheckCircle,
-        description: "Lote homologado pela autoridade superior",
-      },
-      revoked: {
-        label: "Revogado",
-        color: "bg-red-600",
-        icon: XCircle,
-        description: "Licitação revogada pela autoridade superior",
-      },
-      canceled: {
-        label: "Anulado",
-        color: "bg-red-700",
-        icon: XCircle,
-        description: "Licitação anulada",
+        description: "Processo de licitação finalizado",
       },
     };
-    return statusMap[status] || statusMap.waiting;
+    return statusMap[status];
   };
 
   const handleOpenProposals = (lotId: string) => {
-    // Usar a função do contexto
-    openProposals();
-
-    // Estabelecer o lote ativo
-    setActiveLotId(lotId);
-
+    setLotStatuses((prev) => ({ ...prev, [lotId]: "proposals_opened" }));
+    onChatMessage(
+      `O processo está em fase de análise das propostas para o lote ${lotId}`,
+      "system"
+    );
     toast({
       title: "Propostas Abertas",
       description: `As propostas do lote ${lotId} foram abertas para análise.`,
@@ -241,15 +203,19 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
   const confirmDisqualifySupplier = () => {
     if (!selectedLot || !selectedSupplier || !justification.trim()) return;
 
-    // Encontrar o fornecedor para exibição de mensagens
+    setSuppliersData((prev) => ({
+      ...prev,
+      [selectedLot]: prev[selectedLot].map((supplier) =>
+        supplier.id === selectedSupplier
+          ? { ...supplier, status: "disqualified" as SupplierStatus }
+          : supplier
+      ),
+    }));
+
     const supplier = suppliersData[selectedLot]?.find((s) => s.id === selectedSupplier);
-
-    // Usar o método do contexto para atualizar o status do fornecedor
-    updateSupplierStatus(selectedSupplier, "disqualified");
-
-    // Adicionar uma mensagem do sistema via contexto
-    addSystemMessage(
-      `A proposta do ${supplier?.name} para o lote ${selectedLot} foi desclassificada com a seguinte justificativa: "${justification}"`
+    onChatMessage(
+      `A proposta do ${supplier?.name} para o lote ${selectedLot} foi desclassificada com a seguinte justificativa: "${justification}"`,
+      "system"
     );
 
     toast({
@@ -261,14 +227,20 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
   };
 
   const handleReclassifySupplier = (lotId: string, supplierId: string) => {
-    // Encontrar o fornecedor para exibição de mensagens
+    setSuppliersData((prev) => ({
+      ...prev,
+      [lotId]: prev[lotId].map((supplier) =>
+        supplier.id === supplierId
+          ? { ...supplier, status: "classified" as SupplierStatus }
+          : supplier
+      ),
+    }));
+
     const supplier = suppliersData[lotId]?.find((s) => s.id === supplierId);
-
-    // Usar o método do contexto para atualizar o status do fornecedor
-    updateSupplierStatus(supplierId, "classified");
-
-    // Adicionar uma mensagem do sistema via contexto
-    addSystemMessage(`O fornecedor ${supplier?.name} foi reclassificado para o lote ${lotId}`);
+    onChatMessage(
+      `O fornecedor ${supplier?.name} foi reclassificado para o lote ${lotId}`,
+      "system"
+    );
 
     toast({
       title: "Fornecedor Reclassificado",
@@ -284,8 +256,11 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
   const confirmOpenResourceManifestation = () => {
     if (!selectedLot || !timeLimit) return;
 
-    // Usar o método do contexto para abrir a fase recursal
-    openResourcePhase(selectedLot, parseInt(timeLimit));
+    setLotStatuses((prev) => ({ ...prev, [selectedLot]: "resource_manifestation" }));
+    onChatMessage(
+      `Aberta manifestação de recursos para o lote ${selectedLot} pelo período de ${timeLimit} hora(s)`,
+      "system"
+    );
 
     toast({
       title: "Manifestação de Recursos Aberta",
@@ -295,85 +270,84 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
     closeDialog();
   };
 
-  const handleStartDispute = (lotId: string) => {
-    // Usar o método do contexto para iniciar a disputa
-    startDispute(lotId);
-
-    toast({
-      title: "Disputa Iniciada",
-      description: `A disputa do lote ${lotId} foi iniciada.`,
-    });
-  };
-
-  const handleEndDispute = (lotId: string) => {
-    // Usar o método do contexto para encerrar a disputa
-    endDispute(lotId);
-
-    // Determinar o arrematante (menor valor)
+  // NOVA FUNÇÃO: Definir vencedor automaticamente (menor lance)
+  const handleDefineWinnerAutomatically = (lotId: string) => {
     const suppliers = suppliersData[lotId]?.filter((s) => s.status === "classified") || [];
     if (suppliers.length > 0) {
       const winner = suppliers.reduce((prev, current) =>
         prev.value < current.value ? prev : current
       );
 
-      // Atualizar status do fornecedor para vencedor
-      updateSupplierStatus(winner.id, "winner");
+      // Atualizar status do vencedor
+      setSuppliersData((prev) => ({
+        ...prev,
+        [lotId]: prev[lotId].map((supplier) =>
+          supplier.id === winner.id ? { ...supplier, status: "winner" as SupplierStatus } : supplier
+        ),
+      }));
 
-      // Adicionar mensagem do sistema
-      addSystemMessage(
-        `O lote ${lotId} teve como arrematante ${
-          winner.name
-        } com lance de R$ ${winner.value.toFixed(2)}`
+      // Declarar vencedor automaticamente com justificativa padrão
+      setLotStatuses((prev) => ({ ...prev, [lotId]: "winner_declared" }));
+
+      onChatMessage(
+        `O Pregoeiro/Agente de Contratação declarou vencedor ${winner.name} (${winner.company}) para o lote ${lotId}, com a seguinte justificativa: "Fornecedor com menor lance - R$ ${winner.value.toFixed(2)}"`,
+        "system"
       );
-    }
-
-    toast({
-      title: "Disputa Encerrada",
-      description: `A disputa do lote ${lotId} foi encerrada.`,
-    });
-  };
-
-  const handleDeclareWinner = (lotId: string) => {
-    setSelectedLot(lotId);
-    setDialogType("declare_winner");
-  };
-
-  const confirmDeclareWinner = () => {
-    if (!selectedLot || !justification.trim()) return;
-
-    // Encontramos o fornecedor com status de vencedor
-    const winner = suppliersData[selectedLot]?.find((s) => s.status === "winner");
-
-    if (winner) {
-      // Usar o método do contexto para declarar o vencedor
-      declareWinner(selectedLot, winner.id, justification);
 
       toast({
         title: "Vencedor Declarado",
-        description: `Vencedor declarado para o lote ${selectedLot}. Agora pode seguir para fase recursal.`,
+        description: `${winner.name} foi declarado vencedor com R$ ${winner.value.toFixed(2)} (menor lance)`,
       });
     }
+  };
+
+  // NOVA FUNÇÃO: Classificar fornecedor específico como vencedor
+  const handleClassifyAsWinner = (lotId: string, supplierId: string) => {
+    setSelectedLot(lotId);
+    setSelectedSupplier(supplierId);
+    setDialogType("classify_winner");
+  };
+
+  const confirmClassifyAsWinner = () => {
+    if (!selectedLot || !selectedSupplier || !justification.trim()) return;
+
+    const supplier = suppliersData[selectedLot]?.find((s) => s.id === selectedSupplier);
+
+    // Atualizar status do vencedor
+    setSuppliersData((prev) => ({
+      ...prev,
+      [selectedLot]: prev[selectedLot].map((supplier) =>
+        supplier.id === selectedSupplier ? { ...supplier, status: "winner" as SupplierStatus } : supplier
+      ),
+    }));
+
+    // Declarar vencedor com justificativa personalizada
+    setLotStatuses((prev) => ({ ...prev, [selectedLot]: "winner_declared" }));
+
+    onChatMessage(
+      `O Pregoeiro/Agente de Contratação declarou vencedor ${supplier?.name} (${supplier?.company}) para o lote ${selectedLot}, com a seguinte justificativa: "${justification}"`,
+      "system"
+    );
+
+    toast({
+      title: "Vencedor Declarado",
+      description: `${supplier?.name} foi declarado vencedor com justificativa personalizada.`,
+    });
 
     closeDialog();
   };
 
   const handleNegotiate = (lotId: string) => {
     const winner = suppliersData[lotId]?.find((s) => s.status === "winner");
+    onChatMessage(
+      `O Pregoeiro/Agente de Contratação está negociando o lote ${lotId} com o detentor da melhor oferta.`,
+      "system"
+    );
 
-    if (winner) {
-      // Usar o método do contexto para iniciar a negociação
-      startNegotiation(lotId, winner.id);
-
-      toast({
-        title: "Negociação Iniciada",
-        description: `Negociação iniciada com ${winner.name}.`,
-      });
-    } else {
-      toast({
-        title: "Erro",
-        description: "Nenhum vencedor definido para negociação.",
-      });
-    }
+    toast({
+      title: "Negociação Iniciada",
+      description: `Negociação iniciada com ${winner?.name}.`,
+    });
   };
 
   const handleRequestDocuments = (lotId: string) => {
@@ -408,14 +382,10 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
     setTimeLimit("1");
   };
 
-  const getAvailableActions = (lotId: string, localStatus: LotStatus) => {
+  const getAvailableActions = (lotId: string, status: LotStatus) => {
     const actions = [];
-    const workflowStatus = lotStatuses[lotId] || "waiting"; // valor padrão se não estiver definido
 
-    // Debug: vamos ver os valores
-    console.log("Debug - lotId:", lotId, "localStatus:", localStatus, "workflowStatus:", workflowStatus);
-
-    switch (localStatus) {
+    switch (status) {
       case "waiting_to_open":
         actions.push({
           key: "open_proposals",
@@ -428,39 +398,26 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
         break;
 
       case "proposals_opened":
-        actions.push(
-          {
-            key: "resource_manifestation",
-            label: "Abrir Manifestação de Recursos",
-            description: "Definir período para manifestação de recursos",
-            icon: MessageSquare,
-            variant: "outline" as const,
-            onClick: () => handleOpenResourceManifestation(lotId),
-          },
-          {
-            key: "start_dispute",
-            label: "Iniciar Disputa",
-            description: "Iniciar disputa de lances entre fornecedores classificados",
-            icon: Gavel,
-            variant: "default" as const,
-            onClick: () => handleStartDispute(lotId),
-          }
-        );
-        break;
-
-      case "in_dispute":
         actions.push({
-          key: "end_dispute",
-          label: "Encerrar Disputa",
-          description: "Finalizar disputa e definir arrematante",
-          icon: Trophy,
-          variant: "destructive" as const,
-          onClick: () => handleEndDispute(lotId),
+          key: "resource_manifestation",
+          label: "Abrir Manifestação de Recursos",
+          description: "Definir período para manifestação de recursos",
+          icon: MessageSquare,
+          variant: "outline" as const,
+          onClick: () => handleOpenResourceManifestation(lotId),
         });
         break;
 
       case "dispute_ended":
         actions.push(
+          {
+            key: "define_winner_auto",
+            label: "🎯 Definir Vencedor (Menor Lance)",
+            description: "Define automaticamente o vencedor pelo menor valor",
+            icon: Trophy,
+            variant: "default" as const,
+            onClick: () => handleDefineWinnerAutomatically(lotId),
+          },
           {
             key: "negotiate",
             label: "Negociar",
@@ -476,14 +433,6 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
             icon: FileText,
             variant: "outline" as const,
             onClick: () => handleRequestDocuments(lotId),
-          },
-          {
-            key: "declare_winner",
-            label: "Declarar Vencedor",
-            description: "Declarar vencedor oficial do lote",
-            icon: CheckCircle,
-            variant: "default" as const,
-            onClick: () => handleDeclareWinner(lotId),
           }
         );
         break;
@@ -496,16 +445,12 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
           icon: Scale,
           variant: "default" as const,
           onClick: () => {
-            // Navegar para página de fase recursal
-            const currentUrl = window.location.pathname;
-            const baseUrl = currentUrl.replace("/session/dispute", "");
-            window.location.href = `/tenders/${lotId}/resource-phase`;
+            window.location.href = `/demo/resource-phase?lot=${lotId}`;
           },
         });
         break;
     }
 
-    console.log("Debug - actions found:", actions.length, actions);
     return actions;
   };
 
@@ -529,26 +474,17 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
         <Alert>
           <Info className="h-4 w-4" />
           <AlertDescription>
-            <strong>Fluxo:</strong> Abrir Propostas → Classificar Fornecedores → Iniciar Disputa →
-            Declarar Vencedor →<strong> Fase Recursal (página separada)</strong>
+            <strong>Fluxo:</strong> Definir Vencedor (Menor Lance) → Declarar Vencedor → <strong>Fase Recursal (página separada)</strong>
           </AlertDescription>
         </Alert>
       </div>
 
       {/* Cards dos lotes */}
       {lots.map((lot, index) => {
-        // Obter status do workflow e convertê-lo para status local
-        const workflowStatus = lotStatuses[lot.id];
-        const localStatus = mapWorkflowToLocalStatus(workflowStatus);
-
-        // Obter informações do status atual
-        const statusInfo = getStatusInfo(workflowStatus);
+        const status = lotStatuses[lot.id];
+        const statusInfo = getStatusInfo(status);
         const StatusIcon = statusInfo.icon;
-
-        // Obter ações disponíveis para o lote
-        const actions = getAvailableActions(lot.id, localStatus);
-
-        // Obter fornecedores e contagens
+        const actions = getAvailableActions(lot.id, status);
         const suppliers = suppliersData[lot.id] || [];
         const classifiedCount = suppliers.filter((s) => s.status === "classified").length;
         const disqualifiedCount = suppliers.filter((s) => s.status === "disqualified").length;
@@ -571,7 +507,7 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
                   <div className="flex items-center gap-4 text-sm text-gray-500">
                     <div className="flex items-center gap-1">
                       <DollarSign className="h-4 w-4" />
-                      Valor estimado: R$ {(Math.random() * 10000 + 5000).toFixed(2)}
+                      Valor estimado: R$ {lot.estimatedValue?.toFixed(2) || "10.000,00"}
                     </div>
                     <div className="flex items-center gap-1">
                       <Users className="h-4 w-4" />
@@ -640,7 +576,7 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
                         </Badge>
                       )}
                       {winnerCount > 0 && (
-                        <Badge className="bg-green-600 text-xs">{winnerCount} Arrematante</Badge>
+                        <Badge className="bg-green-600 text-xs">{winnerCount} Vencedor</Badge>
                       )}
                     </div>
                   </div>
@@ -648,10 +584,10 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
               )}
 
               {/* Lista de fornecedores */}
-              {(localStatus === "proposals_opened" ||
-                localStatus === "resource_manifestation" ||
-                localStatus === "dispute_ended" ||
-                localStatus === "winner_declared") && (
+              {(status === "proposals_opened" ||
+                status === "resource_manifestation" ||
+                status === "dispute_ended" ||
+                status === "winner_declared") && (
                 <div className="space-y-2">
                   {suppliers.map((supplier) => (
                     <div
@@ -671,7 +607,7 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
                           className={supplier.status === "winner" ? "bg-green-600" : ""}>
                           {supplier.status === "classified" && "Classificado"}
                           {supplier.status === "disqualified" && "Desclassificado"}
-                          {supplier.status === "winner" && "Arrematante"}
+                          {supplier.status === "winner" && "Vencedor"}
                           {supplier.status === "eliminated" && "Eliminado"}
                         </Badge>
                         <div>
@@ -684,13 +620,23 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
                       </div>
                       <div className="flex gap-2">
                         {supplier.status === "classified" && (
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleDisqualifySupplier(lot.id, supplier.id)}>
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Desclassificar
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => handleClassifyAsWinner(lot.id, supplier.id)}
+                              className="bg-green-600 hover:bg-green-700">
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Declarar Vencedor
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDisqualifySupplier(lot.id, supplier.id)}>
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Desclassificar
+                            </Button>
+                          </>
                         )}
                         {supplier.status === "disqualified" && (
                           <Button
@@ -700,6 +646,12 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
                             <RotateCcw className="h-4 w-4 mr-1" />
                             Reclassificar
                           </Button>
+                        )}
+                        {supplier.status === "winner" && (
+                          <Badge className="bg-green-600 text-white">
+                            <Trophy className="h-4 w-4 mr-1" />
+                            Vencedor Declarado
+                          </Badge>
                         )}
                       </div>
                     </div>
@@ -780,22 +732,31 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
         </DialogContent>
       </Dialog>
 
-      <Dialog open={dialogType === "declare_winner"} onOpenChange={closeDialog}>
+      {/* NOVO: Diálogo para classificar fornecedor como vencedor */}
+      <Dialog open={dialogType === "classify_winner"} onOpenChange={closeDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Declarar Vencedor</DialogTitle>
+            <DialogTitle>Declarar Fornecedor Vencedor</DialogTitle>
             <DialogDescription>
-              Informe a justificativa para declarar o vencedor deste lote.
+              Informe a justificativa para declarar este fornecedor como vencedor.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            {selectedSupplier && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium">Fornecedor Selecionado:</h4>
+                <p>{suppliersData[selectedLot || ""]?.find(s => s.id === selectedSupplier)?.name}</p>
+                <p className="text-sm text-gray-600">{suppliersData[selectedLot || ""]?.find(s => s.id === selectedSupplier)?.company}</p>
+                <p className="mt-1 font-mono font-medium">R$ {suppliersData[selectedLot || ""]?.find(s => s.id === selectedSupplier)?.value.toFixed(2)}</p>
+              </div>
+            )}
             <div>
               <Label htmlFor="winner_justification">Justificativa *</Label>
               <Textarea
                 id="winner_justification"
                 value={justification}
                 onChange={(e) => setJustification(e.target.value)}
-                placeholder="Digite a justificativa para declarar o vencedor..."
+                placeholder="Digite a justificativa para declarar este fornecedor como vencedor..."
                 className="min-h-[100px]"
               />
             </div>
@@ -804,7 +765,10 @@ export function DisputeAuctioneerControls({ lots, onChatMessage }: DisputeAuctio
             <Button variant="outline" onClick={closeDialog}>
               Cancelar
             </Button>
-            <Button onClick={confirmDeclareWinner} disabled={!justification.trim()}>
+            <Button 
+              onClick={confirmClassifyAsWinner} 
+              disabled={!justification.trim()}
+              className="bg-green-600 hover:bg-green-700">
               Declarar Vencedor
             </Button>
           </DialogFooter>

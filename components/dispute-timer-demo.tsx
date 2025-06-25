@@ -15,6 +15,7 @@ interface DisputeTimerDemoProps {
   onFinalize?: (lotId: string) => void;
   isAuctioneer: boolean;
   lotStatus: string;
+  onDisputeFinalized?: (lotId: string) => void; // Nova prop
 }
 
 export function DisputeTimerDemo({
@@ -26,6 +27,7 @@ export function DisputeTimerDemo({
   onFinalize,
   isAuctioneer,
   lotStatus,
+  onDisputeFinalized, // Nova prop
 }: DisputeTimerDemoProps) {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [phase, setPhase] = useState<string>("initial");
@@ -151,11 +153,45 @@ export function DisputeTimerDemo({
     if (isAuctioneer && lotStatus === "open") {
       setIsRunning(false);
       setTimeLeft(0);
-      toast({
-        title: "Disputa Finalizada",
-        description: `Pregoeiro finalizou a disputa do lote ${lotId}. Vencedor será o último lance válido.`,
-      });
+
+      // Simular definição do arrematante (menor valor)
+      const mockSuppliers = {
+        "lot-001": [
+          { id: "s1", name: "FORNECEDOR 15", company: "Tech Solutions LTDA", value: 2890.0 },
+          { id: "s2", name: "FORNECEDOR 22", company: "Inovação Digital ME", value: 2900.0 },
+          { id: "s3", name: "FORNECEDOR 8", company: "Sistemas Avançados S.A.", value: 2904.0 },
+        ],
+        "lot-002": [
+          { id: "s5", name: "FORNECEDOR 5", company: "Fornecedora Premium LTDA", value: 110.0 },
+          { id: "s6", name: "FORNECEDOR 18", company: "Distribuidora Central ME", value: 115.0 },
+        ],
+        "lot-003": [
+          { id: "s7", name: "FORNECEDOR 1", company: "Comercial Norte S.A.", value: 48.0 },
+          { id: "s8", name: "FORNECEDOR 7", company: "Suprimentos Sul LTDA", value: 49.5 },
+        ],
+      };
+
+      const suppliers = mockSuppliers[lotId as keyof typeof mockSuppliers] || [];
+      if (suppliers.length > 0) {
+        const winner = suppliers.reduce((prev, current) =>
+          prev.value < current.value ? prev : current
+        );
+
+        toast({
+          title: "Disputa Finalizada",
+          description: `Disputa do lote ${lotId} finalizada. Arrematante: ${winner.name} com R$ ${winner.value.toFixed(2)}`,
+          duration: 5000,
+        });
+      } else {
+        toast({
+          title: "Disputa Finalizada",
+          description: `Pregoeiro finalizou a disputa do lote ${lotId}.`,
+        });
+      }
+
+      // Chamar as funções de callback
       onFinalize?.(lotId);
+      onDisputeFinalized?.(lotId); // Nova chamada para mostrar controles do pregoeiro
     }
   };
 
@@ -227,7 +263,7 @@ export function DisputeTimerDemo({
             variant="destructive" 
             onClick={handleFinalize} 
             className="h-8"
-            title="Finalizar disputa e declarar vencedor"
+            title="Finalizar disputa e liberar controles do pregoeiro"
           >
             <Square className="h-4 w-4 mr-1" />
             Finalizar

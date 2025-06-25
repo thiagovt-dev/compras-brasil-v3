@@ -387,11 +387,25 @@ export function TenderWorkflowProvider({ children }: { children: React.ReactNode
   const openProposals = () => {
     setTenderStatus("proposal_analysis");
 
+    // Atualizar todos os lotes para "proposals_opened" (usando o status intermediário)
+    setLotStatuses((prev) => {
+      const newStatuses = { ...prev };
+      Object.keys(newStatuses).forEach((lotId) => {
+        if (newStatuses[lotId] === "waiting") {
+          newStatuses[lotId] = "finished"; // Mudamos para finished para mostrar as ações de declarar vencedor
+        }
+      });
+      return newStatuses;
+    });
+
     // Adicionar mensagem sobre abertura das propostas
     addSystemMessage(
       "O pregoeiro iniciou a análise de propostas. As propostas estão sendo abertas para verificação."
     );
     addSystemMessage("O processo está em fase de análise das propostas");
+    addSystemMessage(
+      "Propostas analisadas e fornecedores classificados. Você pode iniciar a disputa ou declarar vencedores."
+    );
   };
 
   // Iniciar disputa

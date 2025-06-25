@@ -38,7 +38,9 @@ interface DisputeLotsListDemoProps {
   onTimerEnd?: (lotId: string) => void;
   onFinalizeLot?: (lotId: string) => void;
   onStartLot?: (lotId: string) => void;
+  onDisputeFinalized?: (lotId: string) => void; // NOVA PROP
 }
+
 
 // Status individuais por lote (fallback local se não fornecido via props)
 const mockLotStatuses: Record<string, string> = {
@@ -116,18 +118,19 @@ export function DisputeLotsListDemo({
   onTimerEnd: externalOnTimerEnd,
   onFinalizeLot: externalOnFinalizeLot,
   onStartLot: externalOnStartLot,
+  onDisputeFinalized, // ADICIONADA ESTA PROP
 }: DisputeLotsListDemoProps) {
   const [newBidValues, setNewBidValues] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState<Record<string, boolean>>({});
   const [countdown, setCountdown] = useState<Record<string, number | null>>({});
   const [showConfirmDialog, setShowConfirmDialog] = useState<string | null>(null);
   const [lotBids, setLotBids] = useState<Record<string, any[]>>(mockLotBids);
-  
+
   // Usar status externos se fornecidos, senão usar os mockados locais
   const [lotStatuses, setLotStatuses] = useState<Record<string, string>>(
     externalLotStatuses || mockLotStatuses
   );
-  
+
   const [lotParticipants, setLotParticipants] = useState<Record<string, number>>({
     "lot-001": 3,
     "lot-002": 2,
@@ -140,7 +143,7 @@ export function DisputeLotsListDemo({
     "lot-009": 2,
     "lot-010": 3,
   });
-  
+
   const countdownRefs = useRef<Record<string, NodeJS.Timeout | null>>({});
   const { toast } = useToast();
 
@@ -190,20 +193,20 @@ export function DisputeLotsListDemo({
 
   // Função para formatação de moeda
   const formatCurrency = (value: string) => {
-    const numericValue = value.replace(/\D/g, '');
-    if (!numericValue) return '';
+    const numericValue = value.replace(/\D/g, "");
+    if (!numericValue) return "";
     const number = parseFloat(numericValue) / 100;
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(number);
   };
 
   const parseCurrencyToNumber = (formattedValue: string): number => {
     const numericString = formattedValue
-      .replace(/[R$\s]/g, '')
-      .replace(/\./g, '')
-      .replace(',', '.');
+      .replace(/[R$\s]/g, "")
+      .replace(/\./g, "")
+      .replace(",", ".");
     return parseFloat(numericString) || 0;
   };
 
@@ -216,32 +219,35 @@ export function DisputeLotsListDemo({
   useEffect(() => {
     if (disputeMode === "closed") return;
 
-    const interval = setInterval(() => {
-      setLotBids((prevBids) => {
-        const updatedBids = { ...prevBids };
-        for (const lotId in updatedBids) {
-          if (lotStatuses[lotId] === "open" && Math.random() < 0.15) {
-            const randomValue = 50 + Math.random() * 100; // Valores aleatórios entre R$ 50 e R$ 150
-            const randomSupplierNumber = Math.floor(Math.random() * 30) + 1;
+    const interval = setInterval(
+      () => {
+        setLotBids((prevBids) => {
+          const updatedBids = { ...prevBids };
+          for (const lotId in updatedBids) {
+            if (lotStatuses[lotId] === "open" && Math.random() < 0.15) {
+              const randomValue = 50 + Math.random() * 100; // Valores aleatórios entre R$ 50 e R$ 150
+              const randomSupplierNumber = Math.floor(Math.random() * 30) + 1;
 
-            const newBid = {
-              id: `bid-${Date.now()}-${Math.random()}`,
-              value: Number(randomValue.toFixed(2)),
-              is_percentage: false,
-              profiles: {
-                name: `Fornecedor ${randomSupplierNumber}`,
-                company_name: `Empresa ${randomSupplierNumber} Ltda`,
-              },
-              timestamp: new Date().toISOString(),
-            };
+              const newBid = {
+                id: `bid-${Date.now()}-${Math.random()}`,
+                value: Number(randomValue.toFixed(2)),
+                is_percentage: false,
+                profiles: {
+                  name: `Fornecedor ${randomSupplierNumber}`,
+                  company_name: `Empresa ${randomSupplierNumber} Ltda`,
+                },
+                timestamp: new Date().toISOString(),
+              };
 
-            // Adicionar novo lance ao histórico (manter até 10 lances)
-            updatedBids[lotId] = [newBid, ...(updatedBids[lotId] || [])].slice(0, 10);
+              // Adicionar novo lance ao histórico (manter até 10 lances)
+              updatedBids[lotId] = [newBid, ...(updatedBids[lotId] || [])].slice(0, 10);
+            }
           }
-        }
-        return updatedBids;
-      });
-    }, disputeMode === "random" ? 2000 : 4000);
+          return updatedBids;
+        });
+      },
+      disputeMode === "random" ? 2000 : 4000
+    );
 
     return () => clearInterval(interval);
   }, [disputeMode, lotStatuses]);
@@ -341,10 +347,10 @@ export function DisputeLotsListDemo({
   const getSuggestedBids = (lotId: string) => {
     // Agora sugerimos valores diversos, não baseados no "melhor" lance
     const baseSuggestions = [50, 75, 100, 125, 150];
-    return baseSuggestions.map((value) => 
-      new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
+    return baseSuggestions.map((value) =>
+      new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
       }).format(value)
     );
   };
@@ -449,6 +455,7 @@ export function DisputeLotsListDemo({
                         onFinalize={handleFinalizeLot}
                         isAuctioneer={isAuctioneer}
                         lotStatus={lotStatus}
+                        onDisputeFinalized={onDisputeFinalized} // PASSAR A PROP AQUI
                       />
                     </div>
 
@@ -469,9 +476,7 @@ export function DisputeLotsListDemo({
                         <div className="font-semibold text-blue-600 text-lg">
                           {formatValue(bestBid.value, bestBid.is_percentage)}
                         </div>
-                        <div className="text-xs text-gray-500">
-                          por {bestBid.profiles.name}
-                        </div>
+                        <div className="text-xs text-gray-500">por {bestBid.profiles.name}</div>
                       </div>
                     )}
                   </div>
@@ -485,7 +490,9 @@ export function DisputeLotsListDemo({
                       {rankedBids.slice(0, 3).map((bid, index) => (
                         <div key={bid.id} className="flex justify-between items-center text-sm">
                           <span className="flex items-center gap-2">
-                            <Badge variant={index === 0 ? "default" : "outline"} className="text-xs">
+                            <Badge
+                              variant={index === 0 ? "default" : "outline"}
+                              className="text-xs">
                               {index + 1}º
                             </Badge>
                             <span>{bid.profiles.name}</span>
@@ -505,10 +512,7 @@ export function DisputeLotsListDemo({
                 {/* Controles do pregoeiro */}
                 {isAuctioneer && lotStatus === "waiting" && (
                   <div className="mt-4 pt-4 border-t border-gray-200">
-                    <Button
-                      onClick={() => handleStartLot(lot.id)}
-                      className="w-full"
-                      size="lg">
+                    <Button onClick={() => handleStartLot(lot.id)} className="w-full" size="lg">
                       <Play className="h-4 w-4 mr-2" />
                       Iniciar Disputa deste Lote
                     </Button>
@@ -610,8 +614,8 @@ export function DisputeLotsListDemo({
               <br />
               <br />
               <span className="text-sm text-gray-600">
-                <strong>Importante:</strong> Este lance será usado para classificação por menor preço.
-                Não há valor mínimo obrigatório.
+                <strong>Importante:</strong> Este lance será usado para classificação por menor
+                preço. Não há valor mínimo obrigatório.
               </span>
               <br />
               <br />
