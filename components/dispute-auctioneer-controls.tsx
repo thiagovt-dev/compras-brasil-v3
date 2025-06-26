@@ -45,7 +45,12 @@ import {
 
 interface DisputeAuctioneerControlsProps {
   lots: any[];
-  onChatMessage: (message: string, type: "system" | "auctioneer", lotId?: string, action?: string) => void;
+  onChatMessage: (
+    message: string,
+    type: "system" | "auctioneer",
+    lotId?: string,
+    action?: string
+  ) => void;
   showControls?: boolean;
   onDisputeFinalized?: (lotId: string) => void;
 }
@@ -121,11 +126,11 @@ const mockSuppliersData: Record<string, any[]> = {
   ],
 };
 
-export function DisputeAuctioneerControls({ 
-  lots, 
+export function DisputeAuctioneerControls({
+  lots,
   onChatMessage,
   showControls = false,
-  onDisputeFinalized
+  onDisputeFinalized,
 }: DisputeAuctioneerControlsProps) {
   // Inicializar com status "dispute_ended" como se a disputa já tivesse acontecido
   const [lotStatuses, setLotStatuses] = useState<Record<string, LotStatus>>(
@@ -137,11 +142,11 @@ export function DisputeAuctioneerControls({
   const [justification, setJustification] = useState("");
   const [timeLimit, setTimeLimit] = useState("1");
   const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
-  
+
   // Estados para controle de tempo com horas e minutos
   const [timeLimitHours, setTimeLimitHours] = useState("2");
   const [timeLimitMinutes, setTimeLimitMinutes] = useState("0");
-  
+
   // Estados para controle de desempate
   const [tiebreakerSuppliers, setTiebreakerSuppliers] = useState<string[]>([]);
   const [tiebreakerTimeLeft, setTiebreakerTimeLeft] = useState<Record<string, number>>({});
@@ -157,56 +162,80 @@ export function DisputeAuctioneerControls({
   const hasLotTie = (lotId: string) => {
     const suppliers = suppliersData[lotId]?.filter((s) => s.status === "classified") || [];
     if (suppliers.length < 2) return false;
-    
-    const minValue = Math.min(...suppliers.map(s => s.value));
-    const tiedSuppliers = suppliers.filter(s => s.value === minValue);
+
+    const minValue = Math.min(...suppliers.map((s) => s.value));
+    const tiedSuppliers = suppliers.filter((s) => s.value === minValue);
     return tiedSuppliers.length > 1;
   };
+
+  const getLotDisplayNumber = (lotId: string) => {
+    const lotIndex = lots.findIndex((lot) => lot.id === lotId);
+    return lotIndex >= 0 ? lotIndex + 1 : lotId;
+  };
+
 
   // Obter fornecedores empatados
   const getTiedSuppliers = (lotId: string) => {
     const suppliers = suppliersData[lotId]?.filter((s) => s.status === "classified") || [];
     if (suppliers.length < 2) return [];
-    
-    const minValue = Math.min(...suppliers.map(s => s.value));
-    return suppliers.filter(s => s.value === minValue);
+
+    const minValue = Math.min(...suppliers.map((s) => s.value));
+    return suppliers.filter((s) => s.value === minValue);
   };
 
-  // Iniciar disputa de desempate
   const handleStartTiebreaker = (lotId: string) => {
+    const lotDisplayNumber = getLotDisplayNumber(lotId);
+    console.log(`🎯 Iniciando desempate para lote: ${lotId} (Lote ${lotDisplayNumber})`);
+
     const tiedSuppliers = getTiedSuppliers(lotId);
-    
+
     if (tiedSuppliers.length < 2) {
       toast({
         title: "Erro",
-        description: "Não há empate entre fornecedores neste lote.",
+        description: `Não há empate entre fornecedores no Lote ${lotDisplayNumber}.`,
         variant: "destructive",
       });
       return;
     }
 
-    // Atualizar status do lote
-    setLotStatuses(prev => ({ ...prev, [lotId]: "tiebreaker_active" }));
-    
-    // Marcar fornecedores empatados
-    setSuppliersData(prev => ({
+    console.log(
+      `🤝 Fornecedores empatados no lote ${lotId} (Lote ${lotDisplayNumber}):`,
+      tiedSuppliers.map((s) => s.name)
+    );
+
+    // Atualizar status APENAS do lote específico
+    setLotStatuses((prev) => ({
       ...prev,
-      [lotId]: prev[lotId].map(supplier => 
-        tiedSuppliers.some(tied => tied.id === supplier.id)
-          ? { ...supplier, status: "tiebreaker" as SupplierStatus }
-          : supplier
-      )
+      [lotId]: "tiebreaker_active",
     }));
 
-    // Iniciar timer de 5 minutos
-    setTiebreakerTimeLeft(prev => ({ ...prev, [lotId]: 300 })); // 5 minutos = 300 segundos
-    
-    // Simular countdown
-    const countdown = setInterval(() => {
-      setTiebreakerTimeLeft(prev => {
+    // Marcar fornecedores empatados APENAS no lote específico
+    setSuppliersData((prev) => ({
+      ...prev,
+      [lotId]:
+        prev[lotId]?.map((supplier) =>
+          tiedSuppliers.some((tied) => tied.id === supplier.id)
+            ? { ...supplier, status: "tiebreaker" as SupplierStatus }
+            : supplier
+        ) || [],
+    }));
+
+    // Iniciar timer de 5 minutos APENAS para o lote específico
+    setTiebreakerTimeLeft((prev) => ({
+      ...prev,
+      [lotId]: 300,
+    }));
+
+    // CORREÇÃO: Usar uma referência específica para cada lote
+    const intervalKey = `tiebreaker-${lotId}`;
+    const countdownInterval = setInterval(() => {
+      setTiebreakerTimeLeft((prev) => {
         const currentTime = prev[lotId];
         if (!currentTime || currentTime <= 1) {
-          clearInterval(countdown);
+          clearInterval(countdownInterval);
+          console.log(
+            `⏰ Timer do lote ${lotId} (Lote ${lotDisplayNumber}) expirou, finalizando desempate`
+          );
           handleTiebreakerEnd(lotId);
           return { ...prev, [lotId]: 0 };
         }
@@ -214,76 +243,126 @@ export function DisputeAuctioneerControls({
       });
     }, 1000);
 
+    // Salvar referência do intervalo para poder cancelar depois se necessário
+    (window as any)[intervalKey] = countdownInterval;
+
     // Enviar mensagem para o chat com ação especial de desempate
-    const supplierNames = tiedSuppliers.map(s => s.name);
-    
-    // Incluir variações de nome para garantir compatibilidade com o usuário demo
-    const supplierNamesForTiebreaker = [
-      ...supplierNames,
-      "FORNECEDOR 23", // Número do fornecedor demo
-      "Fornecedor 23",
-      "João Silva" // Nome do perfil demo
-    ];
-    
+    const supplierNames = tiedSuppliers.map((s) => s.name);
+
     onChatMessage(
-      `Iniciada disputa de desempate para o lote ${lotId}. Fornecedores em disputa: ${supplierNames.join(", ")}. Tempo: 5 minutos.`,
+      `Iniciada disputa de desempate para o Lote ${lotDisplayNumber}. Fornecedores em disputa: ${supplierNames.join(
+        ", "
+      )}. Tempo: 5 minutos.`,
       "system",
-      lotId, // Passar o ID do lote
-      "start_tiebreaker" // Ação especial
+      lotId,
+      "start_tiebreaker"
     );
 
     toast({
       title: "Disputa de Desempate Iniciada",
-      description: `Disputa entre ${tiedSuppliers.length} fornecedores por 5 minutos.`,
+      description: `Lote ${lotDisplayNumber}: Disputa entre ${tiedSuppliers.length} fornecedores por 5 minutos.`,
     });
   };
 
-  // Finalizar disputa de desempate
   const handleTiebreakerEnd = (lotId: string) => {
+    const lotDisplayNumber = getLotDisplayNumber(lotId);
+    console.log(`🏁 Finalizando desempate para lote: ${lotId} (Lote ${lotDisplayNumber})`);
+
+    // Limpar intervalo se existir
+    const intervalKey = `tiebreaker-${lotId}`;
+    if ((window as any)[intervalKey]) {
+      clearInterval((window as any)[intervalKey]);
+      delete (window as any)[intervalKey];
+    }
+
     // Simular que um dos fornecedores "venceu" o desempate com um lance ligeiramente menor
-    const tiebreakerSuppliersInLot = suppliersData[lotId]?.filter(s => s.status === "tiebreaker") || [];
-    
+    const tiebreakerSuppliersInLot =
+      suppliersData[lotId]?.filter((s) => s.status === "tiebreaker") || [];
+
     if (tiebreakerSuppliersInLot.length > 0) {
       // Escolher aleatoriamente um vencedor do desempate
-      const winner = tiebreakerSuppliersInLot[Math.floor(Math.random() * tiebreakerSuppliersInLot.length)];
-      
+      const winner =
+        tiebreakerSuppliersInLot[Math.floor(Math.random() * tiebreakerSuppliersInLot.length)];
+
       // Simular um lance ligeiramente menor para o vencedor
       const newValue = winner.value - 0.01;
-      
-      // Atualizar dados dos fornecedores
-      setSuppliersData(prev => ({
+
+      console.log(
+        `🏆 Vencedor do desempate no lote ${lotId} (Lote ${lotDisplayNumber}): ${
+          winner.name
+        } com R$ ${newValue.toFixed(2)}`
+      );
+
+      // Atualizar dados dos fornecedores APENAS para o lote específico
+      setSuppliersData((prev) => ({
         ...prev,
-        [lotId]: prev[lotId].map(supplier => {
-          if (supplier.id === winner.id) {
-            return { ...supplier, value: newValue, status: "classified" as SupplierStatus };
-          } else if (supplier.status === "tiebreaker") {
-            return { ...supplier, status: "classified" as SupplierStatus };
-          }
-          return supplier;
-        })
+        [lotId]:
+          prev[lotId]?.map((supplier) => {
+            if (supplier.id === winner.id) {
+              return { ...supplier, value: newValue, status: "classified" as SupplierStatus };
+            } else if (supplier.status === "tiebreaker") {
+              return { ...supplier, status: "classified" as SupplierStatus };
+            }
+            return supplier;
+          }) || [],
       }));
 
-      // Atualizar status do lote
-      setLotStatuses(prev => ({ ...prev, [lotId]: "dispute_ended" }));
+      // CORREÇÃO: Atualizar status APENAS do lote específico
+      setLotStatuses((prev) => ({
+        ...prev,
+        [lotId]: "dispute_ended" as LotStatus,
+      }));
 
-      // Enviar mensagem para o chat
+      // Enviar mensagem para o chat com o lote correto
       onChatMessage(
-        `Disputa de desempate finalizada para o lote ${lotId}. ${winner.name} apresentou lance de R$ ${newValue.toFixed(2)}.`,
+        `Disputa de desempate finalizada para o Lote ${lotDisplayNumber}. ${
+          winner.name
+        } apresentou lance de R$ ${newValue.toFixed(2)}.`,
         "system"
       );
 
       toast({
         title: "Disputa de Desempate Finalizada",
-        description: `${winner.name} venceu com lance de R$ ${newValue.toFixed(2)}`,
+        description: `Lote ${lotDisplayNumber}: ${
+          winner.name
+        } venceu com lance de R$ ${newValue.toFixed(2)}`,
       });
+    } else {
+      console.log(
+        `⚠️ Nenhum fornecedor em desempate encontrado para o lote ${lotId} (Lote ${lotDisplayNumber})`
+      );
+
+      setLotStatuses((prev) => ({
+        ...prev,
+        [lotId]: "dispute_ended" as LotStatus,
+      }));
     }
   };
 
-  // Finalizar manualmente disputa de desempate
+  // CORREÇÃO: Garantir que o lotId correto seja usado na finalização
   const handleFinalizeTiebreaker = (lotId: string) => {
-    setTiebreakerTimeLeft(prev => ({ ...prev, [lotId]: 0 }));
+    const lotDisplayNumber = getLotDisplayNumber(lotId);
+    console.log(
+      `🔧 Finalizando desempate manualmente para lote: ${lotId} (Lote ${lotDisplayNumber})`
+    );
+
+    // Limpar timer específico do lote
+    setTiebreakerTimeLeft((prev) => {
+      const newState = { ...prev };
+      delete newState[lotId];
+      return newState;
+    });
+
+    // Limpar intervalo se existir
+    const intervalKey = `tiebreaker-${lotId}`;
+    if ((window as any)[intervalKey]) {
+      clearInterval((window as any)[intervalKey]);
+      delete (window as any)[intervalKey];
+    }
+
     handleTiebreakerEnd(lotId);
   };
+
 
   // Função para formatar tempo do desempate
   const formatTiebreakerTime = (seconds: number) => {
@@ -296,18 +375,18 @@ export function DisputeAuctioneerControls({
   const getTotalTimeInHours = () => {
     const hours = parseInt(timeLimitHours) || 0;
     const minutes = parseInt(timeLimitMinutes) || 0;
-    return hours + (minutes / 60);
+    return hours + minutes / 60;
   };
 
   // Formatar tempo para exibição
   const formatTimeDisplay = () => {
     const hours = parseInt(timeLimitHours) || 0;
     const minutes = parseInt(timeLimitMinutes) || 0;
-    
+
     if (hours === 0 && minutes === 0) return "0 minutos";
-    if (hours === 0) return `${minutes} minuto${minutes !== 1 ? 's' : ''}`;
-    if (minutes === 0) return `${hours} hora${hours !== 1 ? 's' : ''}`;
-    return `${hours} hora${hours !== 1 ? 's' : ''} e ${minutes} minuto${minutes !== 1 ? 's' : ''}`;
+    if (hours === 0) return `${minutes} minuto${minutes !== 1 ? "s" : ""}`;
+    if (minutes === 0) return `${hours} hora${hours !== 1 ? "s" : ""}`;
+    return `${hours} hora${hours !== 1 ? "s" : ""} e ${minutes} minuto${minutes !== 1 ? "s" : ""}`;
   };
 
   const getStatusInfo = (status: LotStatus) => {
@@ -361,18 +440,28 @@ export function DisputeAuctioneerControls({
         description: "Processo de licitação finalizado",
       },
     };
-    return statusMap[status];
+
+    // CORREÇÃO: Retornar valor padrão se o status não existir no mapeamento
+    return (
+      statusMap[status] || {
+        label: "Status Indefinido",
+        color: "bg-gray-400",
+        icon: Clock,
+        description: "Status não reconhecido pelo sistema",
+      }
+    );
   };
 
   const handleOpenProposals = (lotId: string) => {
+    const lotDisplayNumber = getLotDisplayNumber(lotId);
     setLotStatuses((prev) => ({ ...prev, [lotId]: "proposals_opened" }));
     onChatMessage(
-      `O processo está em fase de análise das propostas para o lote ${lotId}`,
+      `O processo está em fase de análise das propostas para o Lote ${lotDisplayNumber}`,
       "system"
     );
     toast({
       title: "Propostas Abertas",
-      description: `As propostas do lote ${lotId} foram abertas para análise.`,
+      description: `As propostas do Lote ${lotDisplayNumber} foram abertas para análise.`,
     });
   };
 
@@ -455,8 +544,10 @@ export function DisputeAuctioneerControls({
     closeDialog();
   };
 
-  // Função modificada: Agora verifica empate antes de definir vencedor
+
+
   const handleDefineWinnerAutomatically = (lotId: string) => {
+    const lotDisplayNumber = getLotDisplayNumber(lotId);
     const suppliers = suppliersData[lotId]?.filter((s) => s.status === "classified") || [];
     if (suppliers.length === 0) return;
 
@@ -464,18 +555,22 @@ export function DisputeAuctioneerControls({
     if (hasLotTie(lotId)) {
       // Atualizar status para empate
       setLotStatuses((prev) => ({ ...prev, [lotId]: "dispute_ended_tie" }));
-      
+
       const tiedSuppliers = getTiedSuppliers(lotId);
-      const supplierNames = tiedSuppliers.map(s => s.name).join(", ");
-      
+      const supplierNames = tiedSuppliers.map((s) => s.name).join(", ");
+
       onChatMessage(
-        `Empate detectado no lote ${lotId} entre os fornecedores: ${supplierNames}, todos com R$ ${tiedSuppliers[0].value.toFixed(2)}`,
+        `Empate detectado no Lote ${lotDisplayNumber} entre os fornecedores: ${supplierNames}, todos com R$ ${tiedSuppliers[0].value.toFixed(
+          2
+        )}`,
         "system"
       );
 
       toast({
         title: "Empate Detectado",
-        description: `${tiedSuppliers.length} fornecedores empatados com R$ ${tiedSuppliers[0].value.toFixed(2)}`,
+        description: `Lote ${lotDisplayNumber}: ${
+          tiedSuppliers.length
+        } fornecedores empatados com R$ ${tiedSuppliers[0].value.toFixed(2)}`,
         variant: "default",
       });
       return;
@@ -498,13 +593,19 @@ export function DisputeAuctioneerControls({
     setLotStatuses((prev) => ({ ...prev, [lotId]: "winner_declared" }));
 
     onChatMessage(
-      `O Pregoeiro/Agente de Contratação declarou vencedor ${winner.name} (${winner.company}) para o lote ${lotId}, com a seguinte justificativa: "Fornecedor com menor lance - R$ ${winner.value.toFixed(2)}"`,
+      `O Pregoeiro/Agente de Contratação declarou vencedor ${winner.name} (${
+        winner.company
+      }) para o Lote ${lotDisplayNumber}, com a seguinte justificativa: "Fornecedor com menor lance - R$ ${winner.value.toFixed(
+        2
+      )}"`,
       "system"
     );
 
     toast({
       title: "Vencedor Declarado",
-      description: `${winner.name} foi declarado vencedor com R$ ${winner.value.toFixed(2)} (menor lance)`,
+      description: `Lote ${lotDisplayNumber}: ${
+        winner.name
+      } foi declarado vencedor com R$ ${winner.value.toFixed(2)} (menor lance)`,
     });
   };
 
@@ -524,7 +625,9 @@ export function DisputeAuctioneerControls({
     setSuppliersData((prev) => ({
       ...prev,
       [selectedLot]: prev[selectedLot].map((supplier) =>
-        supplier.id === selectedSupplier ? { ...supplier, status: "winner" as SupplierStatus } : supplier
+        supplier.id === selectedSupplier
+          ? { ...supplier, status: "winner" as SupplierStatus }
+          : supplier
       ),
     }));
 
@@ -626,12 +729,13 @@ export function DisputeAuctioneerControls({
           {
             key: "define_winner_auto",
             label: hasTie ? "🎯 Desempate" : "🎯 Definir Vencedor (Menor Lance)",
-            description: hasTie 
-              ? "Iniciar disputa de desempate entre fornecedores empatados" 
+            description: hasTie
+              ? "Iniciar disputa de desempate entre fornecedores empatados"
               : "Define automaticamente o vencedor pelo menor valor",
             icon: hasTie ? Shuffle : Trophy,
             variant: "default" as const,
-            onClick: () => hasTie ? handleStartTiebreaker(lotId) : handleDefineWinnerAutomatically(lotId),
+            onClick: () =>
+              hasTie ? handleStartTiebreaker(lotId) : handleDefineWinnerAutomatically(lotId),
           },
           {
             key: "negotiate",
@@ -670,7 +774,11 @@ export function DisputeAuctioneerControls({
           description: "Finalizar disputa de desempate manualmente",
           icon: Timer,
           variant: "destructive" as const,
-          onClick: () => handleFinalizeTiebreaker(lotId),
+          // CORREÇÃO: Garantir que o lotId correto seja passado
+          onClick: () => {
+            console.log(`🛑 Solicitada finalização manual do desempate para lote: ${lotId}`);
+            handleFinalizeTiebreaker(lotId);
+          },
         });
         break;
 
@@ -711,7 +819,7 @@ export function DisputeAuctioneerControls({
 
       {/* Cards dos lotes */}
       {lots.map((lot, index) => {
-        const status = lotStatuses[lot.id];
+        const status = lotStatuses[lot.id] || "waiting_to_open";
         const statusInfo = getStatusInfo(status);
         const StatusIcon = statusInfo.icon;
         const actions = getAvailableActions(lot.id, status);
@@ -722,6 +830,9 @@ export function DisputeAuctioneerControls({
         const tiebreakerCount = suppliers.filter((s) => s.status === "tiebreaker").length;
         const timeLeft = tiebreakerTimeLeft[lot.id];
 
+        // CORREÇÃO: Usar o índice real do array para numeração
+        const lotDisplayNumber = index + 1;
+
         return (
           <Card key={lot.id} className="w-full">
             <CardHeader>
@@ -730,7 +841,7 @@ export function DisputeAuctioneerControls({
                   <div className="flex items-center gap-2">
                     <Package className="h-5 w-5 text-gray-500" />
                     <CardTitle className="text-lg">
-                      Lote {index + 1}: {lot.name || `Lote ${lot.id}`}
+                      Lote {lotDisplayNumber}: {lot.name || `Lote ${lot.id}`}
                     </CardTitle>
                   </div>
                   <p className="text-sm text-gray-600">
@@ -745,6 +856,7 @@ export function DisputeAuctioneerControls({
                       <Users className="h-4 w-4" />
                       {suppliers.length} fornecedores participantes
                     </div>
+                    <div className="text-xs text-gray-400">ID: {lot.id}</div>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
@@ -794,7 +906,13 @@ export function DisputeAuctioneerControls({
                               <div className="text-xs text-gray-600">{action.description}</div>
                             </div>
                           </div>
-                          <Button size="sm" variant={action.variant} onClick={action.onClick}>
+                          <Button
+                            size="sm"
+                            variant={action.variant}
+                            onClick={() => {
+                              console.log(`🔧 Executando ação ${action.key} para lote ${lot.id}`);
+                              action.onClick();
+                            }}>
                             {action.label}
                           </Button>
                         </div>
@@ -862,8 +980,8 @@ export function DisputeAuctioneerControls({
                               : "secondary"
                           }
                           className={
-                            supplier.status === "winner" 
-                              ? "bg-green-600" 
+                            supplier.status === "winner"
+                              ? "bg-green-600"
                               : supplier.status === "tiebreaker"
                               ? "bg-red-600 animate-pulse"
                               : ""
@@ -928,7 +1046,7 @@ export function DisputeAuctioneerControls({
                   ))}
                 </div>
               )}
-            </CardContent>
+            </CardContent>{" "}
           </Card>
         );
       })}
@@ -981,7 +1099,9 @@ export function DisputeAuctioneerControls({
               <Label>Período para Manifestação</Label>
               <div className="flex items-center gap-2 mt-2">
                 <div className="flex-1">
-                  <Label htmlFor="hours" className="text-sm text-gray-600">Horas</Label>
+                  <Label htmlFor="hours" className="text-sm text-gray-600">
+                    Horas
+                  </Label>
                   <Input
                     id="hours"
                     type="number"
@@ -994,7 +1114,9 @@ export function DisputeAuctioneerControls({
                   />
                 </div>
                 <div className="flex-1">
-                  <Label htmlFor="minutes" className="text-sm text-gray-600">Minutos</Label>
+                  <Label htmlFor="minutes" className="text-sm text-gray-600">
+                    Minutos
+                  </Label>
                   <Input
                     id="minutes"
                     type="number"
@@ -1033,9 +1155,21 @@ export function DisputeAuctioneerControls({
             {selectedSupplier && (
               <div className="p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-medium">Fornecedor Selecionado:</h4>
-                <p>{suppliersData[selectedLot || ""]?.find(s => s.id === selectedSupplier)?.name}</p>
-                <p className="text-sm text-gray-600">{suppliersData[selectedLot || ""]?.find(s => s.id === selectedSupplier)?.company}</p>
-                <p className="mt-1 font-mono font-medium">R$ {suppliersData[selectedLot || ""]?.find(s => s.id === selectedSupplier)?.value.toFixed(2)}</p>
+                <p>
+                  {suppliersData[selectedLot || ""]?.find((s) => s.id === selectedSupplier)?.name}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {
+                    suppliersData[selectedLot || ""]?.find((s) => s.id === selectedSupplier)
+                      ?.company
+                  }
+                </p>
+                <p className="mt-1 font-mono font-medium">
+                  R${" "}
+                  {suppliersData[selectedLot || ""]
+                    ?.find((s) => s.id === selectedSupplier)
+                    ?.value.toFixed(2)}
+                </p>
               </div>
             )}
             <div>
@@ -1053,8 +1187,8 @@ export function DisputeAuctioneerControls({
             <Button variant="outline" onClick={closeDialog}>
               Cancelar
             </Button>
-            <Button 
-              onClick={confirmClassifyAsWinner} 
+            <Button
+              onClick={confirmClassifyAsWinner}
               disabled={!justification.trim()}
               className="bg-green-600 hover:bg-green-700">
               Declarar Vencedor
@@ -1076,7 +1210,9 @@ export function DisputeAuctioneerControls({
               <Label>Prazo para Envio</Label>
               <div className="flex items-center gap-2 mt-2">
                 <div className="flex-1">
-                  <Label htmlFor="docHours" className="text-sm text-gray-600">Horas</Label>
+                  <Label htmlFor="docHours" className="text-sm text-gray-600">
+                    Horas
+                  </Label>
                   <Input
                     id="docHours"
                     type="number"
@@ -1089,7 +1225,9 @@ export function DisputeAuctioneerControls({
                   />
                 </div>
                 <div className="flex-1">
-                  <Label htmlFor="docMinutes" className="text-sm text-gray-600">Minutos</Label>
+                  <Label htmlFor="docMinutes" className="text-sm text-gray-600">
+                    Minutos
+                  </Label>
                   <Input
                     id="docMinutes"
                     type="number"
