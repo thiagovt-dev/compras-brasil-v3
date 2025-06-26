@@ -1,39 +1,47 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { AuthGuard } from "@/components/auth-guard"
-import { DashboardSidebar } from "@/components/dashboard-sidebar"
-import { UserNav } from "@/components/user-nav"
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
-import { useAuth } from "@/lib/supabase/auth-context"
+import type React from "react";
+import { AuthGuard } from "@/components/auth-guard";
+import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import { UserNav } from "@/components/user-nav";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { useAuth } from "@/lib/supabase/auth-context";
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const { profile, signOut } = useAuth()
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { profile, signOut, isLoading } = useAuth();
+
+  // Se ainda está carregando o perfil, mostrar loading
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p className="mt-2 text-sm text-muted-foreground">Carregando dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Determine user role based on agency_id/supplier_id first, then profile_type
   const getUserRole = () => {
-    if (profile?.agency_id) return "agency"
-    if (profile?.supplier_id) return "supplier"
-    return profile?.profile_type || "citizen"
-  }
+    if (profile?.agency_id) return "agency";
+    if (profile?.supplier_id) return "supplier";
+    return profile?.profile_type || "citizen";
+  };
 
-  const userRole = getUserRole()
+  const userRole = getUserRole();
 
   const userData = {
     name: profile?.name || "Usuário",
     email: profile?.email || "",
     role: getUserRoleLabel(profile?.profile_type),
     image: "",
-  }
+  };
 
   const handleLogout = async () => {
-    await signOut()
-    window.location.href = "/login"
-  }
+    await signOut();
+    window.location.href = "/login";
+  };
 
   return (
     <AuthGuard>
@@ -50,26 +58,26 @@ export default function DashboardLayout({
         </SidebarInset>
       </SidebarProvider>
     </AuthGuard>
-  )
+  );
 }
 
 function getUserRoleLabel(profileType?: string): string {
   switch (profileType) {
     case "citizen":
-      return "Cidadão"
+      return "Cidadão";
     case "supplier":
-      return "Fornecedor"
+      return "Fornecedor";
     case "agency":
-      return "Órgão Público"
+      return "Órgão Público";
     case "admin":
-      return "Administrador"
+      return "Administrador";
     case "support":
-      return "Suporte"
+      return "Suporte";
     case "registration":
-      return "Cadastro"
+      return "Cadastro";
     case "agency_support":
-      return "Suporte do Órgão"
+      return "Suporte do Órgão";
     default:
-      return "Usuário"
+      return "Usuário";
   }
 }
