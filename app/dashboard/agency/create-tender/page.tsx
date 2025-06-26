@@ -306,6 +306,7 @@ export default function CreateTenderPage() {
     proposalTime: "17:00", // Novo campo para horário
     openingDate: undefined as Date | undefined,
     openingTime: "09:00", // Novo campo para horário
+    publishDate: undefined as Date | undefined,
     documentationMode: "winner",
     phaseInversion: false,
     segments: [],
@@ -1676,8 +1677,7 @@ export default function CreateTenderPage() {
                       value={formData.segments[0] || ""}
                       onValueChange={(value) => handleChange("segments", [value])}
                       onInputChange={setSegmentSearch}
-                      placeholder="Busque ou selecione um segmento"
-                    >
+                      placeholder="Busque ou selecione um segmento">
                       <ComboboxProvider
                         value={formData.segments[0] || ""}
                         onValueChange={(value) => handleChange("segments", [value])}
@@ -2244,11 +2244,21 @@ export default function CreateTenderPage() {
                               variant="outline"
                               className="w-full justify-start text-left font-normal">
                               <CalendarIcon className="mr-2 h-4 w-4" />
-                              <span>Selecionar data</span>
+                              {formData.publishDate ? (
+                                format(formData.publishDate, "dd/MM/yyyy", { locale: ptBR })
+                              ) : (
+                                <span>Selecionar data</span>
+                              )}
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0">
-                            <Calendar mode="single" initialFocus locale={ptBR} />
+                            <Calendar
+                              mode="single"
+                              selected={formData.publishDate}
+                              onSelect={(date) => handleChange("publishDate", date)}
+                              initialFocus
+                              locale={ptBR}
+                            />
                           </PopoverContent>
                         </Popover>
                       </div>
