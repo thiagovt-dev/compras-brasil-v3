@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, TrendingDown, Timer, AlertCircle, CheckCircle, Clock, Target, Trophy, Play } from "lucide-react";
+import { Users, TrendingDown, Timer, AlertCircle, CheckCircle, Clock, Target, Trophy, Play, Trash2, Shuffle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -38,9 +38,14 @@ interface DisputeLotsListDemoProps {
   onTimerEnd?: (lotId: string) => void;
   onFinalizeLot?: (lotId: string) => void;
   onStartLot?: (lotId: string) => void;
-  onDisputeFinalized?: (lotId: string) => void; // NOVA PROP
+  onDisputeFinalized?: (lotId: string) => void;
+  // NOVA PROP: Dados de desempate
+  tiebreakerData?: Record<string, {
+    isActive: boolean;
+    timeLeft: number;
+    suppliers: string[];
+  }>;
 }
-
 
 // Status individuais por lote (fallback local se não fornecido via props)
 const mockLotStatuses: Record<string, string> = {
@@ -65,6 +70,7 @@ const mockLotBids: Record<
     is_percentage: boolean; 
     profiles: { name: string; company_name: string };
     timestamp: string;
+    isUserBid?: boolean; // Flag para identificar lances do usuário
   }>
 > = {
   "lot-001": [
@@ -118,13 +124,20 @@ export function DisputeLotsListDemo({
   onTimerEnd: externalOnTimerEnd,
   onFinalizeLot: externalOnFinalizeLot,
   onStartLot: externalOnStartLot,
-  onDisputeFinalized, // ADICIONADA ESTA PROP
+  onDisputeFinalized,
+  tiebreakerData = {}, // NOVA PROP com valor padrão
 }: DisputeLotsListDemoProps) {
   const [newBidValues, setNewBidValues] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState<Record<string, boolean>>({});
-  const [countdown, setCountdown] = useState<Record<string, number | null>>({});
   const [showConfirmDialog, setShowConfirmDialog] = useState<string | null>(null);
   const [lotBids, setLotBids] = useState<Record<string, any[]>>(mockLotBids);
+  
+  // Novo estado para controlar lances recentes do usuário (para o botão de cancelar)
+  const [recentUserBids, setRecentUserBids] = useState<Record<string, {
+    bidId: string;
+    timestamp: Date;
+    canCancel: boolean;
+  }>>({});
 
   // Usar status externos se fornecidos, senão usar os mockados locais
   const [lotStatuses, setLotStatuses] = useState<Record<string, string>>(
@@ -144,7 +157,7 @@ export function DisputeLotsListDemo({
     "lot-010": 3,
   });
 
-  const countdownRefs = useRef<Record<string, NodeJS.Timeout | null>>({});
+  const cancelTimerRefs = useRef<Record<string, NodeJS.Timeout | null>>({});
   const { toast } = useToast();
 
   // Atualizar status locais quando os externos mudarem
@@ -154,6 +167,19 @@ export function DisputeLotsListDemo({
     }
   }, [externalLotStatuses]);
 
+  // Função para obter o número do lote baseado no índice
+  const getLotNumber = (lotId: string) => {
+    const lotIndex = lots.findIndex(lot => lot.id === lotId);
+    return lotIndex >= 0 ? lotIndex + 1 : 1;
+  };
+
+  // NOVA FUNÇÃO: Formatar tempo de desempate
+  const formatTiebreakerTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  };
+
   // Funções locais que usam as callbacks externas se disponíveis
   const handleTimerEnd = (lotId: string) => {
     if (externalOnTimerEnd) {
@@ -162,7 +188,7 @@ export function DisputeLotsListDemo({
       setLotStatuses((prev) => ({ ...prev, [lotId]: "finished" }));
       toast({
         title: "Tempo Encerrado",
-        description: `O tempo da disputa do lote ${lotId} foi encerrado.`,
+        description: `O tempo da disputa do Lote ${getLotNumber(lotId)} foi encerrado.`,
       });
     }
   };
@@ -174,7 +200,7 @@ export function DisputeLotsListDemo({
       setLotStatuses((prev) => ({ ...prev, [lotId]: "finished" }));
       toast({
         title: "Lote Finalizado",
-        description: `Pregoeiro finalizou a disputa do lote ${lotId}.`,
+        description: `Pregoeiro finalizou a disputa do Lote ${getLotNumber(lotId)}.`,
       });
     }
   };
@@ -186,7 +212,7 @@ export function DisputeLotsListDemo({
       setLotStatuses((prev) => ({ ...prev, [lotId]: "open" }));
       toast({
         title: "Lote Iniciado",
-        description: `Disputa do lote ${lotId} foi iniciada.`,
+        description: `Disputa do Lote ${getLotNumber(lotId)} foi iniciada.`,
       });
     }
   };
@@ -224,7 +250,12 @@ export function DisputeLotsListDemo({
         setLotBids((prevBids) => {
           const updatedBids = { ...prevBids };
           for (const lotId in updatedBids) {
-            if (lotStatuses[lotId] === "open" && Math.random() < 0.15) {
+            // NOVA LÓGICA: Verificar se está em desempate
+            const tiebreakerInfo = tiebreakerData[lotId];
+            const isInTiebreaker = tiebreakerInfo?.isActive || false;
+            
+            // Continuar simulando lances para lotes em disputa normal ou em desempate
+            if ((lotStatuses[lotId] === "open" || isInTiebreaker) && Math.random() < 0.15) {
               const randomValue = 50 + Math.random() * 100; // Valores aleatórios entre R$ 50 e R$ 150
               const randomSupplierNumber = Math.floor(Math.random() * 30) + 1;
 
@@ -237,6 +268,7 @@ export function DisputeLotsListDemo({
                   company_name: `Empresa ${randomSupplierNumber} Ltda`,
                 },
                 timestamp: new Date().toISOString(),
+                isUserBid: false,
               };
 
               // Adicionar novo lance ao histórico (manter até 10 lances)
@@ -250,27 +282,62 @@ export function DisputeLotsListDemo({
     );
 
     return () => clearInterval(interval);
-  }, [disputeMode, lotStatuses]);
+  }, [disputeMode, lotStatuses, tiebreakerData]);
 
-  const startCountdown = (lotId: string) => {
-    const countdownTime = disputeMode === "random" ? 5 : 10;
-    setCountdown((prev) => ({ ...prev, [lotId]: countdownTime }));
-
-    if (countdownRefs.current[lotId]) {
-      clearInterval(countdownRefs.current[lotId]!);
+  // Função para iniciar timer de cancelamento (10 segundos)
+  const startCancelTimer = (lotId: string, bidId: string) => {
+    // Limpar timer anterior se existir
+    if (cancelTimerRefs.current[lotId]) {
+      clearTimeout(cancelTimerRefs.current[lotId]!);
     }
 
-    countdownRefs.current[lotId] = setInterval(() => {
-      setCountdown((prev) => {
-        const current = prev[lotId];
-        if (current === null || current <= 1) {
-          clearInterval(countdownRefs.current[lotId]!);
-          handleEffectiveBid(lotId);
-          return { ...prev, [lotId]: null };
-        }
-        return { ...prev, [lotId]: current - 1 };
-      });
-    }, 1000);
+    // Marcar que o lance pode ser cancelado
+    setRecentUserBids((prev) => ({
+      ...prev,
+      [lotId]: {
+        bidId,
+        timestamp: new Date(),
+        canCancel: true,
+      },
+    }));
+
+    // Timer de 10 segundos para remover a opção de cancelar
+    cancelTimerRefs.current[lotId] = setTimeout(() => {
+      setRecentUserBids((prev) => ({
+        ...prev,
+        [lotId]: {
+          ...prev[lotId],
+          canCancel: false,
+        },
+      }));
+    }, 10000);
+  };
+
+  // Função para cancelar lance do usuário
+  const handleCancelBid = (lotId: string, bidId: string) => {
+    // Remover o lance da lista
+    setLotBids((prev) => ({
+      ...prev,
+      [lotId]: prev[lotId]?.filter(bid => bid.id !== bidId) || [],
+    }));
+
+    // Remover do estado de lances recentes
+    setRecentUserBids((prev) => {
+      const newState = { ...prev };
+      delete newState[lotId];
+      return newState;
+    });
+
+    // Limpar timer
+    if (cancelTimerRefs.current[lotId]) {
+      clearTimeout(cancelTimerRefs.current[lotId]!);
+    }
+
+    toast({
+      title: "Lance Cancelado",
+      description: `Seu lance foi cancelado com sucesso.`,
+      variant: "default",
+    });
   };
 
   const handleSendBid = async (lotId: string) => {
@@ -284,24 +351,8 @@ export function DisputeLotsListDemo({
       return;
     }
 
-    // Removido a validação de lance mínimo - agora qualquer valor é aceito
-    setNewBidValues((prev) => ({ ...prev, [lotId]: "" }));
-    startCountdown(lotId);
-    toast({ title: "Lance enviado", description: "Aguardando confirmação do lance..." });
-  };
-
-  const handleCancelBid = (lotId: string) => {
-    if (countdownRefs.current[lotId]) {
-      clearInterval(countdownRefs.current[lotId]!);
-    }
-    setCountdown((prev) => ({ ...prev, [lotId]: null }));
-    setIsSubmitting((prev) => ({ ...prev, [lotId]: false }));
-    toast({ title: "Lance cancelado", description: "Seu lance foi cancelado." });
-  };
-
-  const handleEffectiveBid = (lotId: string) => {
     try {
-      const bidValue = parseCurrencyToNumber(newBidValues[lotId] || "");
+      // Criar o lance imediatamente (sem countdown)
       const newBid = {
         id: `bid-${Date.now()}`,
         value: bidValue,
@@ -313,23 +364,38 @@ export function DisputeLotsListDemo({
           company_name: profile?.company_name || "Sua Empresa",
         },
         timestamp: new Date().toISOString(),
+        isUserBid: true, // Marcar como lance do usuário
       };
 
+      // Adicionar o lance à lista
       setLotBids((prev) => ({
         ...prev,
         [lotId]: [newBid, ...(prev[lotId] || [])].slice(0, 10),
       }));
 
+      // Limpar o campo de entrada
+      setNewBidValues((prev) => ({ ...prev, [lotId]: "" }));
+
+      // Iniciar timer de cancelamento
+      startCancelTimer(lotId, newBid.id);
+
+      // NOVA LÓGICA: Toast diferenciado para desempate
+      const tiebreakerInfo = tiebreakerData[lotId];
+      const isInTiebreaker = tiebreakerInfo?.isActive || false;
+
       toast({
-        title: "Lance efetivado",
-        description: `Seu lance de R$ ${bidValue.toFixed(2)} foi registrado com sucesso!`,
+        title: isInTiebreaker ? "Lance de Desempate Enviado" : "Lance Enviado",
+        description: isInTiebreaker 
+          ? `Seu lance de desempate de R$ ${bidValue.toFixed(2)} foi registrado! Você tem 10 segundos para cancelá-lo.`
+          : `Seu lance de R$ ${bidValue.toFixed(2)} foi registrado! Você tem 10 segundos para cancelá-lo.`,
         duration: 5000,
       });
+
     } catch (error) {
-      console.error("Erro ao efetivar lance:", error);
+      console.error("Erro ao enviar lance:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível efetivar o lance.",
+        description: "Não foi possível enviar o lance.",
         variant: "destructive",
       });
     } finally {
@@ -357,19 +423,37 @@ export function DisputeLotsListDemo({
 
   const handleSuggestedBidClick = (lotId: string, value: string) => {
     setNewBidValues((prev) => ({ ...prev, [lotId]: value }));
+    
+    // NOVA LÓGICA: Toast diferenciado para desempate
+    const tiebreakerInfo = tiebreakerData[lotId];
+    const isInTiebreaker = tiebreakerInfo?.isActive || false;
+    
     toast({
-      title: "Valor Sugerido Aplicado",
-      description: `Valor ${value} aplicado ao campo de lance.`,
+      title: isInTiebreaker ? "Valor Sugerido para Desempate" : "Valor Sugerido Aplicado",
+      description: `Valor ${value} aplicado ao campo de lance${isInTiebreaker ? ' de desempate' : ''}.`,
     });
   };
 
   const getLotStatusInfo = (lotId: string) => {
     const status = lotStatuses[lotId] || "waiting";
+    
+    // NOVA LÓGICA: Verificar se está em desempate
+    const tiebreakerInfo = tiebreakerData[lotId];
+    if (tiebreakerInfo?.isActive) {
+      return { 
+        label: "Desempate", 
+        variant: "destructive" as const, 
+        icon: Shuffle 
+      };
+    }
+
     switch (status) {
       case "waiting":
         return { label: "Não iniciado", variant: "outline" as const, icon: Clock };
       case "open":
         return { label: "Em disputa", variant: "default" as const, icon: TrendingDown };
+      case "tiebreaker":
+        return { label: "Desempate", variant: "destructive" as const, icon: Shuffle };
       case "finished":
         return { label: "Finalizado", variant: "secondary" as const, icon: Trophy };
       default:
@@ -377,8 +461,44 @@ export function DisputeLotsListDemo({
     }
   };
 
+  // FUNÇÃO CORRIGIDA: Verificação aprimorada para permitir lances no desempate
   const canSendBid = (lotId: string) => {
     if (disputeMode === "closed") return false;
+    
+    // NOVA LÓGICA: Permitir lances durante desempate se o usuário estiver envolvido
+    const tiebreakerInfo = tiebreakerData[lotId];
+    if (tiebreakerInfo?.isActive) {
+      // Verificar múltiplas variações do nome do fornecedor
+      const userSupplierVariations = [
+        `FORNECEDOR ${profile?.supplierNumber || 23}`,
+        `Fornecedor ${profile?.supplierNumber || 23}`,
+        profile?.name || "João Silva",
+        profile?.company_name || "Fornecedora ABC",
+        "FORNECEDOR 23", // Garantir que o usuário demo seja incluído
+        "Fornecedor 23",
+        "João Silva"
+      ];
+      
+      // Verificar se alguma das variações está na lista de fornecedores em desempate
+      const isInTiebreaker = tiebreakerInfo.suppliers.some(supplier => 
+        userSupplierVariations.some(variation => 
+          supplier.toLowerCase().includes(variation.toLowerCase()) || 
+          variation.toLowerCase().includes(supplier.toLowerCase())
+        )
+      );
+      
+      console.log("🔍 Verificação de desempate:", {
+        lotId,
+        tiebreakerSuppliers: tiebreakerInfo.suppliers,
+        userVariations: userSupplierVariations,
+        isInTiebreaker,
+        isSupplier,
+        canSend: isSupplier && isInTiebreaker
+      });
+      
+      return isSupplier && isInTiebreaker;
+    }
+
     return lotStatuses[lotId] === "open" && isSupplier;
   };
 
@@ -405,6 +525,45 @@ export function DisputeLotsListDemo({
     return modeNames[mode] || mode;
   };
 
+  // Função para verificar se um lance pode ser cancelado
+  const canCancelBid = (lotId: string, bidId: string) => {
+    const recentBid = recentUserBids[lotId];
+    return recentBid && recentBid.bidId === bidId && recentBid.canCancel;
+  };
+
+  // Função para obter o tempo restante para cancelar (em segundos)
+  const getCancelTimeLeft = (lotId: string) => {
+    const recentBid = recentUserBids[lotId];
+    if (!recentBid || !recentBid.canCancel) return 0;
+    
+    const elapsed = (Date.now() - recentBid.timestamp.getTime()) / 1000;
+    return Math.max(0, 10 - elapsed);
+  };
+
+  // Hook para atualizar o tempo restante para cancelar
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRecentUserBids((prev) => {
+        const newState = { ...prev };
+        let hasChanges = false;
+
+        Object.keys(newState).forEach((lotId) => {
+          if (newState[lotId].canCancel) {
+            const elapsed = (Date.now() - newState[lotId].timestamp.getTime()) / 1000;
+            if (elapsed >= 10) {
+              newState[lotId] = { ...newState[lotId], canCancel: false };
+              hasChanges = true;
+            }
+          }
+        });
+
+        return hasChanges ? newState : prev;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="h-full flex flex-col bg-gray-50 p-6">
       <div className="flex justify-between items-center mb-6">
@@ -415,49 +574,82 @@ export function DisputeLotsListDemo({
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-        {lots.map((lot) => {
+        {lots.map((lot, index) => {
           const statusInfo = getLotStatusInfo(lot.id);
           const StatusIcon = statusInfo.icon;
           const bestBid = getBestBid(lot.id);
           const rankedBids = getRankedBids(lot.id);
-          const currentCountdown = countdown[lot.id];
           const isLotSubmitting = isSubmitting[lot.id];
           const isActive = activeLot?.id === lot.id;
           const suggestedBids = getSuggestedBids(lot.id);
           const lotStatus = lotStatuses[lot.id];
+          const lotNumber = index + 1;
+
+          // NOVA LÓGICA: Obter dados de desempate
+          const tiebreakerInfo = tiebreakerData[lot.id];
+          const isInTiebreaker = tiebreakerInfo?.isActive || false;
+
+          // Verificar se existe lance recente do usuário que pode ser cancelado
+          const userRecentBid = recentUserBids[lot.id];
+          const canCancelRecentBid = userRecentBid && userRecentBid.canCancel;
+          const cancelTimeLeft = Math.ceil(getCancelTimeLeft(lot.id));
 
           return (
             <Card
               key={lot.id}
               className={`cursor-pointer transition-all ${
                 isActive ? "border-blue-500 ring-2 ring-blue-200" : "hover:border-gray-300"
-              }`}
+              } ${isInTiebreaker ? "border-red-300 bg-red-50" : ""}`}
               onClick={() => onSelectLot(lot)}>
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-semibold text-xl">{lot.name}</h3>
+                      <h3 className="font-semibold text-xl">Lote {lotNumber}</h3>
                       <Badge variant={statusInfo.variant}>
                         <StatusIcon className="h-3 w-3 mr-1" />
                         {statusInfo.label}
                       </Badge>
                       {isActive && <Badge variant="default">Lote Ativo</Badge>}
+                      
+                      {/* NOVO: Badge de desempate com timer */}
+                      {isInTiebreaker && tiebreakerInfo && (
+                        <Badge variant="destructive" className="animate-pulse">
+                          <Timer className="h-3 w-3 mr-1" />
+                          {formatTiebreakerTime(tiebreakerInfo.timeLeft)}
+                        </Badge>
+                      )}
                     </div>
 
-                    {/* Timer individual por lote */}
-                    <div className="mb-3">
-                      <DisputeTimerDemo
-                        lotId={lot.id}
-                        mode={disputeMode}
-                        isActive={true}
-                        onTimeEnd={handleTimerEnd}
-                        onFinalize={handleFinalizeLot}
-                        isAuctioneer={isAuctioneer}
-                        lotStatus={lotStatus}
-                        onDisputeFinalized={onDisputeFinalized} // PASSAR A PROP AQUI
-                      />
-                    </div>
+                    {/* NOVA SEÇÃO: Informações de desempate */}
+                    {isInTiebreaker && tiebreakerInfo && (
+                      <div className="mb-3 p-2 bg-red-100 border border-red-200 rounded-lg">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-red-800 font-medium">
+                            🔥 Desempate em andamento entre: {tiebreakerInfo.suppliers.join(", ")}
+                          </span>
+                          <span className="text-red-600 font-bold">
+                            {formatTiebreakerTime(tiebreakerInfo.timeLeft)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Timer individual por lote - MODIFICADO para não mostrar durante desempate */}
+                    {!isInTiebreaker && (
+                      <div className="mb-3">
+                        <DisputeTimerDemo
+                          lotId={lot.id}
+                          mode={disputeMode}
+                          isActive={true}
+                          onTimeEnd={handleTimerEnd}
+                          onFinalize={handleFinalizeLot}
+                          isAuctioneer={isAuctioneer}
+                          lotStatus={lotStatus}
+                          onDisputeFinalized={onDisputeFinalized}
+                        />
+                      </div>
+                    )}
 
                     <p className="text-sm text-gray-600 mb-2">{lot.description}</p>
                     <div className="flex items-center gap-4 text-sm text-gray-500">
@@ -496,8 +688,25 @@ export function DisputeLotsListDemo({
                               {index + 1}º
                             </Badge>
                             <span>{bid.profiles.name}</span>
+                            {bid.isUserBid && <span className="text-blue-600 font-medium">(Você)</span>}
                           </span>
-                          <span className="font-medium">{formatValue(bid.value, false)}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{formatValue(bid.value, false)}</span>
+                            {/* Botão de cancelar lance (lixeira) */}
+                            {bid.isUserBid && canCancelBid(lot.id, bid.id) && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCancelBid(lot.id, bid.id);
+                                }}
+                                title={`Cancelar lance (${cancelTimeLeft}s restantes)`}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       ))}
                       {rankedBids.length > 3 && (
@@ -509,79 +718,94 @@ export function DisputeLotsListDemo({
                   </div>
                 )}
 
+                {/* Aviso sobre lance recente que pode ser cancelado */}
+                {canCancelRecentBid && (
+                  <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-yellow-800">
+                        ⚠️ Você pode cancelar seu último lance
+                      </span>
+                      <span className="text-yellow-600 font-medium">
+                        {cancelTimeLeft}s restantes
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Controles do pregoeiro */}
                 {isAuctioneer && lotStatus === "waiting" && (
                   <div className="mt-4 pt-4 border-t border-gray-200">
                     <Button onClick={() => handleStartLot(lot.id)} className="w-full" size="lg">
                       <Play className="h-4 w-4 mr-2" />
-                      Iniciar Disputa deste Lote
+                      Iniciar Disputa do Lote {lotNumber}
                     </Button>
                   </div>
                 )}
 
-                {/* Campo de lance para fornecedores */}
+                {/* Campo de lance para fornecedores - MODIFICADO para desempate */}
                 {canSendBid(lot.id) && (
                   <div className="mt-4 pt-4 border-t border-gray-200">
-                    {currentCountdown !== null ? (
-                      <div className="text-center">
-                        <div className="mb-4">
-                          <Timer className="h-12 w-12 text-blue-600 mx-auto mb-2" />
-                          <p className="text-3xl font-bold text-blue-600 mb-1">
-                            {currentCountdown}s
-                          </p>
-                          <p className="text-md text-gray-600">Confirmando seu lance...</p>
+                    <div className="space-y-3">
+                      {/* NOVA SEÇÃO: Aviso especial para desempate */}
+                      {isInTiebreaker && (
+                        <div className="p-3 bg-red-100 border border-red-200 rounded-lg">
+                          <div className="text-sm text-red-800 font-medium">
+                            🔥 <strong>DESEMPATE ATIVO!</strong> Você está participando da disputa de desempate.
+                            <br />
+                            Tempo restante: <strong>{formatTiebreakerTime(tiebreakerInfo?.timeLeft || 0)}</strong>
+                          </div>
                         </div>
+                      )}
+
+                      {/* Valores Sugeridos */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Target className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">Valores sugeridos:</span>
+                        {suggestedBids.slice(0, 3).map((suggestedValue, index) => (
+                          <Button
+                            key={index}
+                            variant="outline"
+                            size="sm"
+                            className="h-8 text-xs"
+                            onClick={() => handleSuggestedBidClick(lot.id, suggestedValue)}>
+                            {suggestedValue}
+                          </Button>
+                        ))}
+                      </div>
+
+                      {/* Campo de Lance */}
+                      <div className="flex items-center gap-3">
+                        <Input
+                          type="text"
+                          placeholder="R$ 100,00"
+                          value={newBidValues[lot.id] || ""}
+                          onChange={(e) => handleBidInputChange(lot.id, e.target.value)}
+                          disabled={isLotSubmitting}
+                          className={`flex-1 text-xl text-center h-12 font-semibold ${
+                            isInTiebreaker ? "border-red-300 bg-red-50 text-red-900" : "text-gray-900"
+                          }`}
+                          maxLength={15}
+                        />
                         <Button
-                          variant="destructive"
-                          onClick={() => handleCancelBid(lot.id)}
-                          className="text-md px-6 py-2"
+                          onClick={() => setShowConfirmDialog(lot.id)}
+                          disabled={isLotSubmitting || !newBidValues[lot.id]?.trim()}
+                          className={`text-md px-6 py-3 h-12 ${
+                            isInTiebreaker ? "bg-red-600 hover:bg-red-700" : ""
+                          }`}
                           size="lg">
-                          Cancelar Lance
+                          {isLotSubmitting ? "Enviando..." : isInTiebreaker ? "Lance Desempate" : "Enviar Lance"}
                         </Button>
                       </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {/* Valores Sugeridos */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Target className="h-4 w-4 text-gray-500" />
-                          <span className="text-sm text-gray-600">Valores sugeridos:</span>
-                          {suggestedBids.slice(0, 3).map((suggestedValue, index) => (
-                            <Button
-                              key={index}
-                              variant="outline"
-                              size="sm"
-                              className="h-8 text-xs"
-                              onClick={() => handleSuggestedBidClick(lot.id, suggestedValue)}>
-                              {suggestedValue}
-                            </Button>
-                          ))}
-                        </div>
 
-                        {/* Campo de Lance */}
-                        <div className="flex items-center gap-3">
-                          <Input
-                            type="text"
-                            placeholder="R$ 100,00"
-                            value={newBidValues[lot.id] || ""}
-                            onChange={(e) => handleBidInputChange(lot.id, e.target.value)}
-                            disabled={isLotSubmitting}
-                            className="flex-1 text-xl text-center h-12 text-gray-900 font-semibold"
-                            maxLength={15}
-                          />
-                          <Button
-                            onClick={() => setShowConfirmDialog(lot.id)}
-                            disabled={isLotSubmitting || !newBidValues[lot.id]?.trim()}
-                            className="text-md px-6 py-3 h-12"
-                            size="lg">
-                            Enviar Lance
-                          </Button>
-                        </div>
-
-                        <p className="text-center text-gray-500 text-sm">
-                          ⚠️ Qualquer valor é aceito - Classificação por menor preço
-                        </p>
-                      </div>
-                    )}
+                      <p className="text-center text-gray-500 text-sm">
+                        ⚠️ Lance será enviado imediatamente - Você terá 10 segundos para cancelar
+                        {isInTiebreaker && (
+                          <span className="block text-red-600 font-medium">
+                            🔥 Disputando desempate com tempo limitado!
+                          </span>
+                        )}
+                      </p>
+                    </div>
                   </div>
                 )}
 
@@ -599,23 +823,41 @@ export function DisputeLotsListDemo({
         })}
       </div>
 
-      {/* Pop-up de Confirmação de Lance */}
+      {/* Pop-up de Confirmação de Lance - MODIFICADO para desempate */}
       <Dialog
         open={!!showConfirmDialog}
         onOpenChange={(open) => setShowConfirmDialog(open ? showConfirmDialog : null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Confirmar Lance</DialogTitle>
+            <DialogTitle className="text-2xl">
+              {showConfirmDialog && tiebreakerData[showConfirmDialog]?.isActive 
+                ? "Confirmar Lance de Desempate" 
+                : "Confirmar Lance"
+              }
+            </DialogTitle>
             <DialogDescription className="text-lg">
+              {showConfirmDialog && tiebreakerData[showConfirmDialog]?.isActive && (
+                <div className="mb-3 p-2 bg-red-100 border border-red-200 rounded-lg">
+                  <span className="text-red-800 font-medium text-sm">
+                    🔥 Este é um lance de desempate! 
+                    Tempo restante: {formatTiebreakerTime(tiebreakerData[showConfirmDialog]?.timeLeft || 0)}
+                  </span>
+                </div>
+              )}
               Você está prestes a enviar um lance de{" "}
               <span className="font-bold text-blue-600 text-xl">
                 {newBidValues[showConfirmDialog || ""]}
               </span>
+              {" "}para o <strong>Lote {showConfirmDialog ? getLotNumber(showConfirmDialog) : ""}</strong>
               <br />
               <br />
               <span className="text-sm text-gray-600">
-                <strong>Importante:</strong> Este lance será usado para classificação por menor
-                preço. Não há valor mínimo obrigatório.
+                <strong>Importante:</strong> O lance será enviado imediatamente e você terá apenas 10 segundos para cancelá-lo se necessário.
+                {showConfirmDialog && tiebreakerData[showConfirmDialog]?.isActive && (
+                  <span className="block text-red-600 font-medium mt-1">
+                    ⚠️ Este lance faz parte da disputa de desempate!
+                  </span>
+                )}
               </span>
               <br />
               <br />
@@ -629,8 +871,17 @@ export function DisputeLotsListDemo({
               className="text-lg px-6">
               Cancelar
             </Button>
-            <Button onClick={() => handleSendBid(showConfirmDialog || "")} className="text-lg px-6">
-              Confirmar Lance
+            <Button 
+              onClick={() => handleSendBid(showConfirmDialog || "")} 
+              className={`text-lg px-6 ${
+                showConfirmDialog && tiebreakerData[showConfirmDialog]?.isActive 
+                  ? "bg-red-600 hover:bg-red-700" 
+                  : ""
+              }`}>
+              {showConfirmDialog && tiebreakerData[showConfirmDialog]?.isActive 
+                ? "Confirmar Lance de Desempate" 
+                : "Confirmar Lance"
+              }
             </Button>
           </DialogFooter>
         </DialogContent>

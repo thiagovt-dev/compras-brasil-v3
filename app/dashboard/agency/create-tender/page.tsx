@@ -38,6 +38,93 @@ import { FileUploadField } from "@/components/file-upload-field";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { toast } from "@/components/ui/use-toast";
 
+const STORAGE_KEY = "create-tender-form-data";
+
+// Função para formatar valor em BRL
+const formatCurrency = (value: string | number): string => {
+  const numericValue =
+    typeof value === "string"
+      ? Number.parseFloat(value.replace(/[^\d,.-]/g, "").replace(",", "."))
+      : value;
+  if (isNaN(numericValue)) return "R$ 0,00";
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(numericValue);
+};
+
+// Função para converter valor BRL para número
+const parseCurrency = (value: string): number => {
+  const numericValue = Number.parseFloat(value.replace(/[^\d,.-]/g, "").replace(",", "."));
+  return isNaN(numericValue) ? 0 : numericValue;
+};
+
+// Função para calcular valor total do item
+const calculateItemTotal = (quantity: string, unitPrice: string): number => {
+  const qty = Number.parseFloat(quantity) || 0;
+  const price = parseCurrency(unitPrice) || 0;
+  return qty * price;
+};
+
+// Função para calcular valor total do grupo
+const calculateGroupTotal = (items: any[]): number => {
+  return items.reduce((total, item) => {
+    return total + calculateItemTotal(item.quantity, item.unitPrice);
+  }, 0);
+};
+
+// Função para salvar dados no localStorage
+const saveToLocalStorage = (data: any) => {
+  try {
+    // Converter datas para strings antes de salvar
+    const dataToSave = {
+      ...data,
+      impugnationDate: data.impugnationDate ? data.impugnationDate.toISOString() : null,
+      proposalDate: data.proposalDate ? data.proposalDate.toISOString() : null,
+      openingDate: data.openingDate ? data.openingDate.toISOString() : null,
+      publishDate: data.publishDate ? data.publishDate.toISOString() : null,
+      // Remover arquivos dos documentos para evitar problemas de serialização
+      documents: data.documents.map((doc: any) => ({
+        ...doc,
+        file: null, // Não salvar o arquivo, apenas os metadados
+      })),
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+  } catch (error) {
+    console.error("Erro ao salvar no localStorage:", error);
+  }
+};
+
+// Função para carregar dados do localStorage
+const loadFromLocalStorage = () => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const data = JSON.parse(saved);
+      // Converter strings de volta para datas
+      return {
+        ...data,
+        impugnationDate: data.impugnationDate ? new Date(data.impugnationDate) : undefined,
+        proposalDate: data.proposalDate ? new Date(data.proposalDate) : undefined,
+        openingDate: data.openingDate ? new Date(data.openingDate) : undefined,
+        publishDate: data.publishDate ? new Date(data.publishDate) : undefined,
+      };
+    }
+  } catch (error) {
+    console.error("Erro ao carregar do localStorage:", error);
+  }
+  return null;
+};
+
+// Função para limpar localStorage
+const clearLocalStorage = () => {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (error) {
+    console.error("Erro ao limpar localStorage:", error);
+  }
+};
+
 export default function CreateTenderPage() {
   const router = useRouter();
   const supabase = createClientSupabaseClient();
@@ -66,7 +153,6 @@ export default function CreateTenderPage() {
     proposalTime: "17:00", // Novo campo para horário
     openingDate: undefined as Date | undefined,
     openingTime: "09:00", // Novo campo para horário
-    publishDate: undefined as Date | undefined, // Novo campo para data de publicação
     documentationMode: "winner",
     phaseInversion: false,
     segments: [],
@@ -114,6 +200,17 @@ export default function CreateTenderPage() {
       file_path?: string;
     }[],
   });
+
+  // Carregar dados do localStorage na inicialização
+  useEffect(() => {
+    const savedData = loadFromLocalStorage();
+    if (savedData) {
+      setFormData((prevData) => ({
+        ...prevData,
+        ...savedData,
+      }));
+    }
+  }, []);
 
   // Fetch agencies and users
   useEffect(() => {
@@ -213,6 +310,14 @@ export default function CreateTenderPage() {
 
     fetchUsersForSelectedAgency();
   }, [formData.agency_id, supabase]);
+
+  // Salvar no localStorage sempre que formData mudar
+  useEffect(() => {
+    if (!isLoading) {
+      // Só salvar após o carregamento inicial
+      saveToLocalStorage(formData);
+    }
+  }, [formData, isLoading]);
 
   const handleChange = (field: string, value: any) => {
     setFormData({ ...formData, [field]: value });
@@ -402,13 +507,16 @@ export default function CreateTenderPage() {
                   </Select>
                 </div>
               </div>
-              <div className="grid gap-4 md:grid-cols-3 mt-4">
+              <div className="grid gap-4 md:grid-cols-4 mt-4">
                 <div className="space-y-2">
                   <Label>Quantidade</Label>
                   <Input
+                    type="number"
+                    min="0"
+                    step="1"
                     value={formData.items[0].quantity}
                     onChange={(e) => handleSingleItemChange(0, "quantity", e.target.value)}
-                    placeholder="Quantidade"
+                    placeholder="0"
                   />
                 </div>
                 <div className="space-y-2">
@@ -423,8 +531,21 @@ export default function CreateTenderPage() {
                   <Label>Valor Unitário</Label>
                   <Input
                     value={formData.items[0].unitPrice}
-                    onChange={(e) => handleSingleItemChange(0, "unitPrice", e.target.value)}
-                    placeholder="R$ 0,00"
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^\d,.-]/g, "");
+                      handleSingleItemChange(0, "unitPrice", value);
+                    }}
+                    placeholder="0,00"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Valor Total</Label>
+                  <Input
+                    value={formatCurrency(
+                      calculateItemTotal(formData.items[0].quantity, formData.items[0].unitPrice)
+                    )}
+                    disabled
+                    className="bg-gray-50 font-medium"
                   />
                 </div>
               </div>
@@ -487,13 +608,16 @@ export default function CreateTenderPage() {
                     </Select>
                   </div>
                 </div>
-                <div className="grid gap-4 md:grid-cols-3 mt-4">
+                <div className="grid gap-4 md:grid-cols-4 mt-4">
                   <div className="space-y-2">
                     <Label>Quantidade</Label>
                     <Input
+                      type="number"
+                      min="0"
+                      step="1"
                       value={item.quantity}
                       onChange={(e) => handleSingleItemChange(index, "quantity", e.target.value)}
-                      placeholder="Quantidade"
+                      placeholder="0"
                     />
                   </div>
                   <div className="space-y-2">
@@ -508,23 +632,60 @@ export default function CreateTenderPage() {
                     <Label>Valor Unitário</Label>
                     <Input
                       value={item.unitPrice}
-                      onChange={(e) => handleSingleItemChange(index, "unitPrice", e.target.value)}
-                      placeholder="R$ 0,00"
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^\d,.-]/g, "");
+                        handleSingleItemChange(index, "unitPrice", value);
+                      }}
+                      placeholder="0,00"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Valor Total</Label>
+                    <Input
+                      value={formatCurrency(calculateItemTotal(item.quantity, item.unitPrice))}
+                      disabled
+                      className="bg-gray-50 font-medium"
                     />
                   </div>
                 </div>
               </div>
             ))}
+
+            {/* Total Geral para Múltiplos Itens */}
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-medium text-blue-800">Total Geral dos Itens:</span>
+                  <span className="text-xl font-bold text-blue-900">
+                    {formatCurrency(
+                      formData.items.reduce(
+                        (total, item) => total + calculateItemTotal(item.quantity, item.unitPrice),
+                        0
+                      )
+                    )}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         );
 
       case "group":
+        const groupTotal = calculateGroupTotal(formData.groups[0].items);
         return (
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Grupo Único</h3>
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle>Grupo 1</CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Grupo 1</CardTitle>
+                  <div className="text-right">
+                    <div className="text-sm text-muted-foreground">Total do Grupo</div>
+                    <div className="text-lg font-bold text-primary">
+                      {formatCurrency(groupTotal)}
+                    </div>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-2">
@@ -628,15 +789,18 @@ export default function CreateTenderPage() {
                           </Select>
                         </div>
                       </div>
-                      <div className="grid gap-4 md:grid-cols-3 mt-4">
+                      <div className="grid gap-4 md:grid-cols-4 mt-4">
                         <div className="space-y-2">
                           <Label>Quantidade</Label>
                           <Input
+                            type="number"
+                            min="0"
+                            step="1"
                             value={item.quantity}
                             onChange={(e) =>
                               handleItemChange(0, itemIndex, "quantity", e.target.value)
                             }
-                            placeholder="Quantidade"
+                            placeholder="0"
                           />
                         </div>
                         <div className="space-y-2">
@@ -651,10 +815,21 @@ export default function CreateTenderPage() {
                           <Label>Valor Unitário</Label>
                           <Input
                             value={item.unitPrice}
-                            onChange={(e) =>
-                              handleItemChange(0, itemIndex, "unitPrice", e.target.value)
-                            }
-                            placeholder="R$ 0,00"
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^\d,.-]/g, "");
+                              handleItemChange(0, itemIndex, "unitPrice", value);
+                            }}
+                            placeholder="0,00"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Valor Total</Label>
+                          <Input
+                            value={formatCurrency(
+                              calculateItemTotal(item.quantity, item.unitPrice)
+                            )}
+                            disabled
+                            className="bg-gray-50 font-medium"
                           />
                         </div>
                       </div>
@@ -676,181 +851,230 @@ export default function CreateTenderPage() {
                 <Plus className="mr-2 h-4 w-4" /> Adicionar Grupo
               </Button>
             </div>
-            {formData.groups.map((group, groupIndex) => (
-              <Card key={group.id} className="overflow-hidden">
-                <CardHeader className="bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">Grupo {groupIndex + 1}</CardTitle>
-                    {formData.groups.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeGroup(groupIndex)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 space-y-4">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label>Tipo de Itens</Label>
-                      <Select
-                        value={group.type}
-                        onValueChange={(value) => handleGroupChange(groupIndex, "type", value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="products">Produtos</SelectItem>
-                          <SelectItem value="services">Serviços</SelectItem>
-                        </SelectContent>
-                      </Select>
+            {formData.groups.map((group, groupIndex) => {
+              const groupTotal = calculateGroupTotal(group.items);
+              return (
+                <Card key={group.id} className="overflow-hidden">
+                  <CardHeader className="bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base">Grupo {groupIndex + 1}</CardTitle>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="text-sm text-muted-foreground">Total do Grupo</div>
+                          <div className="text-lg font-bold text-primary">
+                            {formatCurrency(groupTotal)}
+                          </div>
+                        </div>
+                        {formData.groups.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeGroup(groupIndex)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Descrição do Grupo</Label>
-                      <Input
-                        value={group.description}
-                        onChange={(e) =>
-                          handleGroupChange(groupIndex, "description", e.target.value)
-                        }
-                        placeholder="Descrição"
-                      />
+                  </CardHeader>
+                  <CardContent className="p-4 space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Tipo de Itens</Label>
+                        <Select
+                          value={group.type}
+                          onValueChange={(value) => handleGroupChange(groupIndex, "type", value)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="products">Produtos</SelectItem>
+                            <SelectItem value="services">Serviços</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Descrição do Grupo</Label>
+                        <Input
+                          value={group.description}
+                          onChange={(e) =>
+                            handleGroupChange(groupIndex, "description", e.target.value)
+                          }
+                          placeholder="Descrição"
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex flex-wrap gap-4">
-                    {group.type === "products" && (
+                    <div className="flex flex-wrap gap-4">
+                      {group.type === "products" && (
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`requireBrand-${groupIndex}`}
+                            checked={group.requireBrand}
+                            onCheckedChange={(checked) =>
+                              handleGroupChange(groupIndex, "requireBrand", checked)
+                            }
+                          />
+                          <Label htmlFor={`requireBrand-${groupIndex}`}>
+                            Requer Marca, Modelo e Fabricante
+                          </Label>
+                        </div>
+                      )}
                       <div className="flex items-center space-x-2">
                         <Checkbox
-                          id={`requireBrand-${groupIndex}`}
-                          checked={group.requireBrand}
+                          id={`allowDescriptionChange-${groupIndex}`}
+                          checked={group.allowDescriptionChange}
                           onCheckedChange={(checked) =>
-                            handleGroupChange(groupIndex, "requireBrand", checked)
+                            handleGroupChange(groupIndex, "allowDescriptionChange", checked)
                           }
                         />
-                        <Label htmlFor={`requireBrand-${groupIndex}`}>
-                          Requer Marca, Modelo e Fabricante
+                        <Label htmlFor={`allowDescriptionChange-${groupIndex}`}>
+                          Permitir Alterar a Descrição
                         </Label>
                       </div>
-                    )}
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`allowDescriptionChange-${groupIndex}`}
-                        checked={group.allowDescriptionChange}
-                        onCheckedChange={(checked) =>
-                          handleGroupChange(groupIndex, "allowDescriptionChange", checked)
-                        }
-                      />
-                      <Label htmlFor={`allowDescriptionChange-${groupIndex}`}>
-                        Permitir Alterar a Descrição
-                      </Label>
                     </div>
-                  </div>
-                  <div className="mt-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-medium">Itens do Grupo</h4>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addItem(groupIndex)}>
-                        <Plus className="mr-2 h-4 w-4" /> Adicionar Item
-                      </Button>
-                    </div>
-                    {group.items.map((item, itemIndex) => (
-                      <div key={item.id} className="border rounded-md p-4 mb-4">
-                        <div className="flex items-center justify-between mb-4">
-                          <h5 className="font-medium">Item {itemIndex + 1}</h5>
-                          {group.items.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeItem(groupIndex, itemIndex)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <div className="space-y-2">
-                            <Label>Descrição</Label>
-                            <Input
-                              value={item.description}
-                              onChange={(e) =>
-                                handleItemChange(
-                                  groupIndex,
-                                  itemIndex,
-                                  "description",
-                                  e.target.value
-                                )
-                              }
-                              placeholder="Descrição do item"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Tipo de Benefício</Label>
-                            <Select
-                              value={item.benefitType}
-                              onValueChange={(value) =>
-                                handleItemChange(groupIndex, itemIndex, "benefitType", value)
-                              }>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="exclusive_for_me_epp">
-                                  Exclusivo ME/EPP
-                                </SelectItem>
-                                <SelectItem value="open_competition_with_benefit_for_me_epp">
-                                  Ampla concorrência com benefício para ME/EPP
-                                </SelectItem>
-                                <SelectItem value="open_competition_without_benefit">
-                                  Ampla concorrência sem benefício
-                                </SelectItem>
-                                <SelectItem value="regional">Regional</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <div className="grid gap-4 md:grid-cols-3 mt-4">
-                          <div className="space-y-2">
-                            <Label>Quantidade</Label>
-                            <Input
-                              value={item.quantity}
-                              onChange={(e) =>
-                                handleItemChange(groupIndex, itemIndex, "quantity", e.target.value)
-                              }
-                              placeholder="Quantidade"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Unidade de Medida</Label>
-                            <Input
-                              value={item.unit}
-                              onChange={(e) =>
-                                handleItemChange(groupIndex, itemIndex, "unit", e.target.value)
-                              }
-                              placeholder="Ex: UN, KG, CX"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Valor Unitário</Label>
-                            <Input
-                              value={item.unitPrice}
-                              onChange={(e) =>
-                                handleItemChange(groupIndex, itemIndex, "unitPrice", e.target.value)
-                              }
-                              placeholder="R$ 0,00"
-                            />
-                          </div>
-                        </div>
+                    <div className="mt-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-medium">Itens do Grupo</h4>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => addItem(groupIndex)}>
+                          <Plus className="mr-2 h-4 w-4" /> Adicionar Item
+                        </Button>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                      {group.items.map((item, itemIndex) => (
+                        <div key={item.id} className="border rounded-md p-4 mb-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <h5 className="font-medium">Item {itemIndex + 1}</h5>
+                            {group.items.length > 1 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeItem(groupIndex, itemIndex)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div className="space-y-2">
+                              <Label>Descrição</Label>
+                              <Input
+                                value={item.description}
+                                onChange={(e) =>
+                                  handleItemChange(
+                                    groupIndex,
+                                    itemIndex,
+                                    "description",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="Descrição do item"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Tipo de Benefício</Label>
+                              <Select
+                                value={item.benefitType}
+                                onValueChange={(value) =>
+                                  handleItemChange(groupIndex, itemIndex, "benefitType", value)
+                                }>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="exclusive_for_me_epp">
+                                    Exclusivo ME/EPP
+                                  </SelectItem>
+                                  <SelectItem value="open_competition_with_benefit_for_me_epp">
+                                    Ampla concorrência com benefício para ME/EPP
+                                  </SelectItem>
+                                  <SelectItem value="open_competition_without_benefit">
+                                    Ampla concorrência sem benefício
+                                  </SelectItem>
+                                  <SelectItem value="regional">Regional</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div className="grid gap-4 md:grid-cols-4 mt-4">
+                            <div className="space-y-2">
+                              <Label>Quantidade</Label>
+                              <Input
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={item.quantity}
+                                onChange={(e) =>
+                                  handleItemChange(
+                                    groupIndex,
+                                    itemIndex,
+                                    "quantity",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="0"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Unidade de Medida</Label>
+                              <Input
+                                value={item.unit}
+                                onChange={(e) =>
+                                  handleItemChange(groupIndex, itemIndex, "unit", e.target.value)
+                                }
+                                placeholder="Ex: UN, KG, CX"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Valor Unitário</Label>
+                              <Input
+                                value={item.unitPrice}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/[^\d,.-]/g, "");
+                                  handleItemChange(groupIndex, itemIndex, "unitPrice", value);
+                                }}
+                                placeholder="0,00"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Valor Total</Label>
+                              <Input
+                                value={formatCurrency(
+                                  calculateItemTotal(item.quantity, item.unitPrice)
+                                )}
+                                disabled
+                                className="bg-gray-50 font-medium"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+
+            {/* Total Geral de Todos os Grupos */}
+            <Card className="bg-green-50 border-green-200">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-medium text-green-800">
+                    Total Geral de Todos os Grupos:
+                  </span>
+                  <span className="text-xl font-bold text-green-900">
+                    {formatCurrency(
+                      formData.groups.reduce(
+                        (total, group) => total + calculateGroupTotal(group.items),
+                        0
+                      )
+                    )}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         );
     }
@@ -934,16 +1158,16 @@ export default function CreateTenderPage() {
 
       // Calcular para itens sem grupo
       for (const item of itemsToSubmit) {
-        const quantity = parseFloat(item.quantity.replace(",", ".")) || 0;
-        const unitPrice = parseFloat(item.unitPrice.replace(",", ".")) || 0;
+        const quantity = Number.parseFloat(item.quantity.replace(",", ".")) || 0;
+        const unitPrice = Number.parseFloat(item.unitPrice.replace(",", ".")) || 0;
         totalEstimatedValue += quantity * unitPrice;
       }
 
       // Calcular para grupos e seus itens
       for (const group of groupsToSubmit) {
         for (const item of group.items) {
-          const quantity = parseFloat(item.quantity.replace(",", ".")) || 0;
-          const unitPrice = parseFloat(item.unitPrice.replace(",", ".")) || 0;
+          const quantity = Number.parseFloat(item.quantity.replace(",", ".")) || 0;
+          const unitPrice = Number.parseFloat(item.unitPrice.replace(",", ".")) || 0;
           totalEstimatedValue += quantity * unitPrice;
         }
       }
@@ -964,7 +1188,7 @@ export default function CreateTenderPage() {
           impugnation_deadline: impugnationDateTime,
           judgment_criteria: formData.judgmentCriteria,
           dispute_mode: formData.disputeMode,
-          price_decimals: parseInt(formData.priceDecimals),
+          price_decimals: Number.parseInt(formData.priceDecimals),
           bid_increment: formData.valueBetweenBids,
           secret_value: formData.secretValue,
           documentation_mode: formData.documentationMode,
@@ -1156,6 +1380,9 @@ export default function CreateTenderPage() {
         throw new Error("Failed to create tender results record");
       }
 
+      // Limpar localStorage após sucesso
+      clearLocalStorage();
+
       toast({
         title: "Licitação criada com sucesso",
         description: `A licitação foi publicada com valor estimado de ${totalEstimatedValue.toLocaleString(
@@ -1217,6 +1444,21 @@ export default function CreateTenderPage() {
             {currentStep === 3 && "Grupos e itens da licitação"}
             {currentStep === 4 && "Documentos e publicação"}
           </CardDescription>
+          <div className="flex items-center gap-2 mt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (confirm("Tem certeza que deseja limpar todos os dados salvos?")) {
+                  clearLocalStorage();
+                  window.location.reload();
+                }
+              }}
+              className="text-muted-foreground hover:text-destructive">
+              Limpar Dados Salvos
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="mb-8">
@@ -1850,21 +2092,11 @@ export default function CreateTenderPage() {
                               variant="outline"
                               className="w-full justify-start text-left font-normal">
                               <CalendarIcon className="mr-2 h-4 w-4" />
-                              {formData.publishDate ? (
-                                format(formData.publishDate, "dd/MM/yyyy", { locale: ptBR })
-                              ) : (
-                                <span>Selecionar data</span>
-                              )}
+                              <span>Selecionar data</span>
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0">
-                            <Calendar
-                              mode="single"
-                              selected={formData.publishDate}
-                              onSelect={(date) => handleChange("publishDate", date)}
-                              initialFocus
-                              locale={ptBR}
-                            />
+                            <Calendar mode="single" initialFocus locale={ptBR} />
                           </PopoverContent>
                         </Popover>
                       </div>
