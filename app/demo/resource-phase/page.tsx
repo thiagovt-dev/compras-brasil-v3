@@ -14,7 +14,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Link from "next/link";
 
-function ResourcePhaseDemoContent() {
+export function ResourcePhaseDemoContent({ lotId }: { lotId: string }) {
   const {
     lots,
     systemMessages,
@@ -141,7 +141,7 @@ function ResourcePhaseDemoContent() {
 
   // Para este exemplo, vamos usar um ID de lote fixo
   const currentLotId = "lot-001";
-  const currentLot = getLotDetails(currentLotId);
+  const currentLot = getLotDetails(lotId);
 
   // Função para enviar mensagem do chat
   const handleChatMessage = (content: string) => {
@@ -397,7 +397,7 @@ function ResourcePhaseDemoContent() {
 export default function ResourcePhaseDemoPage() {
   return (
     <TenderWorkflowProvider>
-      <ResourcePhaseDemoContent />
+      <ResourcePhaseDemoContent lotId="lot-001" />
     </TenderWorkflowProvider>
   );
 }

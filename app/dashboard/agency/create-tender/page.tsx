@@ -37,11 +37,155 @@ import { DocumentList } from "@/components/document-list";
 import { FileUploadField } from "@/components/file-upload-field";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { toast } from "@/components/ui/use-toast";
+import { TenderSummary } from "./tender-summary";
+import { Combobox, ComboboxProvider } from "@/components/ui/combobox";
 
 const STORAGE_KEY = "create-tender-form-data";
 
+
 // Função para formatar valor em BRL
-const formatCurrency = (value: string | number): string => {
+const SEGMENTS = [
+  {
+    label: "Serviços de Tecnologia da Informação e Comunicação (TIC)",
+    options: [
+      "Desenvolvimento de software e sistemas",
+      "Suporte técnico e manutenção de TI",
+      "Locação e venda de equipamentos de informática",
+      "Serviços de cloud computing e data center",
+      "Provedores de internet e infraestrutura de redes",
+    ],
+  },
+  {
+    label: "Construção Civil e Engenharia",
+    options: [
+      "Obras de infraestrutura (estradas, pontes, saneamento)",
+      "Manutenção predial e reformas",
+      "Projetos de engenharia e arquitetura",
+      "Sondagens e topografia",
+      "Fiscalização de obras públicas",
+    ],
+  },
+  {
+    label: "Saúde",
+    options: [
+      "Fornecimento de medicamentos e insumos hospitalares",
+      "Equipamentos médicos e odontológicos",
+      "Serviços médicos especializados",
+      "Laboratórios de análises clínicas",
+      "Locação de ambulâncias e home care",
+    ],
+  },
+  {
+    label: "Educação",
+    options: [
+      "Fornecimento de livros e materiais didáticos",
+      "Uniformes escolares",
+      "Transporte escolar",
+      "Software educacional",
+      "Mobiliário para salas de aula",
+    ],
+  },
+  {
+    label: "Limpeza, Conservação e Facilities",
+    options: [
+      "Limpeza predial e hospitalar",
+      "Coleta e destinação de resíduos",
+      "Jardinagem e paisagismo",
+      "Controle de pragas",
+      "Portaria, recepção e vigilância",
+    ],
+  },
+  {
+    label: "Alimentação",
+    options: [
+      "Gêneros alimentícios (para merenda escolar, hospitais, presídios)",
+      "Serviços de catering e alimentação coletiva",
+      "Cestas básicas",
+    ],
+  },
+  {
+    label: "Veículos e Transporte",
+    options: [
+      "Locação de veículos",
+      "Aquisição de automóveis, ônibus, motos e tratores",
+      "Manutenção e peças automotivas",
+      "Transporte de pacientes e cargas",
+    ],
+  },
+  {
+    label: "Serviços Administrativos",
+    options: [
+      "Digitalização e arquivamento",
+      "Serviços gráficos",
+      "Tradução e interpretação",
+      "Treinamentos e capacitação",
+      "Consultoria e assessoria técnica",
+    ],
+  },
+  {
+    label: "Segurança",
+    options: [
+      "Vigilância armada e desarmada",
+      "Monitoramento eletrônico",
+      "Equipamentos de segurança (CFTV, alarmes, portões)",
+    ],
+  },
+  {
+    label: "Mobiliário e Equipamentos",
+    options: [
+      "Móveis para escritório, escola e hospital",
+      "Equipamentos de áudio e vídeo",
+      "Ar-condicionado e refrigeração",
+      "Máquinas e ferramentas industriais",
+    ],
+  },
+  {
+    label: "Agricultura e Meio Ambiente",
+    options: [
+      "Fornecimento de sementes e insumos agrícolas",
+      "Equipamentos e tratores",
+      "Consultoria ambiental",
+      "Serviços de reflorestamento e poda",
+      "Monitoramento ambiental",
+    ],
+  },
+  {
+    label: "Vestuário e Têxteis",
+    options: [
+      "Uniformes profissionais",
+      "Equipamentos de proteção individual (EPI)",
+      "Roupa de cama hospitalar e escolar",
+    ],
+  },
+  {
+    label: "Obras e Serviços de Urbanismo",
+    options: [
+      "Iluminação pública",
+      "Pavimentação e calçamento",
+      "Sinalização urbana",
+      "Manutenção de áreas públicas",
+    ],
+  },
+  {
+    label: "Marketing, Comunicação e Eventos",
+    options: [
+      "Produção de eventos",
+      "Publicidade institucional",
+      "Criação de campanhas educativas",
+      "Impressão de material gráfico e brindes",
+    ],
+  },
+  {
+    label: "Energia e Utilities",
+    options: [
+      "Fornecimento e manutenção de painéis solares",
+      "Eficiência energética",
+      "Geradores e nobreaks",
+      "Poços artesianos e sistemas hidráulicos",
+    ],
+  },
+];
+export const formatCurrency = (value: string | number): string => {
   const numericValue =
     typeof value === "string"
       ? Number.parseFloat(value.replace(/[^\d,.-]/g, "").replace(",", "."))
@@ -60,14 +204,14 @@ const parseCurrency = (value: string): number => {
 };
 
 // Função para calcular valor total do item
-const calculateItemTotal = (quantity: string, unitPrice: string): number => {
+export const calculateItemTotal = (quantity: string, unitPrice: string): number => {
   const qty = Number.parseFloat(quantity) || 0;
   const price = parseCurrency(unitPrice) || 0;
   return qty * price;
 };
 
 // Função para calcular valor total do grupo
-const calculateGroupTotal = (items: any[]): number => {
+export const calculateGroupTotal = (items: any[]): number => {
   return items.reduce((total, item) => {
     return total + calculateItemTotal(item.quantity, item.unitPrice);
   }, 0);
@@ -134,6 +278,15 @@ export default function CreateTenderPage() {
   const [agencies, setAgencies] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [segmentSearch, setSegmentSearch] = useState("");
+
+  const filteredSegments = SEGMENTS.map((group) => ({
+    ...group,
+    options: group.options.filter((option) =>
+      option.toLowerCase().includes(segmentSearch.toLowerCase())
+    ),
+  })).filter((group) => group.options.length > 0);
 
   const [formData, setFormData] = useState({
     agency_id: "", // Movido para o topo
@@ -1518,40 +1671,29 @@ export default function CreateTenderPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="category">Categoria</Label>
-                    <Select
-                      value={formData.category}
-                      onValueChange={(value) => handleChange("category", value)}>
-                      <SelectTrigger id="category">
-                        <SelectValue placeholder="Selecione a categoria" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {formData.modality === "pregao-eletronico" && (
-                          <>
-                            <SelectItem value="aquisicao-bens">Aquisição de bens</SelectItem>
-                            <SelectItem value="servicos-comuns">Serviços comuns</SelectItem>
-                            <SelectItem value="servicos-comuns-engenharia">
-                              Serviços comuns de engenharia
-                            </SelectItem>
-                          </>
-                        )}
-                        {formData.modality === "concorrencia-eletronica" && (
-                          <>
-                            <SelectItem value="aquisicao-bens-especiais">
-                              Aquisição de bens especiais
-                            </SelectItem>
-                            <SelectItem value="servicos-especiais">Serviços especiais</SelectItem>
-                            <SelectItem value="obras">Obras</SelectItem>
-                            <SelectItem value="servicos-especiais-engenharia">
-                              Serviços especiais de engenharia
-                            </SelectItem>
-                            <SelectItem value="servicos-comuns-engenharia">
-                              Serviços comuns de engenharia
-                            </SelectItem>
-                          </>
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="segments">Segmentos da Licitação</Label>
+                    <Combobox
+                      value={formData.segments[0] || ""}
+                      onValueChange={(value) => handleChange("segments", [value])}
+                      onInputChange={setSegmentSearch}
+                      placeholder="Busque ou selecione um segmento"
+                    >
+                      <ComboboxProvider
+                        value={formData.segments[0] || ""}
+                        onValueChange={(value) => handleChange("segments", [value])}
+                        setOpen={() => {}} // pode deixar vazio, pois não é usado diretamente
+                      >
+                        {filteredSegments.map((group) => (
+                          <Combobox.Group key={group.label} label={group.label}>
+                            {group.options.map((option) => (
+                              <Combobox.Option key={option} value={option}>
+                                {option}
+                              </Combobox.Option>
+                            ))}
+                          </Combobox.Group>
+                        ))}
+                      </ComboboxProvider>
+                    </Combobox>
                   </div>
                 </div>
 
@@ -1997,25 +2139,35 @@ export default function CreateTenderPage() {
             )}
 
             {currentStep === 3 && (
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <Label>Como deseja organizar os itens?</Label>
-                  <Select
-                    value={formData.itemStructure}
-                    onValueChange={(value) => handleChange("itemStructure", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a estrutura" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="single">Um item sem grupo</SelectItem>
-                      <SelectItem value="multiple">Vários itens sem grupo</SelectItem>
-                      <SelectItem value="group">Um grupo com itens</SelectItem>
-                      <SelectItem value="multiple-groups">Vários grupos com itens</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="flex flex-col md:flex-row gap-8">
+                <div className="flex-1">
+                  {/* Conteúdo principal da etapa 3 */}
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <Label>Como deseja organizar os itens?</Label>
+                      <Select
+                        value={formData.itemStructure}
+                        onValueChange={(value) => handleChange("itemStructure", value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a estrutura" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="single">Um item sem grupo</SelectItem>
+                          <SelectItem value="multiple">Vários itens sem grupo</SelectItem>
+                          <SelectItem value="group">Um grupo com itens</SelectItem>
+                          <SelectItem value="multiple-groups">Vários grupos com itens</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                {renderStep3Content()}
+                    {renderStep3Content()}
+                  </div>
+                </div>
+                <TenderSummary
+                  itemStructure={formData.itemStructure}
+                  items={formData.items}
+                  groups={formData.groups}
+                />
               </div>
             )}
 

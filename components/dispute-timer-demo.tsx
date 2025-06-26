@@ -150,6 +150,15 @@ export function DisputeTimerDemo({
   };
 
   const handleFinalize = () => {
+    console.log(
+      "🔎 [handleFinalize] lotId:",
+      lotId,
+      "lotStatus:",
+      lotStatus,
+      "isAuctioneer:",
+      isAuctioneer
+    );
+
     if (isAuctioneer && lotStatus === "open") {
       setIsRunning(false);
       setTimeLeft(0);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,13 +16,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -53,6 +46,7 @@ interface DisputeAuctioneerControlsProps {
   ) => void;
   showControls?: boolean;
   onDisputeFinalized?: (lotId: string) => void;
+  onShowResourcePhase?: (lotId: string) => void; // NOVO
 }
 
 type LotStatus =
@@ -67,7 +61,6 @@ type LotStatus =
 
 type SupplierStatus = "classified" | "disqualified" | "winner" | "eliminated" | "tiebreaker";
 
-// Dados mocados dos fornecedores por lote - Incluindo empates para demonstração
 const mockSuppliersData: Record<string, any[]> = {
   "lot-001": [
     {
@@ -131,64 +124,71 @@ export function DisputeAuctioneerControls({
   onChatMessage,
   showControls = false,
   onDisputeFinalized,
+  onShowResourcePhase,
 }: DisputeAuctioneerControlsProps) {
-  // Inicializar com status "dispute_ended" como se a disputa já tivesse acontecido
-  const [lotStatuses, setLotStatuses] = useState<Record<string, LotStatus>>(
-    lots.reduce((acc, lot) => ({ ...acc, [lot.id]: "dispute_ended" as LotStatus }), {})
-  );
+  const lotsStatusRef = useRef<Record<string, LotStatus>>({});
+  const [lotStatuses, setLotStatuses] = useState<Record<string, LotStatus>>(() => {
+    const initialStatuses: Record<string, LotStatus> = {};
+    lots.forEach((lot) => {
+      initialStatuses[lot.id] = lotsStatusRef.current[lot.id] || "dispute_ended";
+      lotsStatusRef.current[lot.id] = initialStatuses[lot.id];
+    });
+    return initialStatuses;
+  });
+
   const [suppliersData, setSuppliersData] = useState(mockSuppliersData);
   const [selectedLot, setSelectedLot] = useState<string | null>(null);
   const [dialogType, setDialogType] = useState<string | null>(null);
   const [justification, setJustification] = useState("");
   const [timeLimit, setTimeLimit] = useState("1");
   const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
-
-  // Estados para controle de tempo com horas e minutos
   const [timeLimitHours, setTimeLimitHours] = useState("2");
   const [timeLimitMinutes, setTimeLimitMinutes] = useState("0");
-
-  // Estados para controle de desempate
   const [tiebreakerSuppliers, setTiebreakerSuppliers] = useState<string[]>([]);
   const [tiebreakerTimeLeft, setTiebreakerTimeLeft] = useState<Record<string, number>>({});
 
   const { toast } = useToast();
 
-  // Não renderizar se showControls for false
-  if (!showControls) {
-    return null;
-  }
+  useEffect(() => {
+    Object.keys(lotStatuses).forEach((lotId) => {
+      lotsStatusRef.current[lotId] = lotStatuses[lotId];
+    });
+  }, [lotStatuses]);
 
-  // Verificar se há empate no lote
+  // REMOVIDO: useEffect que sobrescrevia status ao mudar lots
+
+  const updateLotStatus = (lotId: string, status: LotStatus) => {
+    setLotStatuses((prev) => {
+      const newStatus = { ...prev, [lotId]: status };
+      lotsStatusRef.current[lotId] = status;
+      return newStatus;
+    });
+  };
+
   const hasLotTie = (lotId: string) => {
     const suppliers = suppliersData[lotId]?.filter((s) => s.status === "classified") || [];
     if (suppliers.length < 2) return false;
-
     const minValue = Math.min(...suppliers.map((s) => s.value));
     const tiedSuppliers = suppliers.filter((s) => s.value === minValue);
     return tiedSuppliers.length > 1;
   };
 
   const getLotDisplayNumber = (lotId: string) => {
-    const lotIndex = lots.findIndex((lot) => lot.id === lotId);
-    return lotIndex >= 0 ? lotIndex + 1 : lotId;
+    const matches = lotId.match(/\d+$/);
+    const lotNumber = matches ? parseInt(matches[0], 10) : 0;
+    return lotNumber || lotId;
   };
 
-
-  // Obter fornecedores empatados
   const getTiedSuppliers = (lotId: string) => {
     const suppliers = suppliersData[lotId]?.filter((s) => s.status === "classified") || [];
     if (suppliers.length < 2) return [];
-
     const minValue = Math.min(...suppliers.map((s) => s.value));
     return suppliers.filter((s) => s.value === minValue);
   };
 
   const handleStartTiebreaker = (lotId: string) => {
     const lotDisplayNumber = getLotDisplayNumber(lotId);
-    console.log(`🎯 Iniciando desempate para lote: ${lotId} (Lote ${lotDisplayNumber})`);
-
     const tiedSuppliers = getTiedSuppliers(lotId);
-
     if (tiedSuppliers.length < 2) {
       toast({
         title: "Erro",
@@ -197,19 +197,10 @@ export function DisputeAuctioneerControls({
       });
       return;
     }
-
-    console.log(
-      `🤝 Fornecedores empatados no lote ${lotId} (Lote ${lotDisplayNumber}):`,
-      tiedSuppliers.map((s) => s.name)
-    );
-
-    // Atualizar status APENAS do lote específico
     setLotStatuses((prev) => ({
       ...prev,
       [lotId]: "tiebreaker_active",
     }));
-
-    // Marcar fornecedores empatados APENAS no lote específico
     setSuppliersData((prev) => ({
       ...prev,
       [lotId]:
@@ -219,36 +210,24 @@ export function DisputeAuctioneerControls({
             : supplier
         ) || [],
     }));
-
-    // Iniciar timer de 5 minutos APENAS para o lote específico
     setTiebreakerTimeLeft((prev) => ({
       ...prev,
       [lotId]: 300,
     }));
-
-    // CORREÇÃO: Usar uma referência específica para cada lote
     const intervalKey = `tiebreaker-${lotId}`;
     const countdownInterval = setInterval(() => {
       setTiebreakerTimeLeft((prev) => {
         const currentTime = prev[lotId];
         if (!currentTime || currentTime <= 1) {
           clearInterval(countdownInterval);
-          console.log(
-            `⏰ Timer do lote ${lotId} (Lote ${lotDisplayNumber}) expirou, finalizando desempate`
-          );
           handleTiebreakerEnd(lotId);
           return { ...prev, [lotId]: 0 };
         }
         return { ...prev, [lotId]: currentTime - 1 };
       });
     }, 1000);
-
-    // Salvar referência do intervalo para poder cancelar depois se necessário
     (window as any)[intervalKey] = countdownInterval;
-
-    // Enviar mensagem para o chat com ação especial de desempate
     const supplierNames = tiedSuppliers.map((s) => s.name);
-
     onChatMessage(
       `Iniciada disputa de desempate para o Lote ${lotDisplayNumber}. Fornecedores em disputa: ${supplierNames.join(
         ", "
@@ -257,7 +236,6 @@ export function DisputeAuctioneerControls({
       lotId,
       "start_tiebreaker"
     );
-
     toast({
       title: "Disputa de Desempate Iniciada",
       description: `Lote ${lotDisplayNumber}: Disputa entre ${tiedSuppliers.length} fornecedores por 5 minutos.`,
@@ -266,34 +244,17 @@ export function DisputeAuctioneerControls({
 
   const handleTiebreakerEnd = (lotId: string) => {
     const lotDisplayNumber = getLotDisplayNumber(lotId);
-    console.log(`🏁 Finalizando desempate para lote: ${lotId} (Lote ${lotDisplayNumber})`);
-
-    // Limpar intervalo se existir
     const intervalKey = `tiebreaker-${lotId}`;
     if ((window as any)[intervalKey]) {
       clearInterval((window as any)[intervalKey]);
       delete (window as any)[intervalKey];
     }
-
-    // Simular que um dos fornecedores "venceu" o desempate com um lance ligeiramente menor
     const tiebreakerSuppliersInLot =
       suppliersData[lotId]?.filter((s) => s.status === "tiebreaker") || [];
-
     if (tiebreakerSuppliersInLot.length > 0) {
-      // Escolher aleatoriamente um vencedor do desempate
       const winner =
         tiebreakerSuppliersInLot[Math.floor(Math.random() * tiebreakerSuppliersInLot.length)];
-
-      // Simular um lance ligeiramente menor para o vencedor
       const newValue = winner.value - 0.01;
-
-      console.log(
-        `🏆 Vencedor do desempate no lote ${lotId} (Lote ${lotDisplayNumber}): ${
-          winner.name
-        } com R$ ${newValue.toFixed(2)}`
-      );
-
-      // Atualizar dados dos fornecedores APENAS para o lote específico
       setSuppliersData((prev) => ({
         ...prev,
         [lotId]:
@@ -306,21 +267,17 @@ export function DisputeAuctioneerControls({
             return supplier;
           }) || [],
       }));
-
-      // CORREÇÃO: Atualizar status APENAS do lote específico
       setLotStatuses((prev) => ({
         ...prev,
         [lotId]: "dispute_ended" as LotStatus,
       }));
-
-      // Enviar mensagem para o chat com o lote correto
+      if (onDisputeFinalized) onDisputeFinalized(lotId);
       onChatMessage(
         `Disputa de desempate finalizada para o Lote ${lotDisplayNumber}. ${
           winner.name
         } apresentou lance de R$ ${newValue.toFixed(2)}.`,
         "system"
       );
-
       toast({
         title: "Disputa de Desempate Finalizada",
         description: `Lote ${lotDisplayNumber}: ${
@@ -328,61 +285,43 @@ export function DisputeAuctioneerControls({
         } venceu com lance de R$ ${newValue.toFixed(2)}`,
       });
     } else {
-      console.log(
-        `⚠️ Nenhum fornecedor em desempate encontrado para o lote ${lotId} (Lote ${lotDisplayNumber})`
-      );
-
       setLotStatuses((prev) => ({
         ...prev,
         [lotId]: "dispute_ended" as LotStatus,
       }));
+      if (onDisputeFinalized) onDisputeFinalized(lotId);
     }
   };
 
-  // CORREÇÃO: Garantir que o lotId correto seja usado na finalização
   const handleFinalizeTiebreaker = (lotId: string) => {
-    const lotDisplayNumber = getLotDisplayNumber(lotId);
-    console.log(
-      `🔧 Finalizando desempate manualmente para lote: ${lotId} (Lote ${lotDisplayNumber})`
-    );
-
-    // Limpar timer específico do lote
     setTiebreakerTimeLeft((prev) => {
       const newState = { ...prev };
       delete newState[lotId];
       return newState;
     });
-
-    // Limpar intervalo se existir
     const intervalKey = `tiebreaker-${lotId}`;
     if ((window as any)[intervalKey]) {
       clearInterval((window as any)[intervalKey]);
       delete (window as any)[intervalKey];
     }
-
     handleTiebreakerEnd(lotId);
   };
 
-
-  // Função para formatar tempo do desempate
   const formatTiebreakerTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Calcular tempo total em horas a partir de horas e minutos
   const getTotalTimeInHours = () => {
     const hours = parseInt(timeLimitHours) || 0;
     const minutes = parseInt(timeLimitMinutes) || 0;
     return hours + minutes / 60;
   };
 
-  // Formatar tempo para exibição
   const formatTimeDisplay = () => {
     const hours = parseInt(timeLimitHours) || 0;
     const minutes = parseInt(timeLimitMinutes) || 0;
-
     if (hours === 0 && minutes === 0) return "0 minutos";
     if (hours === 0) return `${minutes} minuto${minutes !== 1 ? "s" : ""}`;
     if (minutes === 0) return `${hours} hora${hours !== 1 ? "s" : ""}`;
@@ -440,8 +379,6 @@ export function DisputeAuctioneerControls({
         description: "Processo de licitação finalizado",
       },
     };
-
-    // CORREÇÃO: Retornar valor padrão se o status não existir no mapeamento
     return (
       statusMap[status] || {
         label: "Status Indefinido",
@@ -454,7 +391,7 @@ export function DisputeAuctioneerControls({
 
   const handleOpenProposals = (lotId: string) => {
     const lotDisplayNumber = getLotDisplayNumber(lotId);
-    setLotStatuses((prev) => ({ ...prev, [lotId]: "proposals_opened" }));
+    updateLotStatus(lotId, "proposals_opened");
     onChatMessage(
       `O processo está em fase de análise das propostas para o Lote ${lotDisplayNumber}`,
       "system"
@@ -473,7 +410,6 @@ export function DisputeAuctioneerControls({
 
   const confirmDisqualifySupplier = () => {
     if (!selectedLot || !selectedSupplier || !justification.trim()) return;
-
     setSuppliersData((prev) => ({
       ...prev,
       [selectedLot]: prev[selectedLot].map((supplier) =>
@@ -482,18 +418,15 @@ export function DisputeAuctioneerControls({
           : supplier
       ),
     }));
-
     const supplier = suppliersData[selectedLot]?.find((s) => s.id === selectedSupplier);
     onChatMessage(
       `A proposta do ${supplier?.name} para o lote ${selectedLot} foi desclassificada com a seguinte justificativa: "${justification}"`,
       "system"
     );
-
     toast({
       title: "Fornecedor Desclassificado",
       description: `${supplier?.name} foi desclassificado do lote ${selectedLot}.`,
     });
-
     closeDialog();
   };
 
@@ -506,13 +439,11 @@ export function DisputeAuctioneerControls({
           : supplier
       ),
     }));
-
     const supplier = suppliersData[lotId]?.find((s) => s.id === supplierId);
     onChatMessage(
       `O fornecedor ${supplier?.name} foi reclassificado para o lote ${lotId}`,
       "system"
     );
-
     toast({
       title: "Fornecedor Reclassificado",
       description: `${supplier?.name} foi reclassificado no lote ${lotId}.`,
@@ -526,46 +457,34 @@ export function DisputeAuctioneerControls({
 
   const confirmOpenResourceManifestation = () => {
     if (!selectedLot) return;
-
     const totalTime = getTotalTimeInHours();
     const timeDisplay = formatTimeDisplay();
-
     setLotStatuses((prev) => ({ ...prev, [selectedLot]: "resource_manifestation" }));
     onChatMessage(
       `Aberta manifestação de recursos para o lote ${selectedLot} pelo período de ${timeDisplay}`,
       "system"
     );
-
     toast({
       title: "Manifestação de Recursos Aberta",
       description: `Período de ${timeDisplay} para manifestação de recursos.`,
     });
-
     closeDialog();
   };
-
-
 
   const handleDefineWinnerAutomatically = (lotId: string) => {
     const lotDisplayNumber = getLotDisplayNumber(lotId);
     const suppliers = suppliersData[lotId]?.filter((s) => s.status === "classified") || [];
     if (suppliers.length === 0) return;
-
-    // Verificar se há empate
     if (hasLotTie(lotId)) {
-      // Atualizar status para empate
       setLotStatuses((prev) => ({ ...prev, [lotId]: "dispute_ended_tie" }));
-
       const tiedSuppliers = getTiedSuppliers(lotId);
       const supplierNames = tiedSuppliers.map((s) => s.name).join(", ");
-
       onChatMessage(
         `Empate detectado no Lote ${lotDisplayNumber} entre os fornecedores: ${supplierNames}, todos com R$ ${tiedSuppliers[0].value.toFixed(
           2
         )}`,
         "system"
       );
-
       toast({
         title: "Empate Detectado",
         description: `Lote ${lotDisplayNumber}: ${
@@ -575,23 +494,17 @@ export function DisputeAuctioneerControls({
       });
       return;
     }
-
-    // Se não há empate, proceder normalmente
     const winner = suppliers.reduce((prev, current) =>
       prev.value < current.value ? prev : current
     );
-
-    // Atualizar status do vencedor
     setSuppliersData((prev) => ({
       ...prev,
       [lotId]: prev[lotId].map((supplier) =>
         supplier.id === winner.id ? { ...supplier, status: "winner" as SupplierStatus } : supplier
       ),
     }));
-
-    // Declarar vencedor automaticamente com justificativa padrão
     setLotStatuses((prev) => ({ ...prev, [lotId]: "winner_declared" }));
-
+    if (onDisputeFinalized) onDisputeFinalized(lotId);
     onChatMessage(
       `O Pregoeiro/Agente de Contratação declarou vencedor ${winner.name} (${
         winner.company
@@ -600,7 +513,6 @@ export function DisputeAuctioneerControls({
       )}"`,
       "system"
     );
-
     toast({
       title: "Vencedor Declarado",
       description: `Lote ${lotDisplayNumber}: ${
@@ -609,7 +521,6 @@ export function DisputeAuctioneerControls({
     });
   };
 
-  // Classificar fornecedor específico como vencedor
   const handleClassifyAsWinner = (lotId: string, supplierId: string) => {
     setSelectedLot(lotId);
     setSelectedSupplier(supplierId);
@@ -618,10 +529,7 @@ export function DisputeAuctioneerControls({
 
   const confirmClassifyAsWinner = () => {
     if (!selectedLot || !selectedSupplier || !justification.trim()) return;
-
     const supplier = suppliersData[selectedLot]?.find((s) => s.id === selectedSupplier);
-
-    // Atualizar status do vencedor
     setSuppliersData((prev) => ({
       ...prev,
       [selectedLot]: prev[selectedLot].map((supplier) =>
@@ -630,20 +538,16 @@ export function DisputeAuctioneerControls({
           : supplier
       ),
     }));
-
-    // Declarar vencedor com justificativa personalizada
     setLotStatuses((prev) => ({ ...prev, [selectedLot]: "winner_declared" }));
-
+    if (onDisputeFinalized) onDisputeFinalized(selectedLot);
     onChatMessage(
       `O Pregoeiro/Agente de Contratação declarou vencedor ${supplier?.name} (${supplier?.company}) para o lote ${selectedLot}, com a seguinte justificativa: "${justification}"`,
       "system"
     );
-
     toast({
       title: "Vencedor Declarado",
       description: `${supplier?.name} foi declarado vencedor com justificativa personalizada.`,
     });
-
     closeDialog();
   };
 
@@ -653,7 +557,6 @@ export function DisputeAuctioneerControls({
       `O Pregoeiro/Agente de Contratação está negociando o lote ${lotId} com o detentor da melhor oferta.`,
       "system"
     );
-
     toast({
       title: "Negociação Iniciada",
       description: `Negociação iniciada com ${winner?.name}.`,
@@ -667,23 +570,19 @@ export function DisputeAuctioneerControls({
 
   const confirmRequestDocuments = () => {
     if (!selectedLot) return;
-
     const totalHours = getTotalTimeInHours();
     const timeDisplay = formatTimeDisplay();
     const deadline = new Date();
     deadline.setHours(deadline.getHours() + Math.floor(totalHours));
     deadline.setMinutes(deadline.getMinutes() + Math.round((totalHours % 1) * 60));
-
     onChatMessage(
       `O Pregoeiro/Agente de Contratação solicita o envio dos documentos de habilitação para o lote ${selectedLot}. O prazo de envio é até às ${deadline.toLocaleTimeString()} do dia ${deadline.toLocaleDateString()}.`,
       "system"
     );
-
     toast({
       title: "Documentos Solicitados",
       description: `Documentos solicitados com prazo de ${timeDisplay}.`,
     });
-
     closeDialog();
   };
 
@@ -699,7 +598,6 @@ export function DisputeAuctioneerControls({
 
   const getAvailableActions = (lotId: string, status: LotStatus) => {
     const actions = [];
-
     switch (status) {
       case "waiting_to_open":
         actions.push({
@@ -711,7 +609,6 @@ export function DisputeAuctioneerControls({
           onClick: () => handleOpenProposals(lotId),
         });
         break;
-
       case "proposals_opened":
         actions.push({
           key: "resource_manifestation",
@@ -722,7 +619,6 @@ export function DisputeAuctioneerControls({
           onClick: () => handleOpenResourceManifestation(lotId),
         });
         break;
-
       case "dispute_ended":
         const hasTie = hasLotTie(lotId);
         actions.push(
@@ -755,7 +651,6 @@ export function DisputeAuctioneerControls({
           }
         );
         break;
-
       case "dispute_ended_tie":
         actions.push({
           key: "start_tiebreaker",
@@ -766,7 +661,6 @@ export function DisputeAuctioneerControls({
           onClick: () => handleStartTiebreaker(lotId),
         });
         break;
-
       case "tiebreaker_active":
         actions.push({
           key: "finalize_tiebreaker",
@@ -774,14 +668,9 @@ export function DisputeAuctioneerControls({
           description: "Finalizar disputa de desempate manualmente",
           icon: Timer,
           variant: "destructive" as const,
-          // CORREÇÃO: Garantir que o lotId correto seja passado
-          onClick: () => {
-            console.log(`🛑 Solicitada finalização manual do desempate para lote: ${lotId}`);
-            handleFinalizeTiebreaker(lotId);
-          },
+          onClick: () => handleFinalizeTiebreaker(lotId),
         });
         break;
-
       case "winner_declared":
         actions.push({
           key: "go_to_resource_phase",
@@ -790,14 +679,21 @@ export function DisputeAuctioneerControls({
           icon: Scale,
           variant: "default" as const,
           onClick: () => {
-            window.location.href = `/demo/resource-phase?lot=${lotId}`;
+            if (typeof onShowResourcePhase === "function") {
+              onShowResourcePhase(lotId);
+            }
           },
+
+          // onClick: () => {
+          //   window.location.href = `/demo/resource-phase?lot=${lotId}`;
+          // },
         });
         break;
     }
-
     return actions;
   };
+
+  if (!showControls) return null;
 
   return (
     <div className="space-y-6">
@@ -830,8 +726,8 @@ export function DisputeAuctioneerControls({
         const tiebreakerCount = suppliers.filter((s) => s.status === "tiebreaker").length;
         const timeLeft = tiebreakerTimeLeft[lot.id];
 
-        // CORREÇÃO: Usar o índice real do array para numeração
-        const lotDisplayNumber = index + 1;
+        // Use the corrected lot display number
+        const lotDisplayNumber = getLotDisplayNumber(lot.id);
 
         return (
           <Card key={lot.id} className="w-full">
@@ -1046,7 +942,7 @@ export function DisputeAuctioneerControls({
                   ))}
                 </div>
               )}
-            </CardContent>{" "}
+            </CardContent>
           </Card>
         );
       })}

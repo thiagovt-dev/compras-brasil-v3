@@ -22,6 +22,7 @@ import {
   User,
 } from "lucide-react";
 import { DisputeRightPanelDemo } from "./dispute-right-panel-demo";
+import { ResourcePhaseDemoContent } from "@/app/demo/resource-phase/page";
 
 interface DisputeRoomDemoProps {
   tender: any;
@@ -236,22 +237,21 @@ export default function DisputeRoomDemo({
   const [activeLot, setActiveLot] = useState(mockLots[0]);
   const [lots] = useState(mockLots);
 
-  // Estado para controlar quais lotes foram finalizados e devem mostrar controles
+  const [resourcePhaseLotId, setResourcePhaseLotId] = useState<string | null>(null);
+
+
   const [finalizedLots, setFinalizedLots] = useState<Set<string>>(new Set());
 
-  // Estado para armazenar mensagens do sistema que serão enviadas para o chat
   const [systemMessages, setSystemMessages] = useState<
     Array<{ message: string; type: "system" | "auctioneer" }>
   >([]);
 
-  // NOVO: Estado para controlar lotes em desempate
   const [tiebreakerLots, setTiebreakerLots] = useState<Record<string, {
     isActive: boolean;
     timeLeft: number;
     suppliers: string[];
   }>>({});
 
-  // Inicializar lotes com status variados para demonstração
   const [lotStatuses, setLotStatuses] = useState<Record<string, string>>({
     "lot-001": "open", // Em disputa
     "lot-002": "waiting", // Aguardando
@@ -311,21 +311,25 @@ export default function DisputeRoomDemo({
   const handleDisputeCompleted = (lotId: string) => {
     console.log("🎯 handleDisputeCompleted chamada para lote:", lotId);
 
-    // Verificar se não está em desempate
-    if (!tiebreakerLots[lotId]?.isActive) {
-      // Adicionar o lote específico à lista de finalizados
-      setFinalizedLots((prev) => new Set([...prev, lotId]));
-
-      // Atualizar status do lote para finalizado
-      setLotStatuses((prev) => ({ ...prev, [lotId]: "finished" }));
-
-      toast({
-        title: "Disputa Finalizada - Controles Disponíveis",
-        description: `A disputa do lote ${lotId} foi finalizada. Controles do pregoeiro agora disponíveis.`,
-        duration: 5000,
-      });
-    }
+    // Atualizar status do lote para finalizado SEMPRE
+    setLotStatuses((prev) => ({ ...prev, [lotId]: "finished" }));
+console.log("lote", lotId, "status", lotStatuses[lotId])
+    // Adicionar o lote específico à lista de finalizados
+    setFinalizedLots((prev) => new Set([...prev, lotId]));
+console.log("finalizedLots", finalizedLots)
+    toast({
+      title: "Disputa Finalizada - Controles Disponíveis",
+      description: `A disputa do lote ${lotId} foi finalizada. Controles do pregoeiro agora disponíveis.`,
+      duration: 5000,
+    });
   };
+
+  useEffect(() => {
+    console.log("lotStatuses atualizado:", lotStatuses);
+  }, [lotStatuses]);
+  useEffect(() => {
+    console.log("finalizedLots atualizado:", finalizedLots);
+  }, [finalizedLots]);
 
   // NOVA FUNÇÃO: Iniciar desempate (chamada pelos controles do pregoeiro)
   const handleStartTiebreaker = (lotId: string, suppliers: string[]) => {
@@ -402,6 +406,7 @@ export default function DisputeRoomDemo({
     handleChatMessage(message, type);
   };
 
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header da Sala */}
@@ -434,19 +439,20 @@ export default function DisputeRoomDemo({
         <DisputeModeIndicator mode={disputeMode} />
 
         {/* ALERTA DE DESEMPATE ATIVO */}
-        {Object.values(tiebreakerLots).some(tiebreaker => tiebreaker.isActive) && (
+        {Object.values(tiebreakerLots).some((tiebreaker) => tiebreaker.isActive) && (
           <Alert className="border-red-200 bg-red-50">
             <AlertDescription className="text-red-700 font-medium">
-              🔥 Desempate em andamento! 
+              🔥 Desempate em andamento!
               {Object.entries(tiebreakerLots)
                 .filter(([_, tiebreaker]) => tiebreaker.isActive)
                 .map(([lotId, tiebreaker]) => {
                   const minutes = Math.floor(tiebreaker.timeLeft / 60);
                   const seconds = tiebreaker.timeLeft % 60;
-                  return ` Lote ${lotId}: ${minutes}:${seconds.toString().padStart(2, '0')} restantes`;
+                  return ` Lote ${lotId}: ${minutes}:${seconds
+                    .toString()
+                    .padStart(2, "0")} restantes`;
                 })
-                .join(" | ")
-              }
+                .join(" | ")}
             </AlertDescription>
           </Alert>
         )}
@@ -461,10 +467,11 @@ export default function DisputeRoomDemo({
               </p>
             </div>
             <DisputeAuctioneerControls
-              lots={lots.filter((lot) => finalizedLots.has(lot.id))} // Filtrar apenas lotes finalizados
-              onChatMessage={handleChatMessageWithTiebreaker} // Usar a nova função
+              lots={lots.filter((lot) => finalizedLots.has(lot.id))}
+              onChatMessage={handleChatMessageWithTiebreaker}
               showControls={true}
               onDisputeFinalized={handleDisputeCompleted}
+              onShowResourcePhase={setResourcePhaseLotId}
             />
           </div>
         )}
@@ -554,6 +561,14 @@ export default function DisputeRoomDemo({
           />
         </div>
       </div>
+      {resourcePhaseLotId && (
+        <div className="bg-white border-t border-gray-200">
+          <div className="p-4">
+            <Button onClick={() => setResourcePhaseLotId(null)}>Voltar para Sala de Disputa</Button>
+            <ResourcePhaseDemoContent lotId={resourcePhaseLotId ?? "lot-001"} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
