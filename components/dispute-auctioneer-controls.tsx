@@ -624,10 +624,10 @@ export function DisputeAuctioneerControls({
         actions.push(
           {
             key: "define_winner_auto",
-            label: hasTie ? "🎯 Desempate" : "🎯 Definir Vencedor (Menor Lance)",
+            label: hasTie ? "🎯 Desempate" : null,
             description: hasTie
               ? "Iniciar disputa de desempate entre fornecedores empatados"
-              : "Define automaticamente o vencedor pelo menor valor",
+              : null,
             icon: hasTie ? Shuffle : Trophy,
             variant: "default" as const,
             onClick: () =>
@@ -715,7 +715,7 @@ export function DisputeAuctioneerControls({
 
       {/* Cards dos lotes */}
       {lots.map((lot, index) => {
-        const status = lotStatuses[lot.id] || "waiting_to_open";
+        const status = lotStatuses[lot.id] || "dispute_ended";
         const statusInfo = getStatusInfo(status);
         const StatusIcon = statusInfo.icon;
         const actions = getAvailableActions(lot.id, status);
@@ -789,31 +789,41 @@ export function DisputeAuctioneerControls({
                 <div className="space-y-3">
                   <h4 className="font-medium text-sm">Ações Disponíveis:</h4>
                   <div className="grid grid-cols-1 gap-2">
-                    {actions.map((action) => {
-                      const ActionIcon = action.icon;
-                      return (
-                        <div
-                          key={action.key}
-                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <ActionIcon className="h-4 w-4 text-gray-600" />
-                            <div>
-                              <div className="font-medium text-sm">{action.label}</div>
-                              <div className="text-xs text-gray-600">{action.description}</div>
+                    {actions
+                      .filter(
+                        (action) =>
+                          action.key != null &&
+                          action.label != null &&
+                          action.description != null &&
+                          action.icon != null &&
+                          action.variant != null &&
+                          action.onClick != null
+                      )
+                      .map((action) => {
+                        const ActionIcon = action.icon;
+                        return (
+                          <div
+                            key={action.key}
+                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <ActionIcon className="h-4 w-4 text-gray-600" />
+                              <div>
+                                <div className="font-medium text-sm">{action.label}</div>
+                                <div className="text-xs text-gray-600">{action.description}</div>
+                              </div>
                             </div>
+                            <Button
+                              size="sm"
+                              variant={action.variant}
+                              onClick={() => {
+                                console.log(`🔧 Executando ação ${action.key} para lote ${lot.id}`);
+                                action.onClick();
+                              }}>
+                              {action.label}
+                            </Button>
                           </div>
-                          <Button
-                            size="sm"
-                            variant={action.variant}
-                            onClick={() => {
-                              console.log(`🔧 Executando ação ${action.key} para lote ${lot.id}`);
-                              action.onClick();
-                            }}>
-                            {action.label}
-                          </Button>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                   </div>
                 </div>
               )}

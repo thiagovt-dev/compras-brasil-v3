@@ -284,7 +284,7 @@ export default function DisputeRoomDemo({
               
               // Adicionar lote aos finalizados para mostrar controles do pregoeiro
               setFinalizedLots(prevFinalized => new Set([...prevFinalized, lotId]));
-
+              
               toast({
                 title: "Desempate Finalizado",
                 description: `Tempo esgotado para o desempate do lote ${lotId}. ${winnerName} foi declarado vencedor.`,
