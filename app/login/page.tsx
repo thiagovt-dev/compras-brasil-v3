@@ -56,16 +56,19 @@ export default function LoginPage() {
 
   // Redirecionar se já estiver logado
   useEffect(() => {
-    if (!isLoading && session && profile) {
-      redirectToDashboard(profile);
+    if (!isLoading && session) {
+      if (profile) {
+        redirectToDashboard(profile);
+      } else {
+        // Se não tem profile, redireciona para o dashboard padrão
+        router.replace("/dashboard/citizen");
+      }
     }
   }, [session, profile, isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
-    // Limpa tokens/cookies antigos antes de tentar login
     clearAuthData();
 
     const inputType = detectDocumentType(emailOrDocument);
@@ -135,9 +138,9 @@ export default function LoginPage() {
       </div>
     );
   }
-
   // Se já estiver logado, mostrar loading de redirecionamento
-  if (session && profile) {
+  if (session) {
+    // Opcional: pode mostrar um loading de redirecionamento
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">

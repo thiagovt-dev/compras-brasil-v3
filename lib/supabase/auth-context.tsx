@@ -34,6 +34,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Timeout de segurança para garantir que o loading não fique infinito
   useEffect(() => {
+    // Sincroniza cookie se só existir localStorage
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("sb-jfbuistvgwkfpnujygwx-auth-token");
+      const hasCookie = document.cookie.includes("sb-jfbuistvgwkfpnujygwx-auth-token");
+      if (token && !hasCookie) {
+        try {
+          const parsed = JSON.parse(token);
+          // Reescreve o cookie manualmente
+          document.cookie = `sb-jfbuistvgwkfpnujygwx-auth-token=${encodeURIComponent(
+            token
+          )}; path=/; expires=${new Date(parsed.expires_at * 1000).toUTCString()}`;
+          console.log("🔄 Cookie de auth sincronizado manualmente com localStorage");
+        } catch (e) {
+          // Se der erro no parse, limpa tudo
+          localStorage.removeItem("sb-jfbuistvgwkfpnujygwx-auth-token");
+        }
+      }
+    }
+  }, []);
+  useEffect(() => {
     const timeout = setTimeout(() => {
       if (isLoading) {
         console.warn("Loading timeout reached, forcing loading to false");
@@ -44,70 +64,66 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timeout);
   }, [isLoading]);
 
-  useEffect(() => {
-    const getInitialSession = async () => {
-      setIsLoading(true);
-      try {
-        // Limpar possíveis dados corrompidos do localStorage
+    useEffect(() => {
+      const getInitialSession = async () => {
+        setIsLoading(true);
         try {
-          const storedSession = localStorage.getItem("sb-jfbuistvgwkfpnujygwx-auth-token");
-          if (storedSession) {
-            const parsed = JSON.parse(storedSession);
-            // Se o token está expirado, limpar
-            if (parsed.expires_at && new Date(parsed.expires_at * 1000) < new Date()) {
-              console.log("Expired token found, clearing localStorage");
-              localStorage.removeItem("sb-jfbuistvgwkfpnujygwx-auth-token");
+          // Limpar possíveis dados corrompidos do localStorage
+          try {
+            const storedSession = localStorage.getItem("sb-jfbuistvgwkfpnujygwx-auth-token");
+            if (storedSession) {
+              try {
+                const parsed = JSON.parse(storedSession);
+                if (parsed.expires_at && new Date(parsed.expires_at * 1000) < new Date()) {
+                  localStorage.removeItem("sb-jfbuistvgwkfpnujygwx-auth-token");
+                }
+              } catch {
+                // JSON inválido, remove mesmo assim
+                localStorage.removeItem("sb-jfbuistvgwkfpnujygwx-auth-token");
+              }
             }
+          } catch {
+            localStorage.removeItem("sb-jfbuistvgwkfpnujygwx-auth-token");
+          }
+  
+          const session = await getSession();
+          setSession(session);
+          setUser(session?.user ?? null);
+          if (session?.user) {
+            await fetchProfile(session.user.id);
+          } else {
+            setProfile(null);
           }
         } catch (error) {
-          console.warn("Error checking localStorage token:", error);
-          localStorage.removeItem("sb-jfbuistvgwkfpnujygwx-auth-token");
-        }
-
-        const session = await getSession();
-        console.log("DEBUG SESSION:", session);
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
           setProfile(null);
+        } finally {
+          setIsLoading(false); // <-- SEMPRE FINALIZA O LOADING
         }
-      } catch (error) {
-        console.error("Error getting initial session:", error);
-        setProfile(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    getInitialSession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, !!session);
-      setIsLoading(true);
-
-      try {
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
+      };
+  
+      getInitialSession();
+  
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange(async (event, session) => {
+        setIsLoading(true);
+        try {
+          setSession(session);
+          setUser(session?.user ?? null);
+          if (session?.user) {
+            await fetchProfile(session.user.id);
+          } else {
+            setProfile(null);
+          }
+        } catch {
           setProfile(null);
+        } finally {
+          setIsLoading(false); // <-- SEMPRE FINALIZA O LOADING
         }
-      } catch (error) {
-        console.error("Error in auth state change:", error);
-        setProfile(null);
-      } finally {
-        setIsLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase]);
+      });
+  
+      return () => subscription.unsubscribe();
+    }, [supabase]);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -309,21 +325,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       console.log("Signing out user:", user?.id);
-
+  
+      // Limpa todos os cookies possíveis
       document.cookie.split(";").forEach((cookie) => {
         const eqPos = cookie.indexOf("=");
         const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
         document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
         document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${window.location.pathname}`;
       });
-
+  
       localStorage.removeItem("sb-jfbuistvgwkfpnujygwx-auth-token");
-
+  
       window.location.href = "/login";
     } catch (error) {
       console.error("Error signing out:", error);
     }
-  };
+  }
 
   const value = {
     user,
