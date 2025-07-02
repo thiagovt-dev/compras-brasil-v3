@@ -79,7 +79,8 @@ const generateMockTenderData = (tenderId: string) => {
     id: tenderId,
     title: "Aquisição de Equipamentos de Informática",
     number: "2024/001",
-    description: "Licitação para aquisição de equipamentos de informática para modernização do parque tecnológico",
+    description:
+      "Licitação para aquisição de equipamentos de informática para modernização do parque tecnológico",
     status: "published",
     created_at: new Date().toISOString(),
     is_mock: true,
@@ -119,68 +120,77 @@ const generateMockProposals = (lotId: string) => {
     { name: "Digital Plus Sistemas", cnpj: "88.999.000/0001-33" },
   ];
 
-  const mockItems = lotId === "mock-lot-1" ? [
-    {
-      number: 1,
-      description: "Computador Desktop Intel Core i5, 8GB RAM, SSD 256GB",
-      quantity: 50,
-      unit: "unidade",
-    },
-    {
-      number: 2,
-      description: "Notebook Intel Core i7, 16GB RAM, SSD 512GB",
-      quantity: 25,
-      unit: "unidade",
-    },
-  ] : [
-    {
-      number: 3,
-      description: "Mouse Óptico USB",
-      quantity: 100,
-      unit: "unidade",
-    },
-    {
-      number: 4,
-      description: "Teclado ABNT2 USB",
-      quantity: 100,
-      unit: "unidade",
-    },
-  ];
+  const mockItems =
+    lotId === "mock-lot-1"
+      ? [
+          {
+            number: 1,
+            description: "Computador Desktop Intel Core i5, 8GB RAM, SSD 256GB",
+            quantity: 50,
+            unit: "unidade",
+          },
+          {
+            number: 2,
+            description: "Notebook Intel Core i7, 16GB RAM, SSD 512GB",
+            quantity: 25,
+            unit: "unidade",
+          },
+        ]
+      : [
+          {
+            number: 3,
+            description: "Mouse Óptico USB",
+            quantity: 100,
+            unit: "unidade",
+          },
+          {
+            number: 4,
+            description: "Teclado ABNT2 USB",
+            quantity: 100,
+            unit: "unidade",
+          },
+        ];
 
-  return suppliers.map((supplier, index) => {
-    const baseValue = lotId === "mock-lot-1" ? 200000 : 60000;
-    const variation = (Math.random() - 0.5) * 0.3; // Variação de ±15% para mais diversidade
-    const totalValue = baseValue * (1 + variation);
-    
-    const createdDate = new Date();
-    createdDate.setHours(createdDate.getHours() - Math.floor(Math.random() * 72)); // Até 3 dias atrás
+  return suppliers
+    .map((supplier, index) => {
+      const baseValue = lotId === "mock-lot-1" ? 200000 : 60000;
+      const variation = (Math.random() - 0.5) * 0.3; // Variação de ±15% para mais diversidade
+      const totalValue = baseValue * (1 + variation);
 
-    const items = mockItems.map((item, itemIndex) => {
-      const unitPrice = totalValue / (mockItems.length * item.quantity);
+      const createdDate = new Date();
+      createdDate.setHours(createdDate.getHours() - Math.floor(Math.random() * 72)); // Até 3 dias atrás
+
+      const items = mockItems.map((item, itemIndex) => {
+        const unitPrice = totalValue / (mockItems.length * item.quantity);
+        return {
+          id: `mock-item-${lotId}-${index}-${itemIndex}`,
+          tender_item_id: `mock-tender-item-${itemIndex}`,
+          unit_price: unitPrice,
+          total_price: unitPrice * item.quantity,
+          brand: ["Dell", "HP", "Lenovo", "Acer", "Samsung", "LG", "Asus", "MSI"][
+            Math.floor(Math.random() * 8)
+          ],
+          model: `Modelo ${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${Math.floor(
+            Math.random() * 1000
+          )}`,
+          description: `Especificação detalhada do ${item.description.toLowerCase()}`,
+          tender_item: item,
+        };
+      });
+
       return {
-        id: `mock-item-${lotId}-${index}-${itemIndex}`,
-        tender_item_id: `mock-tender-item-${itemIndex}`,
-        unit_price: unitPrice,
-        total_price: unitPrice * item.quantity,
-        brand: ["Dell", "HP", "Lenovo", "Acer", "Samsung", "LG", "Asus", "MSI"][Math.floor(Math.random() * 8)],
-        model: `Modelo ${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${Math.floor(Math.random() * 1000)}`,
-        description: `Especificação detalhada do ${item.description.toLowerCase()}`,
-        tender_item: item,
+        id: `mock-proposal-${lotId}-${index}`,
+        supplier_id: `mock-supplier-${index}`,
+        lot_id: lotId,
+        total_value: totalValue,
+        status: "classified", // Todos começam como "submitted" para permitir classificação
+        created_at: createdDate.toISOString(),
+        supplier: supplier,
+        items: items,
+        is_mock: true,
       };
-    });
-
-    return {
-      id: `mock-proposal-${lotId}-${index}`,
-      supplier_id: `mock-supplier-${index}`,
-      lot_id: lotId,
-      total_value: totalValue,
-      status: "submitted", // Todos começam como "submitted" para permitir classificação
-      created_at: createdDate.toISOString(),
-      supplier: supplier,
-      items: items,
-      is_mock: true,
-    };
-  }).sort((a, b) => a.total_value - b.total_value); // Ordenar por valor crescente
+    })
+    .sort((a, b) => a.total_value - b.total_value); // Ordenar por valor crescente
 };
 
 export default function TenderProposalsPage() {
@@ -267,16 +277,16 @@ export default function TenderProposalsPage() {
       }
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
-      
+
       // Fallback para dados mockados em caso de erro
       console.log("Erro ao conectar, usando dados mockados");
       const mockTender = generateMockTenderData(tenderId);
       const mockLots = generateMockLots(tenderId);
-      
+
       setTender(mockTender);
       setLots(mockLots);
       setUsingMockData(true);
-      
+
       if (mockLots.length > 0) {
         setSelectedLot(mockLots[0].id);
         await fetchProposals(mockLots[0].id, true);
@@ -340,7 +350,7 @@ export default function TenderProposalsPage() {
       }
     } catch (error) {
       console.error("Erro ao carregar propostas:", error);
-      
+
       // Fallback para dados mockados
       console.log("Erro ao carregar propostas, usando dados mockados");
       const mockProposals = generateMockProposals(lotId);
@@ -372,10 +382,10 @@ export default function TenderProposalsPage() {
     // Se estiver usando dados mockados, simular a ação
     if (selectedProposal.is_mock || usingMockData) {
       setIsSubmitting(true);
-      
+
       // Simular delay de processamento
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       let message = "";
       let newStatus = selectedProposal.status;
 
@@ -406,7 +416,7 @@ export default function TenderProposalsPage() {
       // Atualizar o status localmente para simulação
       setProposals((prev) => ({
         ...prev,
-        [selectedLot]: prev[selectedLot].map(p => 
+        [selectedLot]: prev[selectedLot].map((p) =>
           p.id === selectedProposal.id ? { ...p, status: newStatus } : p
         ),
       }));
@@ -506,7 +516,9 @@ export default function TenderProposalsPage() {
     const Icon = config.icon;
 
     return (
-      <Badge variant={config.variant} className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium">
+      <Badge
+        variant={config.variant}
+        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium">
         <Icon className="h-4 w-4" />
         {config.label}
       </Badge>
@@ -538,8 +550,8 @@ export default function TenderProposalsPage() {
       {usingMockData && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
           <p className="text-base text-amber-800">
-            <strong>Modo Demonstração:</strong> Exibindo dados de exemplo para demonstração das funcionalidades.
-            As ações executadas são simuladas.
+            <strong>Modo Demonstração:</strong> Exibindo dados de exemplo para demonstração das
+            funcionalidades. As ações executadas são simuladas.
           </p>
         </div>
       )}
@@ -596,17 +608,29 @@ export default function TenderProposalsPage() {
                           <TableHead className="text-base font-semibold">Valor Total</TableHead>
                           <TableHead className="text-base font-semibold">Data Envio</TableHead>
                           <TableHead className="text-base font-semibold">Status</TableHead>
-                          <TableHead className="text-right text-base font-semibold">Ações</TableHead>
+                          <TableHead className="text-right text-base font-semibold">
+                            Ações
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {proposals[lot.id].map((proposal, index) => (
                           <TableRow key={proposal.id} className="h-16 hover:bg-muted/50">
-                            <TableCell className="font-medium text-base py-4">{proposal.supplier.name}</TableCell>
-                            <TableCell className="text-base py-4">{proposal.supplier.cnpj}</TableCell>
-                            <TableCell className="text-base font-semibold py-4">{formatCurrency(proposal.total_value)}</TableCell>
-                            <TableCell className="text-base py-4">{formatDate(proposal.created_at)}</TableCell>
-                            <TableCell className="py-4">{getStatusBadge(proposal.status)}</TableCell>
+                            <TableCell className="font-medium text-base py-4">{`Fornecedor ${
+                              index + 1
+                            }`}</TableCell>
+                            <TableCell className="text-base py-4">
+                              {proposal.supplier.cnpj}
+                            </TableCell>
+                            <TableCell className="text-base font-semibold py-4">
+                              {formatCurrency(proposal.total_value)}
+                            </TableCell>
+                            <TableCell className="text-base py-4">
+                              {formatDate(proposal.created_at)}
+                            </TableCell>
+                            <TableCell className="py-4">
+                              {getStatusBadge(proposal.status)}
+                            </TableCell>
                             <TableCell className="text-right py-4">
                               <div className="flex justify-end gap-2">
                                 <Button
@@ -633,13 +657,13 @@ export default function TenderProposalsPage() {
                                     </Button>
                                   </>
                                 )}
-                                {proposal.status === "classified" && index === 0 && (
+                                {proposal.status === "classified" && (
                                   <Button
                                     variant="outline"
                                     size="default"
-                                    onClick={() => handleProposalAction(proposal, "negotiate")}
-                                    className="text-blue-600 border-blue-600 hover:bg-blue-50">
-                                    <MessageSquare className="h-4 w-4" />
+                                    onClick={() => handleProposalAction(proposal, "declassify")}
+                                    className="text-red-600 border-red-600 hover:bg-red-50">
+                                    <X className="h-4 w-4" />
                                   </Button>
                                 )}
                               </div>
@@ -672,7 +696,14 @@ export default function TenderProposalsPage() {
               {actionType === "negotiate" && "Iniciar Negociação"}
             </DialogTitle>
             <DialogDescription className="text-base">
-              Fornecedor: {selectedProposal?.supplier.name}
+              Fornecedor:{" "}
+              {selectedProposal
+                ? `Fornecedor ${
+                    proposals[selectedProposal.lot_id]?.findIndex(
+                      (p) => p.id === selectedProposal.id
+                    ) + 1
+                  }`
+                : ""}{" "}
               {(selectedProposal?.is_mock || usingMockData) && " (Dados de exemplo)"}
             </DialogDescription>
           </DialogHeader>
@@ -716,11 +747,15 @@ export default function TenderProposalsPage() {
                               <Label className="text-sm text-muted-foreground">
                                 Preço Unitário
                               </Label>
-                              <p className="font-semibold text-base">{formatCurrency(item.unit_price)}</p>
+                              <p className="font-semibold text-base">
+                                {formatCurrency(item.unit_price)}
+                              </p>
                             </div>
                             <div>
                               <Label className="text-sm text-muted-foreground">Valor Total</Label>
-                              <p className="font-semibold text-base">{formatCurrency(item.total_price)}</p>
+                              <p className="font-semibold text-base">
+                                {formatCurrency(item.total_price)}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -756,7 +791,9 @@ export default function TenderProposalsPage() {
 
               {actionType === "declassify" && (
                 <div>
-                  <Label htmlFor="justification" className="text-base font-medium">Justificativa *</Label>
+                  <Label htmlFor="justification" className="text-base font-medium">
+                    Justificativa *
+                  </Label>
                   <Textarea
                     id="justification"
                     value={justification}
@@ -768,31 +805,31 @@ export default function TenderProposalsPage() {
                 </div>
               )}
             </div>
-            )}
+          )}
 
-            <DialogFooter>
+          <DialogFooter>
             {actionType !== "view" && (
               <Button
-              onClick={executeAction}
-              disabled={isSubmitting || (actionType === "declassify" && !justification.trim())}
-              size="lg"
-              className={
-                actionType === "declassify"
-                ? "bg-red-600 hover:bg-red-700"
-                : actionType === "classify"
-                ? "bg-green-600 hover:bg-green-700"
-                : ""
-              }>
-              {isSubmitting
-                ? "Processando..."
-                : actionType === "declassify"
-                ? "Desclassificar"
-                : actionType === "classify"
-                ? "Classificar"
-                : "Confirmar"}
+                onClick={executeAction}
+                disabled={isSubmitting || (actionType === "declassify" && !justification.trim())}
+                size="lg"
+                className={
+                  actionType === "declassify"
+                    ? "bg-red-600 hover:bg-red-700"
+                    : actionType === "classify"
+                    ? "bg-green-600 hover:bg-green-700"
+                    : ""
+                }>
+                {isSubmitting
+                  ? "Processando..."
+                  : actionType === "declassify"
+                  ? "Desclassificar"
+                  : actionType === "classify"
+                  ? "Classificar"
+                  : "Confirmar"}
               </Button>
             )}
-            </DialogFooter>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

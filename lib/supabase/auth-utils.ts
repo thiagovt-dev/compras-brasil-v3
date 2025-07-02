@@ -113,23 +113,15 @@ export async function signInWithEmailOrDocument(
 export async function getSession() {
   try {
     const supabase = getSupabaseClient();
-
-    // Adicionar timeout para evitar travamento
-    const sessionPromise = supabase.auth.getSession();
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Session timeout")), 5000)
-    );
-
     const {
       data: { session },
       error,
-    } = (await Promise.race([sessionPromise, timeoutPromise])) as any;
-
+    } = await supabase.auth.getSession();
+    console.log("getSession result:", session, error);
     if (error) {
       console.error("Error getting session:", error);
       return null;
     }
-
     return session;
   } catch (error) {
     console.error("Error in getSession:", error);

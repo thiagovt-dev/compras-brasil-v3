@@ -256,7 +256,7 @@ const TenderWorkflowContext = createContext<TenderWorkflowContextType | undefine
 // Provedor do contexto
 export function TenderWorkflowProvider({ children }: { children: React.ReactNode }) {
   // Estado geral da licitação
-  const [tenderStatus, setTenderStatus] = useState<TenderStatus>("published");
+  const [tenderStatus, setTenderStatus] = useState<TenderStatus>("resource_phase");
 
   // Lotes
   const [lots] = useState(mockLots);
@@ -603,7 +603,7 @@ export function TenderWorkflowProvider({ children }: { children: React.ReactNode
   });
 
   const [disputeMode, setDisputeMode] = useState<DisputeMode>("open");
-  const [resourcePhase, setResourcePhase] = useState<ResourcePhase>("not_started");
+  const [resourcePhase, setResourcePhase] = useState<ResourcePhase>("manifestation_open");
   const [resources, setResources] = useState<ResourceData[]>([]);
   const [systemMessages, setSystemMessages] = useState<Message[]>([]);
   const [chatMessages, setChatMessages] = useState<Message[]>([]);

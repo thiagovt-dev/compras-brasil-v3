@@ -160,7 +160,7 @@ export function ResourcePhaseDemoContent({ lotId }: { lotId: string }) {
       <div className="bg-yellow-100 border-b border-yellow-200 px-6 py-3 mb-6 -mx-8 rounded-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-yellow-800">🎭 MODO DEMONSTRAÇÃO</span>
+            <span className="text-sm font-medium text-yellow-800"> MODO DEMONSTRAÇÃO</span>
             <span className="text-sm text-yellow-700">Visualizar como:</span>
             <div className="flex gap-2">
               <button
@@ -208,19 +208,19 @@ export function ResourcePhaseDemoContent({ lotId }: { lotId: string }) {
       {/* Cabeçalho da página */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <Button variant="ghost" asChild className="mb-2">
+          {/* <Button variant="ghost" asChild className="mb-2">
             <Link href="/demo/dispute" className="flex items-center gap-1">
               <ArrowLeft className="h-4 w-4" />
               Voltar para disputa
             </Link>
-          </Button>
+          </Button> */}
           <h1 className="text-2xl font-bold">Fase Recursal - Pregão Eletrônico nº 23/2025</h1>
-          <p className="text-gray-600 mt-1">
+          {/* <p className="text-gray-600 mt-1">
             <span className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
               Sessão iniciada em: {formatDateTime("2025-06-12T09:30:00Z")}
             </span>
-          </p>
+          </p> */}
         </div>
 
         <div className="flex flex-col items-end">
@@ -235,7 +235,7 @@ export function ResourcePhaseDemoContent({ lotId }: { lotId: string }) {
       </div>
 
       {/* Informações da Licitação */}
-      <Card className="mb-6">
+      {/* <Card className="mb-6">
         <CardHeader className="pb-3">
           <CardTitle>Informações do Lote {currentLot?.number}</CardTitle>
           <CardDescription>
@@ -262,7 +262,7 @@ export function ResourcePhaseDemoContent({ lotId }: { lotId: string }) {
             </AlertDescription>
           </Alert>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Conteúdo principal - Recursos e Decisões */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

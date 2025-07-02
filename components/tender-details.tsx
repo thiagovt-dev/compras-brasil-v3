@@ -12,6 +12,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeftIcon, Users, Eye, Heart, FileText, Gavel, Tag, AlertCircle } from "lucide-react";
+import ResourceManagement from "./resource-management";
+import { TenderWorkflowProvider } from "@/lib/contexts/tender-workflow-context";
+import { ResourcePhaseDemoContent } from "@/app/demo/resource-phase/page";
 
 const TenderDetails = ({
   tender,
@@ -128,7 +131,7 @@ const TenderDetails = ({
         {usingMockData && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
             <p className="text-base text-amber-800">
-              <strong>Modo Demonstração:</strong> Esta licitação não foi encontrada no sistema. 
+              <strong>Modo Demonstração:</strong> Esta licitação não foi encontrada no sistema.
               Exibindo dados de exemplo para demonstração das funcionalidades.
             </p>
           </div>
@@ -172,7 +175,9 @@ const TenderDetails = ({
                   <label className="text-sm font-medium text-gray-600">
                     Critério de julgamento:
                   </label>
-                  <p className="text-base text-gray-900">{tender.judgment_criteria || "Menor Preço"}</p>
+                  <p className="text-base text-gray-900">
+                    {tender.judgment_criteria || "Menor Preço"}
+                  </p>
                 </div>
 
                 <div>
@@ -255,7 +260,10 @@ const TenderDetails = ({
 
             {/* Action Buttons */}
             <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
-              <Button variant="outline" className="flex items-center gap-2" disabled={usingMockData}>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2"
+                disabled={usingMockData}>
                 <Heart className="h-4 w-4" />
                 Favoritar
               </Button>
@@ -326,8 +334,9 @@ const TenderDetails = ({
         <Card className="mt-6">
           <CardContent className="p-0">
             <Tabs defaultValue="impugnations" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="impugnations">Impugnações</TabsTrigger>
+                <TabsTrigger value="resource-phase">Fase Recursal</TabsTrigger>
                 <TabsTrigger value="notices">Avisos</TabsTrigger>
                 <TabsTrigger value="proposals">Propostas</TabsTrigger>
               </TabsList>
@@ -335,6 +344,22 @@ const TenderDetails = ({
               <TabsContent value="impugnations" className="p-6">
                 <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
                   <TenderImpugnations tenderId={tender.id} usingMockData={usingMockData} />
+                </Suspense>
+              </TabsContent>
+
+              <TabsContent value="resource-phase" className="p-6">
+                <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
+                  {/* Exemplo: ajuste os props conforme necessário */}
+                  <TenderWorkflowProvider>
+                    <ResourcePhaseDemoContent lotId={tender.lots?.[0]?.id || "lot-001"} />
+
+                    {/* <ResourceManagement
+                    lotId={tender.lots?.[0]?.id || "lot-001"}
+                    isAuctioneer={isAuctioneer}
+                    isSupplier={isSupplierParticipant}
+                    supplierId={userProfile?.id}
+                  /> */}
+                  </TenderWorkflowProvider>
                 </Suspense>
               </TabsContent>
 

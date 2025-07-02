@@ -314,8 +314,11 @@ export default function RegisterSupplierPage() {
         description:
           "Seu cadastro foi enviado para análise. Você receberá uma notificação quando for aprovado ou se forem necessárias correções.",
       });
-
-      router.push("/dashboard/citizen");
+      if (profile?.profile_type === "citizen") {
+        router.push("/dashboard/citizen");
+      } else if (profile?.profile_type === "admin") {
+        router.push("/dashboard/admin");
+      }
       // Redirect to dashboard
     } catch (error: any) {
       toast({

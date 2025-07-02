@@ -65,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         const session = await getSession();
+        console.log("DEBUG SESSION:", session);
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {

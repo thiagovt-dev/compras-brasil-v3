@@ -69,6 +69,7 @@ const mockSuppliersData: Record<string, any[]> = {
       company: "Tech Solutions LTDA",
       value: 2890.0,
       status: "classified" as SupplierStatus,
+      isSmallBusiness: false,
     },
     {
       id: "s2",
@@ -76,6 +77,7 @@ const mockSuppliersData: Record<string, any[]> = {
       company: "Inovação Digital ME",
       value: 2890.0,
       status: "classified" as SupplierStatus,
+      isSmallBusiness: true,
     },
     {
       id: "s3",
@@ -83,6 +85,7 @@ const mockSuppliersData: Record<string, any[]> = {
       company: "Sistemas Avançados S.A.",
       value: 2904.0,
       status: "classified" as SupplierStatus,
+      isSmallBusiness: true,
     },
   ],
   "lot-002": [
@@ -146,6 +149,9 @@ export function DisputeAuctioneerControls({
   const [timeLimitMinutes, setTimeLimitMinutes] = useState("0");
   const [tiebreakerSuppliers, setTiebreakerSuppliers] = useState<string[]>([]);
   const [tiebreakerTimeLeft, setTiebreakerTimeLeft] = useState<Record<string, number>>({});
+  const [resourceDialogLot, setResourceDialogLot] = useState<string | null>(null);
+  const [resourceHours, setResourceHours] = useState("2");
+  const [resourceMinutes, setResourceMinutes] = useState("0");
 
   const { toast } = useToast();
 
@@ -197,48 +203,80 @@ export function DisputeAuctioneerControls({
       });
       return;
     }
-    setLotStatuses((prev) => ({
-      ...prev,
-      [lotId]: "tiebreaker_active",
-    }));
-    setSuppliersData((prev) => ({
-      ...prev,
-      [lotId]:
-        prev[lotId]?.map((supplier) =>
-          tiedSuppliers.some((tied) => tied.id === supplier.id)
+  
+    // Exemplo: campo isSmallBusiness indica ME/EPP
+    const minValue = Math.min(...tiedSuppliers.map(s => s.value));
+    const meEppSuppliers = tiedSuppliers.filter(s => s.isSmallBusiness);
+    const meEppWithinMargin = meEppSuppliers.find(s => s.value <= minValue * 1.05);
+  
+    if (meEppWithinMargin) {
+      // ME/EPP tem 5 minutos para cobrir o menor lance
+      setLotStatuses((prev) => ({
+        ...prev,
+        [lotId]: "tiebreaker_active",
+      }));
+      setSuppliersData((prev) => ({
+        ...prev,
+        [lotId]: prev[lotId]?.map((supplier) =>
+          supplier.id === meEppWithinMargin.id
             ? { ...supplier, status: "tiebreaker" as SupplierStatus }
             : supplier
         ) || [],
-    }));
-    setTiebreakerTimeLeft((prev) => ({
-      ...prev,
-      [lotId]: 300,
-    }));
-    const intervalKey = `tiebreaker-${lotId}`;
-    const countdownInterval = setInterval(() => {
-      setTiebreakerTimeLeft((prev) => {
-        const currentTime = prev[lotId];
-        if (!currentTime || currentTime <= 1) {
-          clearInterval(countdownInterval);
-          handleTiebreakerEnd(lotId);
-          return { ...prev, [lotId]: 0 };
-        }
-        return { ...prev, [lotId]: currentTime - 1 };
+      }));
+      setTiebreakerTimeLeft((prev) => ({
+        ...prev,
+        [lotId]: 300,
+      }));
+      const intervalKey = `tiebreaker-${lotId}`;
+      const countdownInterval = setInterval(() => {
+        setTiebreakerTimeLeft((prev) => {
+          const currentTime = prev[lotId];
+          if (!currentTime || currentTime <= 1) {
+            clearInterval(countdownInterval);
+            handleTiebreakerEnd(lotId);
+            return { ...prev, [lotId]: 0 };
+          }
+          return { ...prev, [lotId]: currentTime - 1 };
+        });
+      }, 1000);
+      (window as any)[intervalKey] = countdownInterval;
+      onChatMessage(
+        `Desempate ME/EPP: ${meEppWithinMargin.name} pode cobrir o menor lance do Lote ${lotDisplayNumber} em até 5 minutos.`,
+        "system",
+        lotId,
+        "start_tiebreaker"
+      );
+      toast({
+        title: "Desempate ME/EPP",
+        description: `${meEppWithinMargin.name} pode cobrir o menor lance em até 5 minutos.`,
       });
-    }, 1000);
-    (window as any)[intervalKey] = countdownInterval;
-    const supplierNames = tiedSuppliers.map((s) => s.name);
+      return;
+    }
+  
+    // Caso contrário, sorteio automático entre empatados
+    const winner = tiedSuppliers[Math.floor(Math.random() * tiedSuppliers.length)];
+    setSuppliersData((prev) => ({
+      ...prev,
+      [lotId]: prev[lotId]?.map((supplier) =>
+        supplier.id === winner.id
+          ? { ...supplier, status: "classified" as SupplierStatus }
+          : supplier
+      ) || [],
+    }));
+    setLotStatuses((prev) => ({
+      ...prev,
+      [lotId]: "dispute_ended" as LotStatus,
+    }));
+    if (onDisputeFinalized) onDisputeFinalized(lotId);
     onChatMessage(
-      `Iniciada disputa de desempate para o Lote ${lotDisplayNumber}. Fornecedores em disputa: ${supplierNames.join(
-        ", "
-      )}. Tempo: 5 minutos.`,
+      `Desempate por sorteio no Lote ${lotDisplayNumber}. ${winner.name} foi sorteado como vencedor.`,
       "system",
       lotId,
       "start_tiebreaker"
     );
     toast({
-      title: "Disputa de Desempate Iniciada",
-      description: `Lote ${lotDisplayNumber}: Disputa entre ${tiedSuppliers.length} fornecedores por 5 minutos.`,
+      title: "Desempate por Sorteio",
+      description: `${winner.name} foi sorteado como vencedor do Lote ${lotDisplayNumber}.`,
     });
   };
 
@@ -674,19 +712,13 @@ export function DisputeAuctioneerControls({
       case "winner_declared":
         actions.push({
           key: "go_to_resource_phase",
-          label: "Ir para Fase Recursal",
-          description: "Gerenciar recursos em página dedicada",
+          label: "Iniciar Fase Recursal",
+          description: "Definir tempo para manifestação de interesse",
           icon: Scale,
           variant: "default" as const,
           onClick: () => {
-            if (typeof onShowResourcePhase === "function") {
-              onShowResourcePhase(lotId);
-            }
+            setResourceDialogLot(lotId); // Abre o diálogo/modal para definir tempo
           },
-
-          // onClick: () => {
-          //   window.location.href = `/demo/resource-phase?lot=${lotId}`;
-          // },
         });
         break;
     }
@@ -697,6 +729,64 @@ export function DisputeAuctioneerControls({
 
   return (
     <div className="space-y-6">
+      <Dialog open={!!resourceDialogLot} onOpenChange={() => setResourceDialogLot(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Iniciar Fase Recursal</DialogTitle>
+            <DialogDescription>
+              Defina o tempo disponível para manifestação de interesse dos fornecedores.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2">
+            <div>
+              <Label>Horas</Label>
+              <Input
+                type="number"
+                min="0"
+                max="72"
+                value={resourceHours}
+                onChange={(e) => setResourceHours(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Minutos</Label>
+              <Input
+                type="number"
+                min="0"
+                max="59"
+                value={resourceMinutes}
+                onChange={(e) => setResourceMinutes(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResourceDialogLot(null)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                const lotDisplay = getLotDisplayNumber(resourceDialogLot!);
+                const total = `${resourceHours}h${
+                  resourceMinutes !== "0" ? ` ${resourceMinutes}min` : ""
+                }`;
+                onChatMessage(
+                  `A fase recursal foi iniciada para o lote ${lotDisplay}. Tempo para manifestação de interesse: ${total}.`,
+                  "system",
+                  resourceDialogLot!,
+                  "start_resource_phase"
+                );
+                toast({
+                  title: "Fase Recursal Iniciada",
+                  description: `A fase recursal foi iniciada para o lote ${lotDisplay}. Tempo para manifestação: ${total}.`,
+                  variant: "default",
+                });
+                setResourceDialogLot(null);
+              }}>
+              Iniciar Fase Recursal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Header */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">

@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getSupabaseClient } from "@/lib/supabase/client-singleton";
 import { detectDocumentType } from "@/lib/utils/document-utils";
 import { signInWithEmailOrDocument } from "@/lib/supabase/auth-utils";
+import { clearAuthData } from "@/lib/auth-debug";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -64,9 +65,13 @@ export default function LoginPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
+    // Limpa tokens/cookies antigos antes de tentar login
+    clearAuthData();
+
     const inputType = detectDocumentType(emailOrDocument);
     if (inputType === "invalid") {
       setInputError("Formato inválido. Use email, CPF ou CNPJ válido.");
+      setIsSubmitting(false);
       return;
     }
     setInputError("");
@@ -168,6 +173,7 @@ export default function LoginPage() {
                   required
                   disabled={isSubmitting}
                 />
+                {inputError && <div className="text-red-500 text-sm">{inputError}</div>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Senha</Label>

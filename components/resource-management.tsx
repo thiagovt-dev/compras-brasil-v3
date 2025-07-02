@@ -55,14 +55,17 @@ export default function ResourceManagement({
   const {
     resources,
     resourcePhase,
-    manifestationDeadline,
-    resourceDeadline,
-    counterArgumentDeadline,
     updateResource,
     addResourceManifestation,
     submitResource,
     submitCounterArgument,
     judgeResource,
+    manifestationDeadline,
+    setManifestationDeadline,
+    resourceDeadline,
+    setResourceDeadline,
+    counterArgumentDeadline,
+    setCounterArgumentDeadline,
   } = useTenderWorkflow();
 
   // Estados locais
@@ -78,6 +81,10 @@ export default function ResourceManagement({
   >(null);
   const [content, setContent] = useState("");
   const [decision, setDecision] = useState<"procedente" | "improcedente">("improcedente");
+  const [editDeadlinesOpen, setEditDeadlinesOpen] = useState(false);
+  const [manifestationInput, setManifestationInput] = useState(manifestationDeadline ? manifestationDeadline.toISOString().slice(0,16) : "");
+  const [resourceInput, setResourceInput] = useState(resourceDeadline ? resourceDeadline.toISOString().slice(0,16) : "");
+  const [counterInput, setCounterInput] = useState(counterArgumentDeadline ? counterArgumentDeadline.toISOString().slice(0,16) : "");
 
   const { toast } = useToast();
 
@@ -314,7 +321,31 @@ export default function ResourceManagement({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-xl">Fase Recursal</CardTitle>
+              <div className="flex">
+                <CardTitle className="text-xl">Fase Recursal</CardTitle>
+                {isAuctioneer && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="ml-4"
+                    onClick={() => {
+                      setManifestationInput(
+                        manifestationDeadline ? manifestationDeadline.toISOString().slice(0, 16) : ""
+                      );
+                      setResourceInput(
+                        resourceDeadline ? resourceDeadline.toISOString().slice(0, 16) : ""
+                      );
+                      setCounterInput(
+                        counterArgumentDeadline
+                          ? counterArgumentDeadline.toISOString().slice(0, 16)
+                          : ""
+                      );
+                      setEditDeadlinesOpen(true);
+                    }}>
+                    Editar Prazos
+                  </Button>
+                )}
+              </div>
               <CardDescription>
                 Manifestação de intenção, recursos, contrarrazões e julgamento
               </CardDescription>
@@ -437,6 +468,64 @@ export default function ResourceManagement({
             )}
         </CardFooter>
       </Card>
+            <Dialog open={editDeadlinesOpen} onOpenChange={setEditDeadlinesOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Prazos da Fase Recursal</DialogTitle>
+            <DialogDescription>
+              Altere as datas e horários dos prazos conforme necessário.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Manifestação de Interesse</Label>
+              <input
+                type="datetime-local"
+                className="w-full border rounded px-2 py-1"
+                value={manifestationInput}
+                onChange={e => setManifestationInput(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Envio de Recursos</Label>
+              <input
+                type="datetime-local"
+                className="w-full border rounded px-2 py-1"
+                value={resourceInput}
+                onChange={e => setResourceInput(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Envio de Contrarrazões</Label>
+              <input
+                type="datetime-local"
+                className="w-full border rounded px-2 py-1"
+                value={counterInput}
+                onChange={e => setCounterInput(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDeadlinesOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                if (manifestationInput) setManifestationDeadline(new Date(manifestationInput));
+                if (resourceInput) setResourceDeadline(new Date(resourceInput));
+                if (counterInput) setCounterArgumentDeadline(new Date(counterInput));
+                setEditDeadlinesOpen(false);
+                toast({
+                  title: "Prazos atualizados",
+                  description: "Os prazos da fase recursal foram alterados.",
+                });
+              }}
+            >
+              Salvar Prazos
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Lista de recursos */}
       {lotResources.length > 0 ? (
@@ -792,6 +881,8 @@ export default function ResourceManagement({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      
     </div>
   );
 }

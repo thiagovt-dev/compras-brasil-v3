@@ -1,6 +1,7 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Search,
@@ -16,48 +17,65 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
-export const dynamic = "force-dynamic";
+export default function MyTendersPage() {
+  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [myTenders, setMyTenders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-export default async function MyTendersPage() {
-  const cookieStore = await cookies();
-  const supabase = createServerComponentClient({ cookies: () => cookieStore });
+  useEffect(() => {
+    const fetchData = async () => {
+      const supabase = createClientComponentClient();
 
-  // Get current user
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+      // Get current user
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
 
-  if (userError || !user) {
-    redirect("/login");
-  }
+      if (userError || !user) {
+        router.replace("/login");
+        return;
+      }
+      setUser(user);
 
-  // Get user profile
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+      // Get user profile
+      const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
 
-  if (!profile || profile.profile_type !== "supplier") {
-    redirect("/dashboard");
-  }
+      if (!profile || profile.profile_type !== "supplier") {
+        router.replace("/dashboard");
+        return;
+      }
+      setProfile(profile);
 
-  // Fetch tenders where I have proposals
-  const { data: myTenders, error } = await supabase
-    .from("tenders")
-    .select(
-      `
-      *,
-      agency:agencies(name, city, state),
-      proposals!inner(
-        id,
-        status,
-        total_value,
-        created_at,
-        updated_at
-      )
-    `
-    )
-    .eq("proposals.supplier_id", user.id)
-    .order("created_at", { ascending: false });
+      // Fetch tenders where I have proposals
+      const { data: myTenders, error } = await supabase
+        .from("tenders")
+        .select(
+          `
+          *,
+          agency:agencies(name, city, state),
+          proposals!inner(
+            id,
+            status,
+            total_value,
+            created_at,
+            updated_at
+          )
+        `
+        )
+        .eq("proposals.supplier_id", user.id)
+        .order("created_at", { ascending: false });
+
+      setMyTenders(myTenders || []);
+      setLoading(false);
+    };
+
+    fetchData();
+  }, [router]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -107,6 +125,10 @@ export default async function MyTendersPage() {
     return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
   };
 
+  if (loading) {
+    return <div>Carregando...</div>;
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -135,7 +157,7 @@ export default async function MyTendersPage() {
       {myTenders && myTenders.length > 0 ? (
         <div className="grid gap-6">
           {myTenders.map((tender) => {
-            const proposal = tender.proposals[0]; // Since we have inner join, there's always one proposal
+            const proposal = tender.proposals[0];
             return (
               <Card key={tender.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
