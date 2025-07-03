@@ -210,7 +210,7 @@ export const calculateItemTotal = (quantity: string, unitPrice: string): number 
   return qty * price;
 };
 
-// Função para calcular valor total do grupo
+// Função para calcular valor total do Lote
 export const calculateGroupTotal = (items: any[]): number => {
   return items.reduce((total, item) => {
     return total + calculateItemTotal(item.quantity, item.unitPrice);
@@ -318,7 +318,7 @@ export default function CreateTenderPage() {
     },
     itemStructure: "multiple-groups", // Novo campo: 'single', 'multiple', 'group', 'multiple-groups'
     items: [
-      // Novo array para itens sem grupo
+      // Novo array para itens sem Lote
       {
         id: 1,
         description: "",
@@ -828,13 +828,13 @@ export default function CreateTenderPage() {
         const groupTotal = calculateGroupTotal(formData.groups[0].items);
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-medium">Grupo Único</h3>
+            <h3 className="text-lg font-medium">Lote Único</h3>
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-center">
-                  <CardTitle>Grupo 1</CardTitle>
+                  <CardTitle>Lote 1</CardTitle>
                   <div className="text-right">
-                    <div className="text-sm text-muted-foreground">Total do Grupo</div>
+                    <div className="text-sm text-muted-foreground">Total do Lote</div>
                     <div className="text-lg font-bold text-primary">
                       {formatCurrency(groupTotal)}
                     </div>
@@ -858,7 +858,7 @@ export default function CreateTenderPage() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Descrição do Grupo</Label>
+                    <Label>Descrição do Lote</Label>
                     <Input
                       value={formData.groups[0].description}
                       onChange={(e) => handleGroupChange(0, "description", e.target.value)}
@@ -890,7 +890,7 @@ export default function CreateTenderPage() {
                 </div>
                 <div className="mt-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-medium">Itens do Grupo</h4>
+                    <h4 className="font-medium">Itens do Lote</h4>
                     <Button type="button" variant="outline" size="sm" onClick={() => addItem(0)}>
                       <Plus className="mr-2 h-4 w-4" /> Adicionar Item
                     </Button>
@@ -1000,9 +1000,9 @@ export default function CreateTenderPage() {
         return (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Grupos de Itens</h3>
+              <h3 className="text-lg font-medium">Lotes de Itens</h3>
               <Button type="button" variant="outline" size="sm" onClick={addGroup}>
-                <Plus className="mr-2 h-4 w-4" /> Adicionar Grupo
+                <Plus className="mr-2 h-4 w-4" /> Adicionar Lote
               </Button>
             </div>
             {formData.groups.map((group, groupIndex) => {
@@ -1011,10 +1011,10 @@ export default function CreateTenderPage() {
                 <Card key={group.id} className="overflow-hidden">
                   <CardHeader className="bg-gray-50">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-base">Grupo {groupIndex + 1}</CardTitle>
+                      <CardTitle className="text-base">Lote {groupIndex + 1}</CardTitle>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
-                          <div className="text-sm text-muted-foreground">Total do Grupo</div>
+                          <div className="text-sm text-muted-foreground">Total do Lote</div>
                           <div className="text-lg font-bold text-primary">
                             {formatCurrency(groupTotal)}
                           </div>
@@ -1048,7 +1048,7 @@ export default function CreateTenderPage() {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Descrição do Grupo</Label>
+                        <Label>Descrição do Lote</Label>
                         <Input
                           value={group.description}
                           onChange={(e) =>
@@ -1088,7 +1088,7 @@ export default function CreateTenderPage() {
                     </div>
                     <div className="mt-6">
                       <div className="flex items-center justify-between mb-4">
-                        <h4 className="font-medium">Itens do Grupo</h4>
+                        <h4 className="font-medium">Itens do Lote</h4>
                         <Button
                           type="button"
                           variant="outline"
@@ -1211,12 +1211,12 @@ export default function CreateTenderPage() {
               );
             })}
 
-            {/* Total Geral de Todos os Grupos */}
+            {/* Total Geral de Todos os Lotes */}
             <Card className="bg-green-50 border-green-200">
               <CardContent className="p-4">
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-medium text-green-800">
-                    Total Geral de Todos os Grupos:
+                    Total Geral de Todos os Lotes:
                   </span>
                   <span className="text-xl font-bold text-green-900">
                     {formatCurrency(
@@ -1296,7 +1296,7 @@ export default function CreateTenderPage() {
 
       console.log("Opening date and time:", openingDateTime);
 
-      // Determinar itens e grupos para submissão baseado na estrutura escolhida
+      // Determinar itens e Lotes para submissão baseado na estrutura escolhida
       const itemsToSubmit =
         formData.itemStructure === "single" || formData.itemStructure === "multiple"
           ? formData.items
@@ -1310,14 +1310,14 @@ export default function CreateTenderPage() {
       // Calcular valor estimado total
       let totalEstimatedValue = 0;
 
-      // Calcular para itens sem grupo
+      // Calcular para itens sem Lote
       for (const item of itemsToSubmit) {
         const quantity = Number.parseFloat(item.quantity.replace(",", ".")) || 0;
         const unitPrice = Number.parseFloat(item.unitPrice.replace(",", ".")) || 0;
         totalEstimatedValue += quantity * unitPrice;
       }
 
-      // Calcular para grupos e seus itens
+      // Calcular para Lotes e seus itens
       for (const group of groupsToSubmit) {
         for (const item of group.items) {
           const quantity = Number.parseFloat(item.quantity.replace(",", ".")) || 0;
@@ -1403,7 +1403,7 @@ export default function CreateTenderPage() {
         }
       }
 
-      // 3. Criar grupos para submissão
+      // 3. Criar Lotes para submissão
       for (const group of groupsToSubmit) {
         const { data: groupData, error: groupError } = await supabase
           .from("tender_lots")
@@ -1426,7 +1426,7 @@ export default function CreateTenderPage() {
 
         console.log("Group data:", groupData);
 
-        // Criar itens para este grupo
+        // Criar itens para este Lote
         for (const item of group.items) {
           const { error: itemError } = await supabase.from("tender_items").insert({
             lot_id: groupData.id,
@@ -1447,9 +1447,9 @@ export default function CreateTenderPage() {
         }
       }
 
-      // 4. Tratar itens sem grupo (criar um grupo padrão)
+      // 4. Tratar itens sem Lote (criar um Lote padrão)
       if (itemsToSubmit.length > 0) {
-        // Criar um grupo padrão para itens avulsos
+        // Criar um Lote padrão para itens avulsos
         const { data: defaultGroupData, error: groupError } = await supabase
           .from("tender_lots")
           .insert({
@@ -1469,7 +1469,7 @@ export default function CreateTenderPage() {
           throw groupError;
         }
 
-        // Adicionar itens ao grupo padrão
+        // Adicionar itens ao Lote padrão
         for (const item of itemsToSubmit) {
           const { error: itemError } = await supabase.from("tender_items").insert({
             lot_id: defaultGroupData.id,
@@ -1595,7 +1595,7 @@ export default function CreateTenderPage() {
           <CardDescription>
             {currentStep === 1 && "Informações básicas da licitação"}
             {currentStep === 2 && "Equipe responsável pelo processo"}
-            {currentStep === 3 && "Grupos e itens da licitação"}
+            {currentStep === 3 && "Lotes e itens da licitação"}
             {currentStep === 4 && "Documentos e publicação"}
           </CardDescription>
           <div className="flex items-center gap-2 mt-2">
@@ -1617,7 +1617,7 @@ export default function CreateTenderPage() {
         <CardContent>
           <div className="mb-8">
             <StepProgress
-              steps={["Informações Básicas", "Equipe", "Grupos e Itens", "Documentos"]}
+              steps={["Informações Básicas", "Equipe", "Lotes e Itens", "Documentos"]}
               currentStep={currentStep}
             />
           </div>
@@ -1742,7 +1742,7 @@ export default function CreateTenderPage() {
                           formData.modality === "dispensa-eletronica") && (
                           <>
                             <SelectItem value="menor-preco-item">Menor Preço por item</SelectItem>
-                            <SelectItem value="menor-preco-lote">Menor Preço por grupo</SelectItem>
+                            <SelectItem value="menor-preco-lote">Menor Preço por Lote</SelectItem>
                             <SelectItem value="maior-desconto">Maior Desconto</SelectItem>
                             <SelectItem value="menor-taxa">Menor taxa administrativa</SelectItem>
                           </>
@@ -2152,10 +2152,10 @@ export default function CreateTenderPage() {
                           <SelectValue placeholder="Selecione a estrutura" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="single">Um item sem grupo</SelectItem>
-                          <SelectItem value="multiple">Vários itens sem grupo</SelectItem>
-                          <SelectItem value="group">Um grupo com itens</SelectItem>
-                          <SelectItem value="multiple-groups">Vários grupos com itens</SelectItem>
+                          <SelectItem value="single">Um item sem Lote</SelectItem>
+                          <SelectItem value="multiple">Vários itens sem Lote</SelectItem>
+                          <SelectItem value="group">Um Lote com itens</SelectItem>
+                          <SelectItem value="multiple-groups">Vários Lotes com itens</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
