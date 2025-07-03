@@ -225,7 +225,7 @@ export default function MyTendersPage() {
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" asChild>
-                        <Link href={`/dashboard/supplier/proposals/${proposal.id}`}>
+                        <Link href={`/dashboard/tenders/${tender.id}`}>
                           <FileText className="h-4 w-4 mr-2" />
                           Ver Proposta
                         </Link>
