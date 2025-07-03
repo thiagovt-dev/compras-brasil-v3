@@ -11,10 +11,21 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeftIcon, Users, Eye, Heart, FileText, Gavel, Tag, AlertCircle } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  Users,
+  Eye,
+  Heart,
+  FileText,
+  Gavel,
+  Tag,
+  AlertCircle,
+  Send,
+} from "lucide-react";
 import ResourceManagement from "./resource-management";
 import { TenderWorkflowProvider } from "@/lib/contexts/tender-workflow-context";
 import { ResourcePhaseDemoContent } from "@/app/demo/resource-phase/page";
+import { SupplierProposalForm } from "./tenders-supplier-proposal";
 
 const TenderDetails = ({
   tender,
@@ -24,6 +35,7 @@ const TenderDetails = ({
   isAdmin = false,
   isSupplierParticipant = false,
   isCitizen = false,
+  isSupplier = false,
   userProfile,
   usingMockData = false,
 }: {
@@ -34,6 +46,7 @@ const TenderDetails = ({
   isAdmin: boolean;
   isSupplierParticipant: boolean;
   isCitizen: boolean;
+  isSupplier?: boolean;
   userProfile: any;
   usingMockData?: boolean;
 }) => {
@@ -44,6 +57,16 @@ const TenderDetails = ({
 
   // Determinar se pode participar ativamente (não apenas visualizar)
   const canParticipateInDispute = isAuctioneer || isSupplierParticipant;
+
+  // Determinar se pode enviar propostas (fornecedor e licitação publicada)
+  const canSubmitProposals = isSupplier && tender.status === "published";
+
+  // Verificar se o prazo para envio de propostas ainda está em aberto
+  const isProposalDeadlineOpen = () => {
+    if (!tender.proposal_deadline && !tender.closing_date) return true;
+    const deadline = new Date(tender.proposal_deadline || tender.closing_date);
+    return deadline > new Date();
+  };
 
   const getDisputeButtonText = () => {
     if (isAuctioneer) return "Gerenciar Sala de Disputa";
@@ -133,6 +156,15 @@ const TenderDetails = ({
             <p className="text-base text-amber-800">
               <strong>Modo Demonstração:</strong> Esta licitação não foi encontrada no sistema.
               Exibindo dados de exemplo para demonstração das funcionalidades.
+            </p>
+          </div>
+        )}
+
+        {/* Alerta para fornecedores sobre prazo */}
+        {canSubmitProposals && !isProposalDeadlineOpen() && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p className="text-base text-red-800">
+              <strong>Prazo Encerrado:</strong> O prazo para envio de propostas foi encerrado.
             </p>
           </div>
         )}
@@ -282,6 +314,28 @@ const TenderDetails = ({
           </CardContent>
         </Card>
 
+        {/* Formulário de Envio de Propostas para Fornecedores */}
+        {canSubmitProposals && isProposalDeadlineOpen() && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Send className="h-5 w-5" />
+                Envio de Propostas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
+                <SupplierProposalForm
+                  tender={tender}
+                  lots={tender.lots || []}
+                  supplierId={userProfile?.id || "mock-supplier-id"}
+                  usingMockData={usingMockData}
+                />
+              </Suspense>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Content Sections */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column - Solicitations */}
@@ -338,7 +392,7 @@ const TenderDetails = ({
                 <TabsTrigger value="impugnations">Impugnações</TabsTrigger>
                 <TabsTrigger value="resource-phase">Fase Recursal</TabsTrigger>
                 <TabsTrigger value="notices">Avisos</TabsTrigger>
-                <TabsTrigger value="proposals">Propostas</TabsTrigger>
+                {!isSupplier && <TabsTrigger value="proposals">Propostas</TabsTrigger>}{" "}
               </TabsList>
 
               <TabsContent value="impugnations" className="p-6">
@@ -349,16 +403,8 @@ const TenderDetails = ({
 
               <TabsContent value="resource-phase" className="p-6">
                 <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-                  {/* Exemplo: ajuste os props conforme necessário */}
                   <TenderWorkflowProvider>
                     <ResourcePhaseDemoContent lotId={tender.lots?.[0]?.id || "lot-001"} />
-
-                    {/* <ResourceManagement
-                    lotId={tender.lots?.[0]?.id || "lot-001"}
-                    isAuctioneer={isAuctioneer}
-                    isSupplier={isSupplierParticipant}
-                    supplierId={userProfile?.id}
-                  /> */}
                   </TenderWorkflowProvider>
                 </Suspense>
               </TabsContent>
@@ -370,17 +416,19 @@ const TenderDetails = ({
                 </div>
               </TabsContent>
 
-              <TabsContent value="proposals" className="p-6">
-                <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-                  <TenderProposals
-                    tenderId={tender.id}
-                    lots={tender.lots || []}
-                    isAgencyUser={isAgencyUser}
-                    isAuctioneer={isAuctioneer}
-                    usingMockData={usingMockData}
-                  />
-                </Suspense>
-              </TabsContent>
+              {!isSupplier && (
+                <TabsContent value="proposals" className="p-6">
+                  <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+                    <TenderProposals
+                      tenderId={tender.id}
+                      lots={tender.lots || []}
+                      isAgencyUser={isAgencyUser}
+                      isAuctioneer={isAuctioneer}
+                      usingMockData={usingMockData}
+                    />
+                  </Suspense>
+                </TabsContent>
+              )}
             </Tabs>
           </CardContent>
         </Card>

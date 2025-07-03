@@ -366,6 +366,7 @@ export default function TenderDetailPage() {
       showProposals={showProposals}
       isAuctioneer={isAuctioneer as boolean}
       isAdmin={isAdminUser}
+      isSupplier={isSupplierUser}
       isSupplierParticipant={isSupplierParticipant}
       isCitizen={isCitizen}
       userProfile={profile}

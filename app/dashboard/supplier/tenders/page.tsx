@@ -1,8 +1,11 @@
+'use client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Search, Filter } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 export default function SupplierTendersPage() {
+  const router = useRouter();
   return (
     <div className="space-y-6">
       <div>
@@ -41,7 +44,7 @@ export default function SupplierTendersPage() {
                 </p>
               </div>
               <div className="mt-4">
-                <Button>Ver Detalhes</Button>
+                <Button onClick={()=> router.push(`/dashboard/tenders/${tender.id}`)}>Ver Detalhes</Button>
               </div>
             </CardContent>
           </Card>
