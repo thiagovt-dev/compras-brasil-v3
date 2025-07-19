@@ -13,3 +13,14 @@ export function formatFileSize(bytes: number, decimalPoint = 2) {
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i]
 }
+
+export function formatCurrency(value: number | null | undefined): string {
+  if (value === null || value === undefined) {
+    return "Valor não informado";
+  }
+  
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value);
+}

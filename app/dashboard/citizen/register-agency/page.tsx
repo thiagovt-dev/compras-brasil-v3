@@ -1,20 +1,33 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { StepProgress } from "@/components/step-progress"
-import { useToast } from "@/hooks/use-toast"
-import { createClientSupabaseClient } from "@/lib/supabase/client"
-import { useAuth } from "@/lib/supabase/auth-context"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { StepProgress } from "@/components/step-progress";
+import { useToast } from "@/hooks/use-toast";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/supabase/auth-context";
 import {
   Landmark,
   FileText,
@@ -28,38 +41,38 @@ import {
   ChevronRight,
   ChevronLeft,
   PlusCircle,
-} from "lucide-react"
-import { useCepLookup } from "@/hooks/use-cep-lookup"
+} from "lucide-react";
+import { useCepLookup } from "@/hooks/use-cep-lookup";
 
 export default function RegisterAgencyPage() {
-  const router = useRouter()
-  const { toast } = useToast()
-  const { user, profile, signUp } = useAuth()
-  const supabase = createClientSupabaseClient()
+  const router = useRouter();
+  const { toast } = useToast();
+  const { user, profile, signUp } = useAuth();
+  const supabase = createClientSupabaseClient();
 
-  const { data: cepData, loading: cepLoading, error: cepError, fetchCep } = useCepLookup()
+  const { data: cepData, loading: cepLoading, error: cepError, fetchCep } = useCepLookup();
 
   useEffect(() => {
-    console.log(cepData)
+    console.log(cepData);
     if (cepData && cepData.logradouro) {
       setFormData((prev) => ({
         ...prev,
         address: `${cepData.logradouro}${cepData.bairro ? ", " + cepData.bairro : ""}${
           cepData.localidade ? " - " + cepData.localidade : ""
         }${cepData.uf ? "/" + cepData.uf : ""}`,
-      }))
+      }));
     }
-  }, [cepData])
+  }, [cepData]);
 
-  const [currentStep, setCurrentStep] = useState(1)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [documents, setDocuments] = useState<{
-    normativeAct: File | null
-    termsOfAgreement: File | null
+    normativeAct: File | null;
+    termsOfAgreement: File | null;
   }>({
     normativeAct: null,
     termsOfAgreement: null,
-  })
+  });
   const [formData, setFormData] = useState({
     cep: "",
     agencyName: "",
@@ -71,27 +84,27 @@ export default function RegisterAgencyPage() {
     phone: "",
     website: "",
     description: "",
-  })
+  });
   const [users, setUsers] = useState<
     {
-      name: string
-      email: string
-      cpf: string
-      document: string // Campo adicionado para documento/senha temporária
-      role: "auctioneer" | "authority" | "agency_support" // Alterado para agency_support
+      name: string;
+      email: string;
+      cpf: string;
+      document: string; // Campo adicionado para documento/senha temporária
+      role: "auctioneer" | "authority" | "agency_support"; // Alterado para agency_support
     }[]
   >([
     { name: "", email: "", cpf: "", document: "", role: "auctioneer" },
     { name: "", email: "", cpf: "", document: "", role: "authority" },
     { name: "", email: "", cpf: "", document: "", role: "agency_support" }, // Alterado para agency_support
-  ])
+  ]);
 
   const steps = [
     { id: 1, name: "Dados Básicos" },
     { id: 2, name: "Usuários" },
     { id: 3, name: "Documentos" },
     { id: 4, name: "Revisão" },
-  ]
+  ];
 
   // Format functions
   const formatCNPJ = (value: string) => {
@@ -101,8 +114,8 @@ export default function RegisterAgencyPage() {
       .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
       .replace(/\.(\d{3})(\d)/, ".$1/$2")
       .replace(/(\d{4})(\d)/, "$1-$2")
-      .replace(/(-\d{2})\d+?$/, "$1")
-  }
+      .replace(/(-\d{2})\d+?$/, "$1");
+  };
 
   const formatCPF = (value: string) => {
     return value
@@ -110,73 +123,76 @@ export default function RegisterAgencyPage() {
       .replace(/(\d{3})(\d)/, "$1.$2")
       .replace(/(\d{3})(\d)/, "$1.$2")
       .replace(/(\d{3})(\d{1,2})/, "$1-$2")
-      .replace(/(-\d{2})\d+?$/, "$1")
-  }
+      .replace(/(-\d{2})\d+?$/, "$1");
+  };
 
   const formatPhone = (value: string) => {
     return value
       .replace(/\D/g, "")
       .replace(/(\d{2})(\d)/, "($1) $2")
       .replace(/(\d{5})(\d)/, "$1-$2")
-      .replace(/(-\d{4})\d+?$/, "$1")
-  }
+      .replace(/(-\d{4})\d+?$/, "$1");
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
 
     if (name === "cnpj") {
-      setFormData({ ...formData, [name]: formatCNPJ(value) })
+      setFormData({ ...formData, [name]: formatCNPJ(value) });
     } else if (name === "phone") {
-      setFormData({ ...formData, [name]: formatPhone(value) })
+      setFormData({ ...formData, [name]: formatPhone(value) });
     } else {
-      setFormData({ ...formData, [name]: value })
+      setFormData({ ...formData, [name]: value });
     }
-  }
+  };
 
   const handleUserChange = (index: number, field: string, value: string) => {
-    const updatedUsers = [...users]
+    const updatedUsers = [...users];
     if (field === "cpf" || field === "document") {
-      updatedUsers[index] = { ...updatedUsers[index], [field]: formatCPF(value) }
+      updatedUsers[index] = { ...updatedUsers[index], [field]: formatCPF(value) };
     } else {
-      updatedUsers[index] = { ...updatedUsers[index], [field]: value }
+      updatedUsers[index] = { ...updatedUsers[index], [field]: value };
     }
-    setUsers(updatedUsers)
-  }
+    setUsers(updatedUsers);
+  };
 
   const addUser = () => {
-    setUsers([...users, { name: "", email: "", cpf: "", document: "", role: "agency_support" }]) // Alterado para agency_support
-  }
+    setUsers([...users, { name: "", email: "", cpf: "", document: "", role: "agency_support" }]); // Alterado para agency_support
+  };
 
   const removeUser = (index: number) => {
     if (users.length > 3) {
-      setUsers(users.filter((_, i) => i !== index))
+      setUsers(users.filter((_, i) => i !== index));
     } else {
       toast({
         title: "Não é possível remover",
         description:
           "É necessário ter pelo menos um pregoeiro, uma autoridade superior e um membro da equipe de apoio.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, documentType: keyof typeof documents) => {
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    documentType: keyof typeof documents
+  ) => {
     if (e.target.files && e.target.files[0]) {
-      setDocuments({ ...documents, [documentType]: e.target.files[0] })
+      setDocuments({ ...documents, [documentType]: e.target.files[0] });
     }
-  }
+  };
 
   const nextStep = () => {
     if (validateCurrentStep()) {
-      setCurrentStep(currentStep + 1)
-      window.scrollTo(0, 0)
+      setCurrentStep(currentStep + 1);
+      window.scrollTo(0, 0);
     }
-  }
+  };
 
   const prevStep = () => {
-    setCurrentStep(currentStep - 1)
-    window.scrollTo(0, 0)
-  }
+    setCurrentStep(currentStep - 1);
+    window.scrollTo(0, 0);
+  };
 
   const validateCurrentStep = () => {
     switch (currentStep) {
@@ -194,15 +210,15 @@ export default function RegisterAgencyPage() {
             title: "Campos obrigatórios",
             description: "Por favor, preencha todos os campos obrigatórios.",
             variant: "destructive",
-          })
-          return false
+          });
+          return false;
         }
-        return true
+        return true;
       case 2:
         // Check if we have at least one of each role
-        const hasAuctioneer = users.some((user) => user.role === "auctioneer")
-        const hasAuthority = users.some((user) => user.role === "authority")
-        const hasSupport = users.some((user) => user.role === "agency_support")
+        const hasAuctioneer = users.some((user) => user.role === "auctioneer");
+        const hasAuthority = users.some((user) => user.role === "authority");
+        const hasSupport = users.some((user) => user.role === "agency_support");
 
         if (!hasAuctioneer || !hasAuthority || !hasSupport) {
           toast({
@@ -210,8 +226,8 @@ export default function RegisterAgencyPage() {
             description:
               "É necessário ter pelo menos um pregoeiro, uma autoridade superior e um membro da equipe de apoio.",
             variant: "destructive",
-          })
-          return false
+          });
+          return false;
         }
 
         // Check if all users have complete information
@@ -221,42 +237,42 @@ export default function RegisterAgencyPage() {
               title: "Dados incompletos",
               description: "Por favor, preencha todos os dados dos usuários.",
               variant: "destructive",
-            })
-            return false
+            });
+            return false;
           }
         }
-        return true
+        return true;
       case 3:
         if (!documents.normativeAct || !documents.termsOfAgreement) {
           toast({
             title: "Documentos obrigatórios",
             description: "Por favor, anexe todos os documentos obrigatórios.",
             variant: "destructive",
-          })
-          return false
+          });
+          return false;
         }
-        return true
+        return true;
       default:
-        return true
+        return true;
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+    e.preventDefault();
+    setIsSubmitting(true);
 
     try {
-      console.log("🚀 Iniciando cadastro do órgão...")
-      console.log("Form data:", formData)
+      console.log("🚀 Iniciando cadastro do órgão...");
+      console.log("Form data:", formData);
 
       // Validar dados antes de enviar
       if (!formData.agencyName || !formData.cnpj || !formData.email) {
-        throw new Error("Dados obrigatórios não preenchidos")
+        throw new Error("Dados obrigatórios não preenchidos");
       }
 
-      console.log("📝 Inserindo órgão na tabela agencies...")
+      console.log("📝 Inserindo órgão na tabela agencies...");
 
-      console.log(supabase)
+      console.log(supabase);
 
       const { data: agencyData, error: agencyError } = await supabase
         .from("agencies")
@@ -274,26 +290,26 @@ export default function RegisterAgencyPage() {
           updated_at: new Date().toISOString(),
         })
         .select()
-        .single()
+        .single();
 
-      console.log("🏢 Resultado da criação do órgão:", { agencyData, agencyError })
+      console.log("🏢 Resultado da criação do órgão:", { agencyData, agencyError });
 
       if (agencyError) {
-        console.error("❌ Erro ao criar órgão:", agencyError)
-        throw new Error(`Erro ao criar órgão: ${agencyError.message}`)
+        console.error("Erro ao criar órgão:", agencyError);
+        throw new Error(`Erro ao criar órgão: ${agencyError.message}`);
       }
 
       if (!agencyData) {
-        throw new Error("Órgão não foi criado - dados não retornados")
+        throw new Error("Órgão não foi criado - dados não retornados");
       }
 
-      const agencyId = agencyData.id
-      console.log("✅ Órgão criado com ID:", agencyId)
+      const agencyId = agencyData.id;
+      console.log("✅ Órgão criado com ID:", agencyId);
 
       // Atualizar profile do usuário atual se for citizen
-      let userProfileUpdated = false
+      let userProfileUpdated = false;
       if (profile?.profile_type === "citizen") {
-        console.log("👤 Atualizando profile do usuário de citizen para agency...")
+        console.log("👤 Atualizando profile do usuário de citizen para agency...");
 
         const { error: updateProfileError } = await supabase
           .from("profiles")
@@ -302,57 +318,63 @@ export default function RegisterAgencyPage() {
             agency_id: agencyId,
             updated_at: new Date().toISOString(),
           })
-          .eq("id", user?.id)
+          .eq("id", user?.id);
 
         if (updateProfileError) {
-          console.error("❌ Erro ao atualizar profile do usuário:", updateProfileError)
+          console.error("Erro ao atualizar profile do usuário:", updateProfileError);
           // Não falha o processo, mas avisa
         } else {
-          console.log("✅ Profile do usuário atualizado para agency")
-          userProfileUpdated = true
+          console.log("✅ Profile do usuário atualizado para agency");
+          userProfileUpdated = true;
         }
       }
 
-      console.log("👥 Iniciando criação de usuários...")
-      console.log("Usuários a serem criados:", users)
+      console.log("👥 Iniciando criação de usuários...");
+      console.log("Usuários a serem criados:", users);
 
       // Filtrar usuários válidos
       const validUsers = users.filter(
-        (userInfo) => userInfo.name?.trim() && userInfo.email?.trim() && userInfo.document?.trim() && userInfo.role,
-      )
+        (userInfo) =>
+          userInfo.name?.trim() &&
+          userInfo.email?.trim() &&
+          userInfo.document?.trim() &&
+          userInfo.role
+      );
 
-      console.log("Usuários válidos:", validUsers)
+      console.log("Usuários válidos:", validUsers);
 
       if (validUsers.length === 0) {
-        console.warn("⚠️ Nenhum usuário válido para criar")
+        console.warn("⚠️ Nenhum usuário válido para criar");
         toast({
           title: "Aviso",
           description: "Nenhum usuário válido foi encontrado para criação.",
           variant: "destructive",
-        })
+        });
       }
 
       // Criar usuários sequencialmente para evitar problemas de concorrência
-      const userResults = []
+      const userResults = [];
 
       for (const [index, userInfo] of validUsers.entries()) {
         try {
-          console.log(`👤 Criando usuário ${index + 1}/${validUsers.length}: ${userInfo.email}`)
+          console.log(`👤 Criando usuário ${index + 1}/${validUsers.length}: ${userInfo.email}`);
 
           // Usar o documento como senha temporária (sem formatação)
-          const tempPassword = userInfo.document.replace(/\D/g, "")
+          const tempPassword = userInfo.document.replace(/\D/g, "");
 
           if (tempPassword.length < 6) {
-            console.error(`❌ Documento muito curto para ${userInfo.email}:`, tempPassword.length)
+            console.error(`Documento muito curto para ${userInfo.email}:`, tempPassword.length);
             userResults.push({
               success: false,
               email: userInfo.email,
               error: "Documento deve ter pelo menos 6 dígitos para usar como senha",
-            })
-            continue
+            });
+            continue;
           }
 
-          console.log(`🔑 Senha temporária para ${userInfo.email}: ${tempPassword.substring(0, 3)}***`)
+          console.log(
+            `🔑 Senha temporária para ${userInfo.email}: ${tempPassword.substring(0, 3)}***`
+          );
 
           // Preparar dados do usuário para o signUp
           const userData = {
@@ -361,53 +383,53 @@ export default function RegisterAgencyPage() {
             cpf: userInfo.document.replace(/\D/g, ""),
             profile_type: userInfo.role,
             agency_id: agencyId,
-          }
+          };
 
-          console.log(`📋 Dados do usuário ${userInfo.email}:`, userData)
+          console.log(`📋 Dados do usuário ${userInfo.email}:`, userData);
 
           // Usar o método signUp do auth-context
-          const signUpResult = await signUp(userInfo.email, tempPassword, userData)
+          const signUpResult = await signUp(userInfo.email, tempPassword, userData);
 
-          console.log(`📤 Resultado signUp para ${userInfo.email}:`, signUpResult)
+          console.log(`📤 Resultado signUp para ${userInfo.email}:`, signUpResult);
 
           if (signUpResult.error) {
-            console.error(`❌ Erro ao criar usuário ${userInfo.email}:`, signUpResult.error)
+            console.error(`Erro ao criar usuário ${userInfo.email}:`, signUpResult.error);
             userResults.push({
               success: false,
               email: userInfo.email,
               error: signUpResult.error.message,
-            })
-            continue
+            });
+            continue;
           }
 
-          console.log(`✅ Usuário criado com sucesso: ${userInfo.email}`)
+          console.log(`✅ Usuário criado com sucesso: ${userInfo.email}`);
           userResults.push({
             success: true,
             email: userInfo.email,
             userId: signUpResult.user?.id,
-          })
+          });
 
           // Pequena pausa entre criações para evitar rate limiting
-          await new Promise((resolve) => setTimeout(resolve, 500))
+          await new Promise((resolve) => setTimeout(resolve, 500));
         } catch (error) {
-          console.error(`💥 Erro geral ao criar usuário ${userInfo.email}:`, error)
+          console.error(`💥 Erro geral ao criar usuário ${userInfo.email}:`, error);
           userResults.push({
             success: false,
             email: userInfo.email,
             error: error instanceof Error ? error.message : "Erro desconhecido",
-          })
+          });
         }
       }
 
       // Contar sucessos e falhas
-      const successfulUsers = userResults.filter((result) => result.success)
-      const failedUsers = userResults.filter((result) => !result.success)
+      const successfulUsers = userResults.filter((result) => result.success);
+      const failedUsers = userResults.filter((result) => !result.success);
 
-      console.log(`✅ Usuários criados com sucesso: ${successfulUsers.length}`)
-      console.log(`❌ Usuários que falharam: ${failedUsers.length}`)
+      console.log(`✅ Usuários criados com sucesso: ${successfulUsers.length}`);
+      console.log(`Usuários que falharam: ${failedUsers.length}`);
 
       if (failedUsers.length > 0) {
-        console.warn("⚠️ Alguns usuários não foram criados:", failedUsers)
+        console.warn("⚠️ Alguns usuários não foram criados:", failedUsers);
       }
 
       // Mostrar toast de sucesso
@@ -417,12 +439,12 @@ export default function RegisterAgencyPage() {
             title: "Cadastro enviado com sucesso! 🎉",
             description: `Órgão cadastrado e ${successfulUsers.length} usuários criados. SEU PERFIL FOI ATUALIZADO PARA ÓRGÃO! Você precisa sair e entrar novamente para acessar o painel do órgão.`,
             duration: 8000,
-          })
+          });
         } else {
           toast({
             title: "Cadastro enviado com sucesso",
             description: `Órgão cadastrado e ${successfulUsers.length} usuários criados. O cadastro foi enviado para análise.`,
-          })
+          });
         }
       } else {
         if (userProfileUpdated) {
@@ -431,17 +453,17 @@ export default function RegisterAgencyPage() {
             description: `Órgão cadastrado com ${successfulUsers.length} usuários. ${failedUsers.length} usuários falharam. SEU PERFIL FOI ATUALIZADO! Saia e entre novamente para ver o painel do órgão.`,
             variant: "destructive",
             duration: 8000,
-          })
+          });
         } else {
           toast({
             title: "Cadastro parcialmente concluído",
             description: `Órgão cadastrado com ${successfulUsers.length} usuários. ${failedUsers.length} usuários falharam na criação.`,
             variant: "destructive",
-          })
+          });
         }
       }
 
-      console.log("🎉 Processo de cadastro concluído!")
+      console.log("🎉 Processo de cadastro concluído!");
 
       // Se o profile foi atualizado, redirecionar para logout
       if (userProfileUpdated) {
@@ -449,26 +471,26 @@ export default function RegisterAgencyPage() {
           toast({
             title: "Redirecionando para logout...",
             description: "Você será deslogado automaticamente para aplicar as mudanças.",
-          })
+          });
           setTimeout(() => {
-            window.location.href = "/login?message=profile-updated"
-          }, 3000)
-        }, 2000)
+            window.location.href = "/login?message=profile-updated";
+          }, 3000);
+        }, 2000);
       } else {
         // Redirect normal to dashboard
-        router.push("/dashboard/citizen")
+        router.push("/dashboard/citizen");
       }
     } catch (error: any) {
-      console.error("💥 Erro geral no cadastro:", error)
+      console.error("💥 Erro geral no cadastro:", error);
       toast({
         title: "Erro ao enviar cadastro",
         description: error.message || "Ocorreu um erro ao processar seu cadastro",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -540,8 +562,7 @@ export default function RegisterAgencyPage() {
                     </Label>
                     <Select
                       value={formData.agencyType}
-                      onValueChange={(value) => setFormData({ ...formData, agencyType: value })}
-                    >
+                      onValueChange={(value) => setFormData({ ...formData, agencyType: value })}>
                       <SelectTrigger id="agencyType">
                         <SelectValue placeholder="Selecione o tipo de órgão" />
                       </SelectTrigger>
@@ -551,12 +572,16 @@ export default function RegisterAgencyPage() {
                         <SelectItem value="autarquia">Autarquia</SelectItem>
                         <SelectItem value="fundacao">Fundação</SelectItem>
                         <SelectItem value="empresa_publica">Empresa Pública</SelectItem>
-                        <SelectItem value="sociedade_economia_mista">Sociedade de Economia Mista</SelectItem>
+                        <SelectItem value="sociedade_economia_mista">
+                          Sociedade de Economia Mista
+                        </SelectItem>
                         <SelectItem value="agencia_reguladora">Agência Reguladora</SelectItem>
                         <SelectItem value="tribunal">Tribunal</SelectItem>
                         <SelectItem value="prefeitura">Prefeitura</SelectItem>
                         <SelectItem value="camara_municipal">Câmara Municipal</SelectItem>
-                        <SelectItem value="assembleia_legislativa">Assembleia Legislativa</SelectItem>
+                        <SelectItem value="assembleia_legislativa">
+                          Assembleia Legislativa
+                        </SelectItem>
                         <SelectItem value="outro">Outro</SelectItem>
                       </SelectContent>
                     </Select>
@@ -567,8 +592,7 @@ export default function RegisterAgencyPage() {
                     </Label>
                     <Select
                       value={formData.sphere}
-                      onValueChange={(value) => setFormData({ ...formData, sphere: value })}
-                    >
+                      onValueChange={(value) => setFormData({ ...formData, sphere: value })}>
                       <SelectTrigger id="sphere">
                         <SelectValue placeholder="Selecione a esfera" />
                       </SelectTrigger>
@@ -594,9 +618,11 @@ export default function RegisterAgencyPage() {
                       value={formData.cep}
                       className="w-1/4"
                       onChange={(e) => {
-                        const cep = e.target.value.replace(/\D/g, "").replace(/^(\d{5})(\d)/, "$1-$2")
-                        setFormData({ ...formData, cep })
-                        if (cep.length === 9) fetchCep(cep)
+                        const cep = e.target.value
+                          .replace(/\D/g, "")
+                          .replace(/^(\d{5})(\d)/, "$1-$2");
+                        setFormData({ ...formData, cep });
+                        if (cep.length === 9) fetchCep(cep);
                       }}
                       maxLength={9}
                       required
@@ -693,8 +719,8 @@ export default function RegisterAgencyPage() {
                     </div>
                     <div className="ml-3">
                       <p>
-                        É necessário cadastrar pelo menos um pregoeiro/agente de contratação, uma autoridade superior e
-                        um membro da equipe de apoio.
+                        É necessário cadastrar pelo menos um pregoeiro/agente de contratação, uma
+                        autoridade superior e um membro da equipe de apoio.
                       </p>
                     </div>
                   </div>
@@ -710,8 +736,7 @@ export default function RegisterAgencyPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => removeUser(index)}
-                          className="text-red-500"
-                        >
+                          className="text-red-500">
                           Remover
                         </Button>
                       )}
@@ -746,7 +771,9 @@ export default function RegisterAgencyPage() {
                           maxLength={14}
                           required
                         />
-                        <p className="text-xs text-muted-foreground">Este documento será usado como senha temporária</p>
+                        <p className="text-xs text-muted-foreground">
+                          Este documento será usado como senha temporária
+                        </p>
                       </div>
                     </div>
 
@@ -775,14 +802,19 @@ export default function RegisterAgencyPage() {
                         <Select
                           value={user.role}
                           onValueChange={(value) =>
-                            handleUserChange(index, "role", value as "auctioneer" | "authority" | "agency_support")
-                          }
-                        >
+                            handleUserChange(
+                              index,
+                              "role",
+                              value as "auctioneer" | "authority" | "agency_support"
+                            )
+                          }>
                           <SelectTrigger id={`role-${index}`}>
                             <SelectValue placeholder="Selecione a função" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="auctioneer">Pregoeiro/Agente de Contratação</SelectItem>
+                            <SelectItem value="auctioneer">
+                              Pregoeiro/Agente de Contratação
+                            </SelectItem>
                             <SelectItem value="authority">Autoridade Superior</SelectItem>
                             <SelectItem value="agency_support">Equipe de Apoio</SelectItem>
                           </SelectContent>
@@ -804,8 +836,8 @@ export default function RegisterAgencyPage() {
                     </div>
                     <div className="ml-3">
                       <p>
-                        O documento informado será usado como senha temporária para o primeiro acesso. O usuário deverá
-                        alterar a senha no primeiro login.
+                        O documento informado será usado como senha temporária para o primeiro
+                        acesso. O usuário deverá alterar a senha no primeiro login.
                       </p>
                     </div>
                   </div>
@@ -869,9 +901,9 @@ export default function RegisterAgencyPage() {
                     </div>
                     <div className="ml-3">
                       <p>
-                        Após o preenchimento e anexar esses documentos, o cadastro será enviado para análise. Uma vez
-                        não aprovado, o cadastro volta para o usuário com as observações para correção e reenvio até que
-                        seja aprovado.
+                        Após o preenchimento e anexar esses documentos, o cadastro será enviado para
+                        análise. Uma vez não aprovado, o cadastro volta para o usuário com as
+                        observações para correção e reenvio até que seja aprovado.
                       </p>
                     </div>
                   </div>
@@ -962,8 +994,8 @@ export default function RegisterAgencyPage() {
                 <div className="flex items-center space-x-2">
                   <Checkbox id="terms" required />
                   <Label htmlFor="terms" className="text-[1rem]">
-                    Declaro que todas as informações fornecidas são verdadeiras e que estou ciente das responsabilidades
-                    legais decorrentes da falsidade das informações prestadas.
+                    Declaro que todas as informações fornecidas são verdadeiras e que estou ciente
+                    das responsabilidades legais decorrentes da falsidade das informações prestadas.
                   </Label>
                 </div>
               </div>
@@ -977,7 +1009,10 @@ export default function RegisterAgencyPage() {
               Voltar
             </Button>
           ) : (
-            <Button type="button" variant="outline" onClick={() => router.push("/dashboard/citizen")}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/dashboard/citizen")}>
               <ChevronLeft className="mr-2 h-4 w-4" />
               Cancelar
             </Button>
@@ -996,7 +1031,7 @@ export default function RegisterAgencyPage() {
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }
 
 // Helper functions to get labels
@@ -1014,9 +1049,9 @@ function getAgencyTypeLabel(value: string): string {
     camara_municipal: "Câmara Municipal",
     assembleia_legislativa: "Assembleia Legislativa",
     outro: "Outro",
-  }
+  };
 
-  return agencyTypes[value] || value
+  return agencyTypes[value] || value;
 }
 
 function getSphereLabel(value: string): string {
@@ -1025,9 +1060,9 @@ function getSphereLabel(value: string): string {
     estadual: "Estadual",
     municipal: "Municipal",
     distrital: "Distrital",
-  }
+  };
 
-  return spheres[value] || value
+  return spheres[value] || value;
 }
 
 function getRoleLabel(value: string): string {
@@ -1035,7 +1070,7 @@ function getRoleLabel(value: string): string {
     auctioneer: "Pregoeiro/Agente de Contratação",
     authority: "Autoridade Superior",
     agency_support: "Equipe de Apoio",
-  }
+  };
 
-  return roles[value] || value
+  return roles[value] || value;
 }

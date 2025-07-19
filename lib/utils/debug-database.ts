@@ -11,7 +11,7 @@ export async function debugProfilesTable() {
     .limit(10);
 
   if (error) {
-    console.error("❌ Erro ao buscar profiles:", error);
+    console.error("Erro ao buscar profiles:", error);
     return;
   }
 

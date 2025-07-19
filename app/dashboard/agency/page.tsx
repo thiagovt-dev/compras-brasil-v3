@@ -1,34 +1,84 @@
-"use client";
-
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock, PlusCircle, BarChart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/lib/supabase/auth-context";
+import { 
+  fetchActiveTendersByAgency, 
+  fetchRecentTendersByAgency, 
+  fetchAgencyStats 
+} from "@/lib/actions/tenderAction";
+import { requireAgencyUser } from "@/lib/actions/authAction";
+import { formatCurrency } from "@/lib/utils";
 
-export default function AgencyDashboard() {
-  const { profile, isLoading } = useAuth();
+function formatStatus(status: string) {
+  const statusMap = {
+    "published": "Publicada",
+    "in_progress": "Em Andamento", 
+    "completed": "Concluída",
+    "cancelled": "Cancelada",
+    "revoked": "Revogada",
+    "failed": "Fracassada",
+    "deserted": "Deserta"
+  };
+  return statusMap[status as keyof typeof statusMap] || status;
+}
 
-  // Mostrar loading se ainda estiver carregando o perfil
-  if (isLoading) {
+function getBadgeVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
+  switch (status) {
+    case "published":
+      return "secondary";
+    case "in_progress":
+      return "default";
+    case "completed":
+      return "outline";
+    case "cancelled":
+    case "revoked":
+      return "destructive";
+    default:
+      return "outline";
+  }
+}
+
+export default async function AgencyDashboard() {
+  // Verificar autenticação e obter dados do usuário via server action
+  const authResult = await requireAgencyUser();
+  
+  if (!authResult.success) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-sm text-muted-foreground">Carregando painel...</p>
+          <h2 className="text-lg font-semibold">Acesso não autorizado</h2>
+          <p className="text-muted-foreground">Você precisa estar vinculado a um órgão público.</p>
         </div>
       </div>
     );
   }
+
+  const { profile, agencyId } = authResult.data ?? {};
+
+  // Buscar dados da agência em paralelo
+  const [activeTendersResult, recentTendersResult, statsResult] = await Promise.all([
+    fetchActiveTendersByAgency(agencyId, 3),
+    fetchRecentTendersByAgency(agencyId, 3),
+    fetchAgencyStats(agencyId)
+  ]);
+
+  const activeTenders = activeTendersResult.success ? activeTendersResult.data : [];
+  const recentTenders = recentTendersResult.success ? recentTendersResult.data : [];
+  const stats = statsResult.success ? statsResult.data : {
+    activeTenders: 0,
+    completedTenders: 0,
+    totalValue: 0,
+    totalTenders: 0
+  };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Painel do Órgão Público</h1>
         <p className="text-muted-foreground">
-          Bem-vindo ao sistema Licitações Brasil. Gerencie suas licitações e acompanhe processos em
-          andamento.
+          Bem-vindo ao sistema Licitações Brasil, {profile.name}. Gerencie suas licitações e acompanhe processos em andamento.
         </p>
       </div>
 
@@ -92,24 +142,42 @@ export default function AgencyDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {activeTenders.map((tender) => (
-                <div key={tender.id} className="flex items-center justify-between border-b pb-4">
-                  <div>
-                    <h3 className="font-medium">{tender.title}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <p className="text-[1rem] text-muted-foreground">{tender.number}</p>
-                      <Badge variant="outline">{tender.status}</Badge>
+            {activeTenders && activeTenders.length > 0 ? (
+              <div className="space-y-4">
+                {activeTenders.map((tender: any) => (
+                  <div key={tender.id} className="flex items-center justify-between border-b pb-4">
+                    <div className="flex-1">
+                      <h3 className="font-medium">{tender.title}</h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-sm text-muted-foreground">{tender.tender_number}</p>
+                        <Badge variant={getBadgeVariant(tender.status)}>
+                          {formatStatus(tender.status)}
+                        </Badge>
+                      </div>
+                      {tender.estimated_value && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {formatCurrency(tender.estimated_value)}
+                        </p>
+                      )}
                     </div>
+                    <Link href={`/dashboard/agency/active-tenders/${tender.id}`}>
+                      <Button variant="outline" size="sm">
+                        Gerenciar
+                      </Button>
+                    </Link>
                   </div>
-                  <Link href={`/dashboard/agency/active-tenders/${tender.id}`}>
-                    <Button variant="outline" size="sm">
-                      Gerenciar
-                    </Button>
-                  </Link>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Nenhuma licitação ativa no momento.</p>
+                <Link href="/dashboard/agency/create-tender">
+                  <Button variant="outline" size="sm" className="mt-2">
+                    Criar primeira licitação
+                  </Button>
+                </Link>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -117,7 +185,7 @@ export default function AgencyDashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Licitações Recentes</CardTitle>
-              <Link href="/dashboard/agency/active-tenders">
+              <Link href="/dashboard/agency/tenders">
                 <Button variant="ghost" size="sm">
                   Ver todas
                 </Button>
@@ -125,24 +193,37 @@ export default function AgencyDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentTenders.map((tender) => (
-                <div key={tender.id} className="flex items-center justify-between border-b pb-4">
-                  <div>
-                    <h3 className="font-medium">{tender.title}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <p className="text-[1rem] text-muted-foreground">{tender.number}</p>
-                      <Badge variant="default">{tender.result}</Badge>
+            {recentTenders && recentTenders.length > 0 ? (
+              <div className="space-y-4">
+                {recentTenders.map((tender: any) => (
+                  <div key={tender.id} className="flex items-center justify-between border-b pb-4">
+                    <div className="flex-1">
+                      <h3 className="font-medium">{tender.title}</h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-sm text-muted-foreground">{tender.tender_number}</p>
+                        <Badge variant={getBadgeVariant(tender.status)}>
+                          {formatStatus(tender.status)}
+                        </Badge>
+                      </div>
+                      {tender.estimated_value && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {formatCurrency(tender.estimated_value)}
+                        </p>
+                      )}
                     </div>
+                    <Link href={`/dashboard/agency/tenders/${tender.id}`}>
+                      <Button variant="outline" size="sm">
+                        Detalhes
+                      </Button>
+                    </Link>
                   </div>
-                  <Link href={`/dashboard/tenders/${tender.id}`}>
-                    <Button variant="outline" size="sm">
-                      Detalhes
-                    </Button>
-                  </Link>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Nenhuma licitação recente.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -155,18 +236,18 @@ export default function AgencyDashboard() {
         <CardContent>
           <div className="grid gap-6 md:grid-cols-3">
             <div className="flex flex-col items-center justify-center space-y-2 rounded-lg border p-4">
-              <div className="text-4xl font-bold text-green-700">12</div>
-              <p className="text-[1rem] text-muted-foreground text-center">
+              <div className="text-4xl font-bold text-blue-700">{stats?.activeTenders}</div>
+              <p className="text-sm text-muted-foreground text-center">
                 Licitações em Andamento
               </p>
             </div>
             <div className="flex flex-col items-center justify-center space-y-2 rounded-lg border p-4">
-              <div className="text-4xl font-bold text-green-700">45</div>
-              <p className="text-[1rem] text-muted-foreground text-center">Licitações Concluídas</p>
+              <div className="text-4xl font-bold text-green-700">{stats?.completedTenders}</div>
+              <p className="text-sm text-muted-foreground text-center">Licitações Concluídas</p>
             </div>
             <div className="flex flex-col items-center justify-center space-y-2 rounded-lg border p-4">
-              <div className="text-4xl font-bold text-green-700">R$ 1.2M</div>
-              <p className="text-[1rem] text-muted-foreground text-center">Valor Economizado</p>
+              <div className="text-4xl font-bold text-purple-700">{formatCurrency(stats?.totalValue)}</div>
+              <p className="text-sm text-muted-foreground text-center">Valor Total Estimado</p>
             </div>
           </div>
           <div className="mt-6 flex justify-end">
@@ -182,80 +263,3 @@ export default function AgencyDashboard() {
     </div>
   );
 }
-
-// Helper functions for badges
-function getBadgeVariant(status: string) {
-  switch (status) {
-    case "Publicada":
-      return "secondary";
-    case "Aguardando abertura":
-      return "default";
-    case "Em disputa":
-      return "warning";
-    case "Em andamento":
-      return "default";
-    default:
-      return "outline";
-  }
-}
-
-function getCompletedBadgeVariant(result: string) {
-  switch (result) {
-    case "Homologada":
-      return "success";
-    case "Revogada":
-      return "destructive";
-    case "Anulada":
-      return "destructive";
-    case "Fracassada":
-      return "warning";
-    case "Deserta":
-      return "secondary";
-    default:
-      return "outline";
-  }
-}
-
-// Mock data for active tenders
-const activeTenders = [
-  {
-    id: "1",
-    title: "Aquisição de equipamentos de informática",
-    number: "Pregão Eletrônico nº 001/2025",
-    status: "Em disputa",
-  },
-  {
-    id: "2",
-    title: "Contratação de serviços de limpeza",
-    number: "Pregão Eletrônico nº 002/2025",
-    status: "Aguardando abertura",
-  },
-  {
-    id: "3",
-    title: "Fornecimento de material de escritório",
-    number: "Pregão Eletrônico nº 003/2025",
-    status: "Publicada",
-  },
-];
-
-// Mock data for recent tenders
-const recentTenders = [
-  {
-    id: "4",
-    title: "Reforma de prédio público",
-    number: "Concorrência nº 001/2025",
-    result: "Homologada",
-  },
-  {
-    id: "5",
-    title: "Aquisição de veículos",
-    number: "Pregão Eletrônico nº 004/2024",
-    result: "Revogada",
-  },
-  {
-    id: "6",
-    title: "Serviços de consultoria",
-    number: "Pregão Eletrônico nº 005/2024",
-    result: "Fracassada",
-  },
-];

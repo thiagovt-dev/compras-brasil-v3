@@ -31,12 +31,12 @@ export async function signInWithEmailOrDocument(
       console.log("📊 Resultado da busca:", { profiles, error: profileError });
 
       if (profileError) {
-        console.error("❌ Erro ao buscar perfil:", profileError);
+        console.error("Erro ao buscar perfil:", profileError);
         throw new Error(`Erro na busca: ${profileError.message}`);
       }
 
       if (!profiles || profiles.length === 0) {
-        console.error("❌ Nenhum perfil encontrado para o documento formatado:", formattedDoc);
+        console.error("Nenhum perfil encontrado para o documento formatado:", formattedDoc);
 
         // Tentar buscar também sem formatação como fallback
         console.log("🔄 Tentando buscar sem formatação:", cleanDoc);
@@ -91,7 +91,7 @@ export async function signInWithEmailOrDocument(
     });
 
     if (error) {
-      console.error("❌ Erro no login:", error);
+      console.error("Erro no login:", error);
       throw new Error(`Erro na autenticação: ${error.message}`);
     }
 
@@ -105,7 +105,7 @@ export async function signInWithEmailOrDocument(
       user: data.user,
     };
   } catch (error) {
-    console.error("❌ Erro em signInWithEmailOrDocument:", error);
+    console.error("Erro em signInWithEmailOrDocument:", error);
     throw error;
   }
 }

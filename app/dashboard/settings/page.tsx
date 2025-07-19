@@ -9,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -28,7 +27,6 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("notifications");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   // Notification settings
   const [notificationSettings, setNotificationSettings] = useState({
@@ -49,14 +47,6 @@ export default function SettingsPage() {
     dateFormat: "DD/MM/YYYY",
   });
 
-  // Security settings
-  const [securitySettings, setSecuritySettings] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-    twoFactor: false,
-  });
-
   const handleNotificationChange = (key: string, value: boolean) => {
     setNotificationSettings((prev) => ({
       ...prev,
@@ -66,13 +56,6 @@ export default function SettingsPage() {
 
   const handleAccountChange = (key: string, value: string) => {
     setAccountSettings((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
-
-  const handleSecurityChange = (key: string, value: string | boolean) => {
-    setSecuritySettings((prev) => ({
       ...prev,
       [key]: value,
     }));
@@ -104,38 +87,6 @@ export default function SettingsPage() {
     }, 1000);
   };
 
-  const saveSecuritySettings = () => {
-    setIsSubmitting(true);
-
-    // Validação das senhas
-    if (securitySettings.newPassword !== securitySettings.confirmPassword) {
-      setIsSubmitting(false);
-      toast({
-        title: "Erro",
-        description: "As senhas não coincidem. Por favor, verifique e tente novamente.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Simula chamada API
-    setTimeout(() => {
-      setIsSubmitting(false);
-      toast({
-        title: "Configurações salvas",
-        description: "Suas configurações de segurança foram atualizadas com sucesso.",
-      });
-
-      // Limpa os campos de senha
-      setSecuritySettings((prev) => ({
-        ...prev,
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      }));
-    }, 1000);
-  };
-
   return (
     <div className="space-y-6">
       <div>
@@ -147,7 +98,6 @@ export default function SettingsPage() {
         <TabsList>
           <TabsTrigger value="notifications">Notificações</TabsTrigger>
           <TabsTrigger value="account">Conta</TabsTrigger>
-          <TabsTrigger value="security">Segurança</TabsTrigger>
         </TabsList>
 
         <TabsContent value="notifications" className="space-y-4">
@@ -309,64 +259,6 @@ export default function SettingsPage() {
             </CardContent>
             <CardFooter>
               <Button onClick={saveAccountSettings} disabled={isSubmitting}>
-                {isSubmitting ? "Salvando..." : "Salvar Configurações"}
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="security" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configurações de Segurança</CardTitle>
-              <CardDescription>
-                Atualize sua senha e ative a autenticação de dois fatores
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="current-password">Senha Atual</Label>
-                  <Input
-                    id="current-password"
-                    type="password"
-                    value={securitySettings.currentPassword}
-                    onChange={(e) => handleSecurityChange("currentPassword", e.target.value)}
-                    placeholder="Digite sua senha atual"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="new-password">Nova Senha</Label>
-                  <Input
-                    id="new-password"
-                    type={showPassword ? "text" : "password"}
-                    value={securitySettings.newPassword}
-                    onChange={(e) => handleSecurityChange("newPassword", e.target.value)}
-                    placeholder="Digite a nova senha"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
-                  <Input
-                    id="confirm-password"
-                    type={showPassword ? "text" : "password"}
-                    value={securitySettings.confirmPassword}
-                    onChange={(e) => handleSecurityChange("confirmPassword", e.target.value)}
-                    placeholder="Confirme a nova senha"
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="two-factor"
-                    checked={securitySettings.twoFactor}
-                    onCheckedChange={(checked) => handleSecurityChange("twoFactor", checked)}
-                  />
-                  <Label htmlFor="two-factor">Ativar Autenticação de Dois Fatores</Label>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button onClick={saveSecuritySettings} disabled={isSubmitting}>
                 {isSubmitting ? "Salvando..." : "Salvar Configurações"}
               </Button>
             </CardFooter>

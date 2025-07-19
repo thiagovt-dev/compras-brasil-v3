@@ -1,20 +1,20 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { createClientSupabaseClient } from "@/lib/supabase/client"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import { Save, Loader2 } from "lucide-react"
+import { Save, Loader2, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { useAuth } from "@/lib/supabase/auth-context"
+import { createClientSupabaseClient } from "@/lib/supabase/client"
 
-// Esquema de validação para o formulário de perfil
+// Esquemas de validação
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: "Nome deve ter pelo menos 2 caracteres" }),
   email: z.string().email({ message: "Email inválido" }),
@@ -22,42 +22,33 @@ const profileFormSchema = z.object({
   address: z.string().optional(),
 })
 
-// Esquema de validação para o formulário de empresa
 const companyFormSchema = z.object({
   company_name: z.string().min(2, { message: "Nome da empresa deve ter pelo menos 2 caracteres" }),
   cnpj: z.string().min(14, { message: "CNPJ deve ter pelo menos 14 caracteres" }),
 })
 
-// Esquema de validação para o formulário de pessoa física
 const personFormSchema = z.object({
   cpf: z.string().min(11, { message: "CPF deve ter pelo menos 11 caracteres" }),
 })
 
-interface UserProfileData {
-  id: string
-  name: string
-  email: string
-  phone?: string
-  address?: string
-  profile_type: string
-  cpf?: string
-  cnpj?: string
-  company_name?: string
-  agency_id?: string
-  supplier_id?: string
-  created_at: string
-  updated_at: string
-}
+const securityFormSchema = z.object({
+  currentPassword: z.string().min(1, { message: "Senha atual é obrigatória" }),
+  newPassword: z.string().min(6, { message: "Nova senha deve ter pelo menos 6 caracteres" }),
+  confirmPassword: z.string().min(1, { message: "Confirmação de senha é obrigatória" }),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Senhas não coincidem",
+  path: ["confirmPassword"],
+})
 
 export default function ProfilePage() {
   const [loading, setLoading] = useState(false)
-  const [profile, setProfile] = useState<UserProfileData | null>(null)
   const [activeTab, setActiveTab] = useState("personal")
-  const router = useRouter()
+  const [showPassword, setShowPassword] = useState(false)
   const { toast } = useToast()
+  const { profile, isLoading, user } = useAuth()
   const supabase = createClientSupabaseClient()
 
-  // Formulário de perfil pessoal
+  // Formulários
   const profileForm = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
@@ -68,7 +59,6 @@ export default function ProfilePage() {
     },
   })
 
-  // Formulário de empresa
   const companyForm = useForm<z.infer<typeof companyFormSchema>>({
     resolver: zodResolver(companyFormSchema),
     defaultValues: {
@@ -77,7 +67,6 @@ export default function ProfilePage() {
     },
   })
 
-  // Formulário de pessoa física
   const personForm = useForm<z.infer<typeof personFormSchema>>({
     resolver: zodResolver(personFormSchema),
     defaultValues: {
@@ -85,58 +74,48 @@ export default function ProfilePage() {
     },
   })
 
-  // Carregar dados do perfil
+  const securityForm = useForm<z.infer<typeof securityFormSchema>>({
+    resolver: zodResolver(securityFormSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  })
+
+  // Preencher formulários quando o profile estiver disponível
   useEffect(() => {
-    const fetchProfile = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        router.push("/login")
-        return
-      }
-
-      const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).single()
-
-      if (error) {
-        console.error("Erro ao buscar perfil:", error)
-        return
-      }
-
-      setProfile(data)
-
+    if (profile) {
       // Preencher formulário de perfil
       profileForm.reset({
-        name: data.name || "",
-        email: data.email || "",
-        phone: data.phone || "",
-        address: data.address || "",
+        name: profile.name || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+        address: profile.address || "",
       })
 
       // Preencher formulário de empresa
-      if (data.profile_type === "supplier" || data.profile_type === "agency") {
+      if (profile.profile_type === "supplier" || profile.profile_type === "agency") {
         companyForm.reset({
-          company_name: data.company_name || "",
-          cnpj: data.cnpj || "",
+          company_name: profile.company_name || "",
+          cnpj: profile.cnpj || "",
         })
       }
 
       // Preencher formulário de pessoa física
-      if (data.profile_type === "citizen") {
+      if (profile.profile_type === "citizen") {
         personForm.reset({
-          cpf: data.cpf || "",
+          cpf: profile.cpf || "",
         })
       }
     }
-
-    fetchProfile()
-  }, [supabase, router])
+  }, [profile, profileForm, companyForm, personForm])
 
   // Atualizar perfil pessoal
   const onProfileSubmit = async (values: z.infer<typeof profileFormSchema>) => {
-    setLoading(true)
+    if (!profile?.id) return
 
+    setLoading(true)
     try {
       const { error } = await supabase
         .from("profiles")
@@ -169,8 +148,9 @@ export default function ProfilePage() {
 
   // Atualizar informações da empresa
   const onCompanySubmit = async (values: z.infer<typeof companyFormSchema>) => {
-    setLoading(true)
+    if (!profile?.id) return
 
+    setLoading(true)
     try {
       const { error } = await supabase
         .from("profiles")
@@ -201,8 +181,9 @@ export default function ProfilePage() {
 
   // Atualizar informações de pessoa física
   const onPersonSubmit = async (values: z.infer<typeof personFormSchema>) => {
-    setLoading(true)
+    if (!profile?.id) return
 
+    setLoading(true)
     try {
       const { error } = await supabase
         .from("profiles")
@@ -230,10 +211,68 @@ export default function ProfilePage() {
     }
   }
 
+  // Atualizar senha
+  const onSecuritySubmit = async (values: z.infer<typeof securityFormSchema>) => {
+    if (!user?.email) return
+
+    setLoading(true)
+    try {
+      // Primeiro, verificar se a senha atual está correta tentando fazer login
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: values.currentPassword,
+      })
+
+      if (verifyError) {
+        throw new Error("Senha atual incorreta")
+      }
+
+      // Atualizar a senha
+      const { error } = await supabase.auth.updateUser({
+        password: values.newPassword
+      })
+
+      if (error) throw error
+
+      toast({
+        title: "Senha atualizada",
+        description: "Sua senha foi atualizada com sucesso.",
+      })
+
+      // Limpar formulário
+      securityForm.reset()
+    } catch (error: any) {
+      console.error("Erro ao atualizar senha:", error)
+      toast({
+        title: "Erro ao atualizar senha",
+        description: error.message || "Ocorreu um erro ao atualizar sua senha. Tente novamente.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Loading state do AuthContext
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <p className="mt-2 text-sm text-muted-foreground">Carregando perfil...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Se não há profile mesmo após carregar
   if (!profile) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-200px)]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="text-center">
+          <p className="text-lg font-medium">Perfil não encontrado</p>
+          <p className="text-sm text-muted-foreground">Não foi possível carregar as informações do perfil.</p>
+        </div>
       </div>
     )
   }
@@ -252,7 +291,8 @@ export default function ProfilePage() {
             <TabsTrigger value="company">Dados da Empresa</TabsTrigger>
           )}
           {profile.profile_type === "citizen" && <TabsTrigger value="person">Dados Pessoais</TabsTrigger>}
-        </TabsList>
+          <TabsTrigger value="security">Segurança</TabsTrigger>
+        </TabsList> 
 
         <TabsContent value="personal" className="space-y-4">
           <Card>
@@ -441,6 +481,103 @@ export default function ProfilePage() {
             </Card>
           </TabsContent>
         )}
+
+        <TabsContent value="security" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações de Segurança</CardTitle>
+              <CardDescription>Atualize sua senha de acesso</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...securityForm}>
+                <form onSubmit={securityForm.handleSubmit(onSecuritySubmit)} className="space-y-4">
+                  <FormField
+                    control={securityForm.control}
+                    name="currentPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Senha Atual</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="Digite sua senha atual" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={securityForm.control}
+                    name="newPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nova Senha</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input 
+                              type={showPassword ? "text" : "password"} 
+                              placeholder="Digite a nova senha" 
+                              {...field} 
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                              onClick={() => setShowPassword(!showPassword)}
+                            >
+                              {showPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={securityForm.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirmar Nova Senha</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type={showPassword ? "text" : "password"} 
+                            placeholder="Confirme a nova senha" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button type="submit" disabled={loading}>
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Atualizando...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Atualizar Senha
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   )

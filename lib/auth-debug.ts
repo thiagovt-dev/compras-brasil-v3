@@ -11,7 +11,7 @@ export const AUTH_DEBUG = {
 
   error: (message: string, error?: any) => {
     if (AUTH_DEBUG.enabled) {
-      console.error(`❌ [AUTH ERROR] ${message}`, error || "");
+      console.error(`[AUTH ERROR] ${message}`, error || "");
     }
   },
 

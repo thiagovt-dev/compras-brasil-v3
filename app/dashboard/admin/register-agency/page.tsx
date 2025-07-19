@@ -293,7 +293,7 @@ export default function RegisterAgencyPage() {
       console.log("🏢 Resultado da criação do órgão:", { agencyData, agencyError });
 
       if (agencyError) {
-        console.error("❌ Erro ao criar órgão:", agencyError);
+        console.error("Erro ao criar órgão:", agencyError);
         throw new Error(`Erro ao criar órgão: ${agencyError.message}`);
       }
 
@@ -319,7 +319,7 @@ export default function RegisterAgencyPage() {
           .eq("id", user?.id);
 
         if (updateProfileError) {
-          console.error("❌ Erro ao atualizar profile do usuário:", updateProfileError);
+          console.error("Erro ao atualizar profile do usuário:", updateProfileError);
           // Não falha o processo, mas avisa
         } else {
           console.log("✅ Profile do usuário atualizado para agency");
@@ -361,7 +361,7 @@ export default function RegisterAgencyPage() {
           const tempPassword = userInfo.document.replace(/\D/g, "");
 
           if (tempPassword.length < 6) {
-            console.error(`❌ Documento muito curto para ${userInfo.email}:`, tempPassword.length);
+            console.error(`Documento muito curto para ${userInfo.email}:`, tempPassword.length);
             userResults.push({
               success: false,
               email: userInfo.email,
@@ -386,12 +386,12 @@ export default function RegisterAgencyPage() {
           console.log(`📋 Dados do usuário ${userInfo.email}:`, userData);
 
           // Usar o método signUp do auth-context
-          const signUpResult = await signUp(userInfo.email, '123456', userData);
+          const signUpResult = await signUp(userInfo.email, "123456", userData);
 
           console.log(`📤 Resultado signUp para ${userInfo.email}:`, signUpResult);
 
           if (signUpResult.error) {
-            console.error(`❌ Erro ao criar usuário ${userInfo.email}:`, signUpResult.error);
+            console.error(`Erro ao criar usuário ${userInfo.email}:`, signUpResult.error);
             userResults.push({
               success: false,
               email: userInfo.email,
@@ -419,13 +419,12 @@ export default function RegisterAgencyPage() {
         }
       }
 
-
       // Contar sucessos e falhas
       const successfulUsers = userResults.filter((result) => result.success);
       const failedUsers = userResults.filter((result) => result.success);
 
       console.log(`✅ Usuários criados com sucesso: ${successfulUsers.length}`);
-      console.log(`❌ Usuários que falharam: ${failedUsers.length}`);
+      console.log(`Usuários que falharam: ${failedUsers.length}`);
 
       if (failedUsers.length > 0) {
         console.warn("⚠️ Alguns usuários não foram criados:", failedUsers);
