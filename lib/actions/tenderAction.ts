@@ -3,29 +3,7 @@
 import { withErrorHandling, ServerActionError } from "./errorAction";
 import { createClient } from "@supabase/supabase-js";
 import { getSessionWithProfile } from "./authAction";
-
-interface Tender {
-  id: string;
-  title: string;
-  description?: string;
-  agency_id: string;
-  tender_number: string;
-  tender_type: string;
-  status: string;
-  estimated_value?: number;
-  publication_date?: string;
-  opening_date?: string;
-  closing_date?: string;
-  created_at: string;
-  updated_at: string;
-  process_number?: string;
-  category?: string;
-  agency?: {
-    name: string;
-    agency_type?: string;
-    sphere?: string;
-  };
-}
+import { transformTenderFromDB, transformSupabaseDocument, transformSupabaseParticipant } from "@/lib/utils/formats-supabase-data";
 
 interface SearchFilters {
   query?: string;
@@ -51,30 +29,23 @@ export async function fetchRecentTenders(limit: number = 4) {
   return withErrorHandling(async () => {
     const { data: tenders, error } = await supabase
       .from("tenders")
-      .select(
-        `
-        id,
-        title,
-        description,
-        agency_id,
-        tender_number,
-        tender_type,
-        status,
-        estimated_value,
-        publication_date,
-        opening_date,
-        closing_date,
-        created_at,
-        updated_at,
-        process_number,
-        category,
+      .select(`
+        *,
         agencies!inner (
+          id,
           name,
+          cnpj,
           agency_type,
-          sphere
+          sphere,
+          address,
+          email,
+          phone,
+          website,
+          status,
+          created_at,
+          updated_at
         )
-      `
-      )
+      `)
       .eq("status", "published")
       .order("publication_date", { ascending: false })
       .limit(limit);
@@ -84,31 +55,9 @@ export async function fetchRecentTenders(limit: number = 4) {
       throw new ServerActionError(`Erro ao buscar licitações: ${error.message}`, 500);
     }
 
-    const formattedTenders =
-      tenders?.map((tender: any) => ({
-        id: tender.id,
-        title: tender.title,
-        description: tender.description,
-        agency_id: tender.agency_id,
-        tender_number: tender.tender_number,
-        tender_type: tender.tender_type,
-        status: tender.status,
-        estimated_value: tender.estimated_value,
-        publication_date: tender.publication_date,
-        opening_date: tender.opening_date,
-        closing_date: tender.closing_date,
-        created_at: tender.created_at,
-        updated_at: tender.updated_at,
-        process_number: tender.process_number,
-        category: tender.category,
-        agency: {
-          name: tender.agencies.name,
-          agency_type: tender.agencies.agency_type,
-          sphere: tender.agencies.sphere,
-        },
-      })) || [];
-
-    return formattedTenders;
+    // Transformar os dados para a interface Tender
+    const transformedTenders: Tender[] = (tenders || []).map(transformTenderFromDB);
+    return transformedTenders;
   });
 }
 
@@ -131,7 +80,7 @@ export async function fetchTenderCategories() {
 
 export async function fetchTenderTypes() {
   return withErrorHandling(async () => {
-    const tenderTypes = [
+    const tenderTypes: TenderType[] = [
       { value: "pregao_eletronico", label: "Pregão Eletrônico" },
       { value: "concorrencia", label: "Concorrência" },
       { value: "tomada_de_precos", label: "Tomada de Preços" },
@@ -146,7 +95,7 @@ export async function fetchTenderTypes() {
 
 export async function fetchTenderStatuses() {
   return withErrorHandling(async () => {
-    const statuses = [
+    const statuses: TenderStatus[] = [
       { value: "draft", label: "Rascunho" },
       { value: "published", label: "Publicada" },
       { value: "in_progress", label: "Em Andamento" },
@@ -169,24 +118,20 @@ export async function searchTendersAdvanced(
 ) {
   return withErrorHandling(async () => {
     let queryBuilder = supabase.from("tenders").select(`
-        id,
-        title,
-        description,
-        agency_id,
-        tender_number,
-        tender_type,
-        status,
-        estimated_value,
-        publication_date,
-        opening_date,
-        closing_date,
-        created_at,
-        process_number,
-        category,
+        *,
         agencies!inner (
+          id,
           name,
+          cnpj,
           agency_type,
-          sphere
+          sphere,
+          address,
+          email,
+          phone,
+          website,
+          status,
+          created_at,
+          updated_at
         )
       `);
 
@@ -229,7 +174,9 @@ export async function searchTendersAdvanced(
       throw new ServerActionError(`Erro ao pesquisar licitações: ${error.message}`, 500);
     }
 
-    return tenders || [];
+    // Transformar os dados para a interface Tender
+    const transformedTenders: Tender[] = (tenders || []).map(transformTenderFromDB);
+    return transformedTenders;
   });
 }
 
@@ -243,32 +190,26 @@ export async function fetchUserFavoriteTenders(limit: number = 20, offset: numbe
 
     const { data: favorites, error: favError } = await supabase
       .from("tender_favorites")
-      .select(
-        `
+      .select(`
         tender_id,
         tenders!inner (
-          id,
-          title,
-          description,
-          agency_id,
-          tender_number,
-          tender_type,
-          status,
-          estimated_value,
-          publication_date,
-          opening_date,
-          closing_date,
-          created_at,
-          process_number,
-          category,
+          *,
           agencies!inner (
+            id,
             name,
+            cnpj,
             agency_type,
-            sphere
+            sphere,
+            address,
+            email,
+            phone,
+            website,
+            status,
+            created_at,
+            updated_at
           )
         )
-      `
-      )
+      `)
       .eq("user_id", sessionData.user.id)
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
@@ -281,7 +222,9 @@ export async function fetchUserFavoriteTenders(limit: number = 20, offset: numbe
       throw new ServerActionError(`Erro ao buscar licitações favoritas: ${favError.message}`, 500);
     }
 
-    return favorites?.map((fav) => fav.tenders) || [];
+    // Transformar os dados para a interface Tender
+    const transformedTenders: Tender[] = favorites?.map((fav) => transformTenderFromDB(fav.tenders)) || [];
+    return transformedTenders;
   });
 }
 
@@ -344,8 +287,7 @@ export async function fetchActiveTendersByAgency(agencyId: string, limit: number
 
     const { data: tenders, error } = await supabase
       .from("tenders")
-      .select(
-        `
+      .select(`
         id,
         title,
         tender_number,
@@ -354,8 +296,7 @@ export async function fetchActiveTendersByAgency(agencyId: string, limit: number
         closing_date,
         estimated_value,
         created_at
-      `
-      )
+      `)
       .eq("agency_id", agencyId)
       .in("status", ["published", "in_progress"])
       .order("created_at", { ascending: false })
@@ -378,8 +319,7 @@ export async function fetchRecentTendersByAgency(agencyId: string, limit: number
 
     const { data: tenders, error } = await supabase
       .from("tenders")
-      .select(
-        `
+      .select(`
         id,
         title,
         tender_number,
@@ -387,8 +327,7 @@ export async function fetchRecentTendersByAgency(agencyId: string, limit: number
         closing_date,
         estimated_value,
         created_at
-      `
-      )
+      `)
       .eq("agency_id", agencyId)
       .in("status", ["completed", "cancelled", "revoked", "failed", "deserted"])
       .order("closing_date", { ascending: false })
@@ -456,21 +395,56 @@ export async function fetchTenderById(tenderId: string) {
 
     const { data: tender, error } = await supabase
       .from("tenders")
-      .select(
-        `
+      .select(`
         *,
         agencies!inner (
+          id,
           name,
+          cnpj,
+          agency_type,
+          sphere,
           address,
+          email,
           phone,
-          email
+          website,
+          status,
+          created_at,
+          updated_at
         ),
         profiles!tenders_created_by_fkey (
+          id,
           name,
           email
+        ),
+        tender_lots (
+          id,
+          tender_id,
+          number,
+          description,
+          type,
+          require_brand,
+          allow_description_change,
+          status,
+          appeal_start_date,
+          created_at,
+          updated_at,
+          estimated_value,
+          bid_interval,
+          tender_items (
+            id,
+            tender_id,
+            lot_id,
+            item_number,
+            description,
+            quantity,
+            unit,
+            estimated_unit_price,
+            benefit_type,
+            created_at,
+            updated_at
+          )
         )
-      `
-      )
+      `)
       .eq("id", tenderId)
       .single();
 
@@ -484,7 +458,7 @@ export async function fetchTenderById(tenderId: string) {
       }
     }
 
-    return tender;
+    return transformTenderFromDB(tender);
   });
 }
 
@@ -506,4 +480,98 @@ export async function searchTenders(
     limit,
     offset
   );
+}
+
+export async function fetchTenderDocuments(tenderId: string) {
+  return withErrorHandling(async () => {
+    if (!tenderId) {
+      throw new ServerActionError("Tender ID is required", 400);
+    }
+
+    const { data: documents, error } = await supabase
+      .from("tender_documents")
+      .select(`
+        id,
+        tender_id,
+        user_id,
+        name,
+        file_path,
+        file_type,
+        file_size,
+        created_at
+      `)
+      .eq("tender_id", tenderId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching tender documents:", error);
+      throw new ServerActionError(`Erro ao buscar documentos: ${error.message}`, 500);
+    }
+
+    const transformedDocuments: TenderDocument[] = (documents || []).map(transformSupabaseDocument);
+    return transformedDocuments;
+  });
+}
+
+export async function checkTenderFavorite(tenderId: string, userId: string) {
+  return withErrorHandling(async () => {
+    if (!tenderId || !userId) {
+      return false;
+    }
+
+    const { data: favorite, error } = await supabase
+      .from("tender_favorites")
+      .select("id")
+      .eq("tender_id", tenderId)
+      .eq("user_id", userId)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      console.error("Error checking favorite:", error);
+      return false;
+    }
+
+    return !!favorite;
+  });
+}
+
+export async function fetchTenderParticipants(tenderId: string) {
+  return withErrorHandling(async () => {
+    if (!tenderId) {
+      throw new ServerActionError("Tender ID is required", 400);
+    }
+
+    const { data: participants, error } = await supabase
+      .from("tender_participants")
+      .select(`
+        id,
+        tender_id,
+        supplier_id,
+        user_id,
+        status,
+        justification,
+        classified_by,
+        classified_at,
+        registered_at,
+        created_at,
+        updated_at,
+        suppliers (
+          id,
+          name,
+          cnpj
+        )
+      `)
+      .eq("tender_id", tenderId)
+      .eq("status", "approved")
+      .order("registered_at", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching participants:", error);
+      throw new ServerActionError(`Erro ao buscar participantes: ${error.message}`, 500);
+    }
+
+    // Transformar os dados para a interface TenderParticipant
+    const transformedParticipants: TenderParticipant[] = (participants || []).map(transformSupabaseParticipant);
+    return transformedParticipants;
+  });
 }

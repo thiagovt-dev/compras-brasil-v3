@@ -1,52 +1,34 @@
-import { createServerClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
-import Link from "next/link";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { fetchTenderDocuments } from "@/lib/actions/tenderAction";
+import Link from "next/link";
 import { FileText, Download, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatFileSize } from "@/lib/utils";
+import { formatFileSize, formatDate } from "@/lib/utils";
 
-export default async function TenderDocumentsPage({ params }: { params: { id: string } }) {
-  const cookieStore = cookies();
-  const supabase = createServerClient(cookieStore);
+interface TenderDocumentsPageProps {
+  params: Promise<{ id: string }>;
+}
 
-  // Verificar se o ID da licitação é válido
-  if (!params.id || !/^[0-9a-fA-F-]+$/.test(params.id)) {
+export default async function TenderDocumentsPage({ params }: TenderDocumentsPageProps) {
+  const resolvedParams = await params;
+  const tenderId = resolvedParams.id;
+
+  if (!tenderId || !/^[0-9a-fA-F-]+$/.test(tenderId)) {
     return notFound();
   }
 
-  // Buscar documentos relacionados à licitação
-  const { data: documents, error } = await supabase
-    .from("documents")
-    .select("*")
-    .eq("entity_type", "tender")
-    .eq("entity_id", params.id)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Erro ao buscar documentos:", error);
-  }
-
-  // Buscar informações da licitação
-  const { data: tender } = await supabase
-    .from("tenders")
-    .select("title, reference_number")
-    .eq("id", params.id)
-    .single();
+  const documentsResult = await fetchTenderDocuments(tenderId);
+  const documents = documentsResult.success ? documentsResult.data : [];
 
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h2 className="text-2xl font-bold tracking-tight">Documentos da Licitação</h2>
-          {tender && (
-            <p className="text-muted-foreground">
-              {tender.reference_number} - {tender.title}
-            </p>
-          )}
         </div>
-        <Link href={`/dashboard/citizen/search/${params.id}`}>
+        <Link href={`/dashboard/citizen/search/${tenderId}`}>
           <Button variant="outline">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar para Licitação
@@ -54,21 +36,30 @@ export default async function TenderDocumentsPage({ params }: { params: { id: st
         </Link>
       </div>
 
-      {documents && documents.length > 0 ? (
+      {!documentsResult.success ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-10">
+            <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-center text-muted-foreground">
+              Erro ao carregar documentos: {documentsResult.error}
+            </p>
+          </CardContent>
+        </Card>
+      ) : documents && documents.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {documents.map((doc) => (
+          {documents.map((doc: any) => (
             <Card key={doc.id}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium">{doc.name}</CardTitle>
                 <CardDescription>
-                  {new Date(doc.created_at).toLocaleDateString("pt-BR")}
+                  {formatDate(doc.created_at)}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center text-[1rem] text-muted-foreground">
+                  <div className="flex items-center text-sm text-muted-foreground">
                     <FileText className="mr-2 h-4 w-4" />
-                    <span>{doc.file_type?.toUpperCase()}</span>
+                    <span>{doc.file_type?.toUpperCase() || 'DOC'}</span>
                     {doc.file_size && (
                       <span className="ml-2">({formatFileSize(doc.file_size)})</span>
                     )}
@@ -80,9 +71,9 @@ export default async function TenderDocumentsPage({ params }: { params: { id: st
                     </a>
                   </Button>
                 </div>
-                {doc.description && (
-                  <p className="mt-2 text-[1rem] text-muted-foreground line-clamp-2">
-                    {doc.description}
+                {doc.profiles?.name && (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Enviado por {doc.profiles.name}
                   </p>
                 )}
               </CardContent>
