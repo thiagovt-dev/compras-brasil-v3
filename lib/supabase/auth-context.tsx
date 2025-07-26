@@ -32,8 +32,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<any | null>(null);
+  const [profile, setProfile] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  console.log("🔄 Initializing AuthProvider...", profile);
 
   useEffect(() => {
     const loadingTimeout = setTimeout(() => {
@@ -65,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const result = await fetchProfile(userId);
       
       if (result.success && result.data) {
-        setProfile(result.data);
+        setProfile(result.data as UserData);
         return result.data;
       } else {
         setProfile(null);

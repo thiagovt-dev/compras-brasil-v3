@@ -131,6 +131,72 @@ declare global {
     value: string;
     label: string;
   }
+  interface Supplier {
+    id: string;
+    name: string;
+    cnpj?: string;
+    is_foreign?: boolean;
+    foreign_registration_number?: string;
+    state_registration?: string;
+    address?: string;
+    email?: string;
+    phone?: string;
+    website?: string;
+    supply_lines?: string[]; // ou SupplySegment[] se quiser detalhado
+    status?: string;
+    created_at: string;
+    updated_at?: string;
+  }
+
+  interface SupplySegment {
+    id: string;
+    name: string;
+    description?: string;
+    created_at: string;
+    updated_at?: string;
+  }
+
+  interface SupplierSegment {
+    id: string;
+    supplier_id: string;
+    segment_id: string;
+    created_at: string;
+    // Relacionamento opcional
+    segment?: SupplySegment;
+  }
+
+  interface SupplierRepresentative {
+    id: string;
+    supplier_id: string;
+    user_id: string;
+    is_admin?: boolean;
+    created_at: string;
+    updated_at?: string;
+  }
+
+  interface SupplierDocument {
+    id: string;
+    supplier_id: string;
+    user_id: string;
+    name: string;
+    file_path: string;
+    file_type?: string;
+    file_size?: number;
+    created_at: string;
+  }
+
+  interface UserData {
+    email: string;
+    name: string;
+    profile_type: string;
+    cpf?: string;
+    cnpj?: string;
+    phone?: string;
+    address?: string;
+    agency_id?: string;
+    supplier_id?: string;
+    company_name?: string;
+  }
 }
 
 export {};

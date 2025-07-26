@@ -34,7 +34,7 @@ export default function LoginPage() {
 
     if (profile?.agency_id) {
       route = "/dashboard/agency";
-    } else if (profile?.supplier_id) {
+    } else if (profile.supplier_id && profile.profile_type === "supplier") {
       route = "/dashboard/supplier";
     } else {
       const dashboardRoutes = {

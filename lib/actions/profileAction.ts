@@ -13,6 +13,7 @@ interface UserData {
   phone?: string;
   address?: string;
   agency_id?: string;
+  supplier_id?: string;
   company_name?: string;
 }
 
@@ -119,6 +120,32 @@ export async function updateProfile(userId: string, updateData: Partial<UserData
     if (error) {
       console.error("Error updating profile:", error);
       throw new ServerActionError(`Erro ao atualizar perfil: ${error.message}`, 500);
+    }
+
+    return profile;
+  });
+}
+
+export async function fetchProfileByEmail(email: string) {
+  return withErrorHandling(async () => {
+    if (!email) {
+      throw new ServerActionError("Email is required", 400);
+    }
+
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("email", email)
+      .single();
+
+    if (error) {
+      console.error("Error fetching profile by email:", error);
+
+      if (error.code === "PGRST116") {
+        throw new ServerActionError("Perfil não encontrado", 404);
+      } else {
+        throw new ServerActionError(`Erro ao buscar perfil: ${error.message}`, 500);
+      }
     }
 
     return profile;

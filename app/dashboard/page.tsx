@@ -38,17 +38,16 @@ export default function DashboardPage() {
     };
 
     // Determinar rota baseado em agency_id/supplier_id primeiro, depois profile_type
-    let route = "/dashboard/citizen";
+       let route = "/dashboard/citizen";
 
-    if (profile.agency_id) {
-      route = "/dashboard/agency";
-    } else if (profile.supplier_id) {
-      route = "/dashboard/supplier";
-    } else {
-      route =
-        dashboardRoutes[profile.profile_type as keyof typeof dashboardRoutes] ||
-        "/dashboard/citizen";
-    }
+       if (profile.agency_id) {
+         route = "/dashboard/agency";
+       } else if (profile.supplier_id && profile.profile_type === "supplier") {
+         route = "/dashboard/supplier";
+       } else {
+         route = "/dashboard/citizen";
+       }
+
 
     setHasRedirected(true);
     router.replace(route);
