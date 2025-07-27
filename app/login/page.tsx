@@ -50,7 +50,6 @@ export default function LoginPage() {
         "/dashboard/citizen";
     }
 
-    console.log(`🔄 Redirecionando para: ${route}`);
     router.replace(route);
   };
 

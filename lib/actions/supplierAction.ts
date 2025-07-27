@@ -162,3 +162,60 @@ export async function registerSupplier({
     }
   });
 }
+
+export async function fetchAllSuppliers() {
+  return withErrorHandling(async () => {
+    const { data, error } = await supabase.from("suppliers").select("*");
+    if (error) {
+      throw new ServerActionError(`Erro ao buscar fornecedores: ${error.message}`, 500);
+    }
+    return data;
+  });
+}
+
+export async function fetchSupplierById(supplierId: string) {
+  return withErrorHandling(async () => {
+    const { data, error } = await supabase
+      .from("suppliers")
+      .select("*")
+      .eq("id", supplierId)
+      .single();
+    if (error) {
+      throw new ServerActionError(`Erro ao buscar fornecedor: ${error.message}`, 500);
+    }
+    return data;
+  });
+}
+
+export async function fetchSupplierDocuments(supplierId: string) {
+  return withErrorHandling(async () => {
+    const { data, error } = await supabase
+      .from("supplier_documents")
+      .select("*")
+      .eq("supplier_id", supplierId);
+
+    if (error) {
+      throw new ServerActionError(`Erro ao buscar documentos do fornecedor: ${error.message}`, 500);
+    }
+    return data;
+  });
+}
+
+export async function getSignedUrl(filePath: string) {
+
+  const { data, error } = await supabase.storage
+    .from("compras-brasil-storage")
+    .createSignedUrl(filePath, 60 * 60); 
+  if (error) throw error;
+  return data.signedUrl;
+}
+
+export async function fetchSupplySegments() {
+  return withErrorHandling(async () => {
+    const { data, error } = await supabase.from("supply_segments").select("*");
+    if (error) {
+      throw new ServerActionError(`Erro ao buscar segmentos: ${error.message}`, 500);
+    }
+    return data;
+  });
+}

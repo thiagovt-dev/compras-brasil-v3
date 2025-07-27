@@ -13,14 +13,10 @@ export async function signInWithEmailOrDocument(
 
     // Se não for email, buscar o email pelo documento
     if (inputType !== "email") {
-      console.log(`🔍 Buscando email para ${inputType}:`, emailOrDocument);
 
       const cleanDoc = cleanDocument(emailOrDocument);
       const formattedDoc = formatDocument(cleanDoc, inputType);
 
-      console.log("📄 Documento original:", emailOrDocument);
-      console.log("📄 Documento limpo:", cleanDoc);
-      console.log("📄 Documento formatado:", formattedDoc);
 
       // Buscar na tabela profiles pelo documento formatado (como está salvo no banco)
       const { data: profiles, error: profileError } = await supabase
@@ -28,7 +24,6 @@ export async function signInWithEmailOrDocument(
         .select("email, name, id, cpf, cnpj")
         .eq(inputType === "cpf" ? "cpf" : "cnpj", formattedDoc);
 
-      console.log("📊 Resultado da busca:", { profiles, error: profileError });
 
       if (profileError) {
         console.error("Erro ao buscar perfil:", profileError);
@@ -39,16 +34,11 @@ export async function signInWithEmailOrDocument(
         console.error("Nenhum perfil encontrado para o documento formatado:", formattedDoc);
 
         // Tentar buscar também sem formatação como fallback
-        console.log("🔄 Tentando buscar sem formatação:", cleanDoc);
         const { data: profilesClean, error: profileErrorClean } = await supabase
           .from("profiles")
           .select("email, name, id, cpf, cnpj")
           .eq(inputType === "cpf" ? "cpf" : "cnpj", cleanDoc);
 
-        console.log("📊 Resultado da busca sem formatação:", {
-          profilesClean,
-          error: profileErrorClean,
-        });
 
         if (!profilesClean || profilesClean.length === 0) {
           throw new Error("Documento não encontrado. Verifique se você possui cadastro.");
@@ -61,17 +51,8 @@ export async function signInWithEmailOrDocument(
         }
 
         email = profile.email;
-        console.log(
-          "✅ Email encontrado (busca sem formatação):",
-          email,
-          "para usuário:",
-          profile.name
-        );
+
       } else {
-        if (profiles.length > 1) {
-          console.warn("⚠️ Múltiplos perfis encontrados para o documento:", formattedDoc);
-          console.log("📋 Perfis encontrados:", profiles);
-        }
 
         const profile = profiles[0];
         if (!profile.email) {
@@ -79,12 +60,10 @@ export async function signInWithEmailOrDocument(
         }
 
         email = profile.email;
-        console.log("✅ Email encontrado:", email, "para usuário:", profile.name);
       }
     }
 
     // Fazer login com o email
-    console.log("🔐 Fazendo login com email:", email);
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -99,7 +78,6 @@ export async function signInWithEmailOrDocument(
       throw new Error("Falha na autenticação - sessão não criada");
     }
 
-    console.log("✅ Login realizado com sucesso para:", data.user.email);
     return {
       session: data.session,
       user: data.user,
@@ -117,7 +95,6 @@ export async function getSession() {
       data: { session },
       error,
     } = await supabase.auth.getSession();
-    console.log("getSession result:", session, error);
     if (error) {
       console.error("Error getting session:", error);
       return null;

@@ -35,8 +35,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  console.log("🔄 Initializing AuthProvider...", profile);
-
   useEffect(() => {
     const loadingTimeout = setTimeout(() => {
       setIsLoading(false);

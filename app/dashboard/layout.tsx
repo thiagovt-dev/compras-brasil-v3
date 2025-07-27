@@ -28,7 +28,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (profile?.supplier_id && profile?.profile_type === "supplier") return "supplier";
     return profile?.profile_type || "citizen";
   };
-console.log("🔄 User role determined:", profile);
   const userRole = getUserRole();
 
   const userData = {

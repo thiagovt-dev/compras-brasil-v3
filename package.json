@@ -56,6 +56,7 @@
     "date-fns": "^4.1.0",
     "embla-carousel-react": "latest",
     "fs": "latest",
+    "fuse.js": "^7.1.0",
     "happy-dom": "latest",
     "input-otp": "latest",
     "jsdom": "latest",

@@ -285,11 +285,11 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
-                      isActive={isActive("/dashboard/admin/register-supplier")}
+                      isActive={isActive("/dashboard/admin/suppliers")}
                       className="h-12 px-4 rounded-lg hover:bg-green-50 hover:text-green-700 data-[active=true]:bg-green-100 data-[active=true]:text-green-700 data-[active=true]:font-medium gap-3">
-                      <Link href="/dashboard/admin/register-supplier">
+                      <Link href="/dashboard/admin/suppliers">
                         <ShoppingBag className="h-6 w-6" />
-                        <span className="font-medium text-lg">Cadastrar Fornecedor</span>
+                        <span className="font-medium text-lg"> Fornecedores</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -300,7 +300,7 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
                       className="h-12 px-4 rounded-lg hover:bg-green-50 hover:text-green-700 data-[active=true]:bg-green-100 data-[active=true]:text-green-700 data-[active=true]:font-medium gap-3">
                       <Link href="/dashboard/admin/register-agency">
                         <Building2 className="h-6 w-6" />
-                        <span className="font-medium text-lg">Cadastrar Órgão</span>
+                        <span className="font-medium text-lg">Órgãos</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

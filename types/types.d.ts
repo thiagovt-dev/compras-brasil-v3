@@ -180,9 +180,11 @@ declare global {
     user_id: string;
     name: string;
     file_path: string;
+    signedUrl?: string;
     file_type?: string;
     file_size?: number;
     created_at: string;
+    updated_at?: string;
   }
 
   interface UserData {
