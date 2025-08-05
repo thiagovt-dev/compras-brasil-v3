@@ -96,18 +96,16 @@ export default function LoginPage() {
           description: "Você será redirecionado para o painel",
         });
 
-        // Fetch user profile to determine dashboard
         const { data: profile } = await supabase
           .from("profiles")
           .select("profile_type, agency_id, supplier_id")
           .eq("id", user.id)
           .single();
 
-        // Redirect to appropriate dashboard based on user role
         if (profile) {
           redirectToDashboard(profile);
         } else {
-          redirectToDashboard({ profile_type: "citizen" }); // Default dashboard
+          redirectToDashboard({ profile_type: "citizen" }); 
         }
       }
     } catch (error: any) {
@@ -206,6 +204,11 @@ export default function LoginPage() {
               Não tem uma conta?{" "}
               <Link href="/register" className="text-blue-600 hover:underline">
                 Cadastre-se
+              </Link>
+            </div>
+            <div className="mt-2 text-center text-sm">
+              <Link href="/forgot-password" className="text-blue-600 hover:underline">
+                Esqueceu sua senha?
               </Link>
             </div>
           </CardContent>

@@ -23,6 +23,8 @@ type AuthContextType = {
   ) => Promise<any>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("sb-jfbuistvgwkfpnujygwx-auth-token");
       const hasCookie = document.cookie.includes("sb-jfbuistvgwkfpnujygwx-auth-token");
-      
+
       if (token && !hasCookie) {
         try {
           const parsed = JSON.parse(token);
@@ -63,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loadProfile = async (userId: string) => {
     try {
       const result = await fetchProfile(userId);
-      
+
       if (result.success && result.data) {
         setProfile(result.data as UserData);
         return result.data;
@@ -134,9 +136,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
-      
+
       setIsLoading(true);
-      
+
       try {
         setSession(session);
         setUser(session?.user ?? null);
@@ -276,6 +278,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+const resetPassword = async (email: string) => {
+  console.log("Resetting password for email:", email);
+  try {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    console.log("Reset password data:", data);
+
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+  const updatePassword = async (newPassword: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const value = {
     user,
     session,
@@ -286,6 +319,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signInWithEmailOrDocument,
     signOut,
     refreshProfile,
+    resetPassword,
+    updatePassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

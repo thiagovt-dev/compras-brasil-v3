@@ -187,6 +187,38 @@ export async function fetchSupplierById(supplierId: string) {
   });
 }
 
+export async function updateSupplierStatus(supplierId: string, status: string) {
+  return withErrorHandling(async () => {
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("supplier_id", supplierId)
+      .single();
+    const { data, error } = await supabase
+      .from("suppliers")
+      .update({ status, email: profileData?.email })
+      .eq("id", supplierId)
+      .select()
+      .single();
+
+    if (profileData && status === "active") {
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ profile_type: "supplier" })
+        .eq("id", profileData.id);
+
+      if (updateError) {
+        throw new ServerActionError(`Erro ao atualizar perfil: ${updateError.message}`, 500);
+      }
+    }
+
+    if (error) {
+      throw new ServerActionError(`Erro ao aprovar fornecedor: ${error.message}`, 500);
+    }
+    return data;
+  });
+}
+
 export async function fetchSupplierDocuments(supplierId: string) {
   return withErrorHandling(async () => {
     const { data, error } = await supabase

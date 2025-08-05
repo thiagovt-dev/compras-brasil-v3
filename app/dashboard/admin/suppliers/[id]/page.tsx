@@ -27,7 +27,7 @@ export default async function SupplierDetailPage({ params }: { params: { id: str
   }
 
   return (
-    <div className="space-y-8 max-w-3xl mx-auto">
+    <div className="space-y-8 max-w-full mx-auto">
       <h1 className="text-3xl font-bold tracking-tight">Detalhes do Fornecedor</h1>
       <SupplierDetailCard supplier={{ ...supplier, supply_line_names: supplyLineNames }} />
       <SupplierDocumentsTable documents={documents || []} />
