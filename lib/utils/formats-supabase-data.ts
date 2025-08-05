@@ -8,7 +8,7 @@ export function transformSupabaseDocument(doc: any): TenderDocument {
     file_type: doc.file_type,
     file_size: doc.file_size,
     created_at: doc.created_at,
-    profiles: Array.isArray(doc.profiles) ? doc.profiles[0] : doc.profiles
+    profiles: Array.isArray(doc.profiles) ? doc.profiles[0] : doc.profiles,
   };
 }
 
@@ -25,13 +25,15 @@ export function transformSupabaseParticipant(participant: any): TenderParticipan
     registered_at: participant.registered_at,
     created_at: participant.created_at,
     updated_at: participant.updated_at,
-    suppliers: Array.isArray(participant.suppliers) ? participant.suppliers[0] : participant.suppliers
+    suppliers: Array.isArray(participant.suppliers)
+      ? participant.suppliers[0]
+      : participant.suppliers,
   };
 }
 
 export function transformTenderFromDB(tenderFromDB: any): Tender {
+
   return {
-    // Campos obrigatórios
     id: tenderFromDB.id,
     title: tenderFromDB.title,
     agency_id: tenderFromDB.agency_id,
@@ -41,7 +43,6 @@ export function transformTenderFromDB(tenderFromDB: any): Tender {
     created_at: tenderFromDB.created_at,
     created_by: tenderFromDB.created_by,
 
-    // Campos opcionais
     description: tenderFromDB.description,
     estimated_value: tenderFromDB.estimated_value,
     publication_date: tenderFromDB.publication_date,
@@ -65,25 +66,29 @@ export function transformTenderFromDB(tenderFromDB: any): Tender {
     pregoeiro_id: tenderFromDB.pregoeiro_id,
     team_members: tenderFromDB.team_members,
 
-    // Relacionamentos - transformar agencies de array para objeto
-    agencies: Array.isArray(tenderFromDB.agencies) && tenderFromDB.agencies.length > 0 
-      ? {
-          id: tenderFromDB.agency_id, // Usar o agency_id como id
-          name: tenderFromDB.agencies[0].name,
-          cnpj: tenderFromDB.agencies[0].cnpj,
-          agency_type: tenderFromDB.agencies[0].agency_type,
-          sphere: tenderFromDB.agencies[0].sphere,
-          address: tenderFromDB.agencies[0].address,
-          email: tenderFromDB.agencies[0].email,
-          phone: tenderFromDB.agencies[0].phone,
-          website: tenderFromDB.agencies[0].website,
-          status: tenderFromDB.agencies[0].status,
-          created_at: tenderFromDB.agencies[0].created_at,
-          updated_at: tenderFromDB.agencies[0].updated_at,
-        }
-      : undefined,
+    agencies:
+      Array.isArray(tenderFromDB.agencies) && tenderFromDB.agencies.length > 0
+        ? {
+            id: tenderFromDB.agencies[0].id, // Usar o id real da agência
+            name: tenderFromDB.agencies[0].name,
+            cnpj: tenderFromDB.agencies[0].cnpj,
+            agency_type: tenderFromDB.agencies[0].agency_type,
+            sphere: tenderFromDB.agencies[0].sphere,
+            address: tenderFromDB.agencies[0].address,
+            email: tenderFromDB.agencies[0].email,
+            phone: tenderFromDB.agencies[0].phone,
+            website: tenderFromDB.agencies[0].website,
+            status: tenderFromDB.agencies[0].status,
+            created_at: tenderFromDB.agencies[0].created_at,
+            updated_at: tenderFromDB.agencies[0].updated_at,
+          }
+        : tenderFromDB.agencies && !Array.isArray(tenderFromDB.agencies)
+        ? tenderFromDB.agencies
+        : undefined,
 
-    profiles: Array.isArray(tenderFromDB.profiles) ? tenderFromDB.profiles[0] : tenderFromDB.profiles,
+    profiles: Array.isArray(tenderFromDB.profiles)
+      ? tenderFromDB.profiles[0]
+      : tenderFromDB.profiles,
     tender_lots: tenderFromDB.tender_lots,
   };
 }
