@@ -116,7 +116,7 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  <SidebarMenuItem>
+                  {/* <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/dashboard/supplier/my-tenders")}
@@ -126,7 +126,7 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
                         <span className="font-medium text-lg">Minhas Licitações</span>
                       </Link>
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  </SidebarMenuItem> */}
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild

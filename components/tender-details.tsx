@@ -325,12 +325,12 @@ const TenderDetails = ({
             </CardHeader>
             <CardContent>
               <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-                <SupplierProposalForm
+                {/* <SupplierProposalForm
                   tender={tender}
                   lots={tender.lots || []}
                   supplierId={userProfile?.id || "mock-supplier-id"}
                   usingMockData={usingMockData}
-                />
+                /> */}
               </Suspense>
             </CardContent>
           </Card>

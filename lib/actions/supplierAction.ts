@@ -2,7 +2,7 @@
 
 import { withErrorHandling, ServerActionError } from "./errorAction";
 import { createClient } from "@supabase/supabase-js";
-import { signUpAction } from "./authAction";
+import { getSessionWithProfile, signUpAction } from "./authAction";
 import { createProfile, fetchProfileByEmail, updateProfile } from "./profileAction";
 
 function createServerActionClient() {
@@ -249,5 +249,117 @@ export async function fetchSupplySegments() {
       throw new ServerActionError(`Erro ao buscar segmentos: ${error.message}`, 500);
     }
     return data;
+  });
+}
+
+export async function fetchUserProposals(userId?: string) {
+  return withErrorHandling(async () => {
+    let targetUserId = userId;
+    
+    if (!targetUserId) {
+      const sessionData = await getSessionWithProfile();
+      if (!sessionData?.user) {
+        throw new ServerActionError("Usuário não autenticado", 401);
+      }
+      targetUserId = sessionData.user.id;
+    }
+
+    // CORREÇÃO: Buscar propostas do usuário/fornecedor com campos corretos
+    const { data: proposals, error } = await supabase
+      .from("tender_proposals")
+      .select(`
+        id,
+        tender_id,
+        tender_item_id,
+        supplier_ir,
+        tender_lots_id,
+        user_id,
+        value,
+        status,
+        disqualification_reason,
+        created_at,
+        updated_at,
+        tenders!inner (
+          id,
+          title,
+          description,
+          status,
+          tender_type,
+          estimated_value,
+          opening_date,
+          closing_date,
+          agencies!inner (
+            id,
+            name,
+            address
+          )
+        ),
+        tender_lots!tender_proposals_tender_lots_id_fkey (
+          id,
+          number,
+          description
+        ),
+        tender_items!inner (
+          id,
+          item_number,
+          description,
+          quantity,
+          unit,
+          estimated_unit_price
+        )
+      `)
+      .eq("user_id", targetUserId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching user proposals:", error);
+      throw new ServerActionError(`Erro ao buscar propostas: ${error.message}`, 500);
+    }
+
+    // Transformar dados para o formato esperado pelo componente atual
+    const transformedProposals = (proposals || []).map((proposal: any) => {
+      // Determinar tipo baseado nos dados
+      const type = proposal.tender_lots_id ? "lot" : "item";
+      
+      // Converter valor de reais para o formato do componente
+      const totalValue = (proposal.value || 0);
+      
+      // Extrair cidade e estado do endereço (se disponível)
+      const address = proposal.tenders.agencies.address || "";
+      const addressParts = address.split(",").map((part: string) => part.trim());
+      const city = addressParts.length > 1 ? addressParts[addressParts.length - 2] : "N/A";
+      const state = addressParts.length > 0 ? addressParts[addressParts.length - 1] : "N/A";
+      
+      return {
+        id: proposal.id,
+        tender_id: proposal.tender_id,
+        lot_id: proposal.tender_lots_id,
+        item_id: type === "item" ? proposal.tender_item_id : null,
+        type: type,
+        total_value: totalValue,
+        status: proposal.status,
+        created_at: proposal.created_at,
+        updated_at: proposal.updated_at,
+        notes: null, // Campo notes não existe na estrutura atual
+        tenders: {
+          id: proposal.tenders.id,
+          title: proposal.tenders.title,
+          description: proposal.tenders.description,
+          status: proposal.tenders.status,
+          modality: proposal.tenders.tender_type,
+          estimated_value: proposal.tenders.estimated_value,
+          opening_date: proposal.tenders.opening_date,
+          closing_date: proposal.tenders.closing_date,
+          agency: {
+            id: proposal.tenders.agencies.id,
+            name: proposal.tenders.agencies.name,
+            city: city,
+            state: state,
+          }
+        }
+      };
+    });
+
+    return transformedProposals;
   });
 }
