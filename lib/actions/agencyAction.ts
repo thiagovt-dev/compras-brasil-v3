@@ -2,352 +2,338 @@
 
 import { withErrorHandling, ServerActionError } from "./errorAction";
 import { createClient } from "@supabase/supabase-js";
+import { getSessionWithProfile, signUpAction } from "./authAction";
 
 function createServerActionClient() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error("Missing Supabase configuration");
   }
-
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
 const supabase = createServerActionClient();
 
-export async function fetchAgencies() {
-  return withErrorHandling(async () => {
-    const { data: agencies, error } = await supabase
-      .from("agencies")
-      .select("id, name, agency_type, sphere, created_at, cnpj, address, email, phone, website, status, updated_at")
-      .eq("status", "active")
-      .order("name");
-
-    if (error) {
-      console.error("Error fetching agencies:", error);
-      throw new ServerActionError(`Erro ao buscar órgãos: ${error.message}`, 500);
-    }
-
-    return agencies as Agency[] || [];
-  });
+interface AgencyData {
+  name: string;
+  cnpj: string;
+  agency_type: string;
+  sphere: string;
+  address: string;
+  email: string;
+  phone: string;
+  website?: string;
+  description?: string;
 }
 
-export async function fetchAllAgencies() {
-  return withErrorHandling(async () => {
-    const { data: agencies, error } = await supabase
-      .from("agencies")
-      .select("*")
-      .eq("status", "active")
-      .order("name");
-
-    if (error) {
-      console.error("Error fetching all agencies:", error);
-      throw new ServerActionError(`Erro ao buscar órgãos: ${error.message}`, 500);
-    }
-
-    return agencies as Agency[] || [];
-  });
+interface AgencyUser {
+  name: string;
+  email: string;
+  cpf: string;
+  document: string;
+  role: "auctioneer" | "authority" | "agency_support";
 }
 
-export async function fetchAgencyById(agencyId: string) {
-  return withErrorHandling(async () => {
-    if (!agencyId) {
-      throw new ServerActionError("Agency ID is required", 400);
-    }
-
-    const { data: agency, error } = await supabase
-      .from("agencies")
-      .select("*")
-      .eq("id", agencyId)
-      .single();
-
-    if (error) {
-      console.error("Error fetching agency:", error);
-
-      if (error.code === "PGRST116") {
-        throw new ServerActionError("Órgão não encontrado", 404);
-      } else {
-        throw new ServerActionError(`Erro ao buscar órgão: ${error.message}`, 500);
-      }
-    }
-
-    return agency as Agency;
-  });
+interface AgencyDocument {
+  name: string;
+  file_path: string;
+  file_type?: string;
+  file_size?: number;
 }
 
-export async function fetchAgenciesByType(agencyType: string) {
-  return withErrorHandling(async () => {
-    if (!agencyType) {
-      throw new ServerActionError("Agency type is required", 400);
+async function createAgencyUser(
+  userInfo: AgencyUser,
+  agencyId: string,
+  tempPassword: string
+) {
+  try {
+    console.log(`👤 Criando usuário: ${userInfo.email}`);
+
+    const userData = {
+      name: userInfo.name,
+      email: userInfo.email,
+      cpf: userInfo.document.replace(/\D/g, ""),
+      profile_type: userInfo.role,
+      agency_id: agencyId,
+    };
+
+    console.log(`📋 Dados do usuário ${userInfo.email}:`, userData);
+
+    const signUpResult = await signUpAction({
+      email: userInfo.email,
+      password: tempPassword,
+      name: userInfo.name,
+      profile_type: userInfo.role,
+      cpf: userInfo.document.replace(/\D/g, ""),
+    });
+
+    if (!signUpResult.success || !signUpResult.data?.user?.id) {
+      throw new ServerActionError(signUpResult.error || "Erro ao criar usuário", 500);
     }
 
-    const { data: agencies, error } = await supabase
-      .from("agencies")
-      .select("id, name, agency_type, sphere")
-      .eq("agency_type", agencyType)
-      .eq("status", "active")
-      .order("name");
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({
+        agency_id: agencyId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", signUpResult.data.user.id);
 
-    if (error) {
-      console.error("Error fetching agencies by type:", error);
-      throw new ServerActionError(`Erro ao buscar órgãos por tipo: ${error.message}`, 500);
+    if (updateError) {
+      console.error("Erro ao atualizar perfil com agency_id:", updateError);
     }
 
-    return agencies as Partial<Agency>[] || [];
-  });
+    console.log(`✅ Usuário criado com sucesso: ${userInfo.email}`);
+    return {
+      success: true,
+      email: userInfo.email,
+      userId: signUpResult.data.user.id,
+    };
+  } catch (error) {
+    console.error(`💥 Erro ao criar usuário ${userInfo.email}:`, error);
+    return {
+      success: false,
+      email: userInfo.email,
+      error: error instanceof Error ? error.message : "Erro desconhecido",
+    };
+  }
 }
 
-export async function fetchAgenciesBySphere(sphere: string) {
+export async function registerAgency({
+  agencyData,
+  users,
+  documents,
+  updateCurrentUserProfile = false,
+}: {
+  agencyData: AgencyData;
+  users: AgencyUser[];
+  documents: AgencyDocument[];
+  updateCurrentUserProfile?: boolean;
+}) {
   return withErrorHandling(async () => {
-    if (!sphere) {
-      throw new ServerActionError("Sphere is required", 400);
+    const sessionData = await getSessionWithProfile();
+
+    if (!sessionData?.user) {
+      throw new ServerActionError("Usuário não autenticado", 401);
     }
 
-    const { data: agencies, error } = await supabase
-      .from("agencies")
-      .select("id, name, agency_type, sphere")
-      .eq("sphere", sphere)
-      .eq("status", "active")
-      .order("name");
+    console.log("🚀 Iniciando cadastro do órgão...");
 
-    if (error) {
-      console.error("Error fetching agencies by sphere:", error);
-      throw new ServerActionError(`Erro ao buscar órgãos por esfera: ${error.message}`, 500);
+    // Validar dados obrigatórios
+    if (!agencyData.name || !agencyData.cnpj || !agencyData.email) {
+      throw new ServerActionError("Dados obrigatórios não preenchidos", 400);
     }
 
-    return agencies as Partial<Agency>[] || [];
-  });
-}
-
-export async function searchAgencies(query: string) {
-  return withErrorHandling(async () => {
-    if (!query) {
-      throw new ServerActionError("Search query is required", 400);
-    }
-
-    const { data: agencies, error } = await supabase
-      .from("agencies")
-      .select("id, name, agency_type, sphere")
-      .eq("status", "active")
-      .ilike("name", `%${query}%`)
-      .order("name")
-      .limit(20);
-
-    if (error) {
-      console.error("Error searching agencies:", error);
-      throw new ServerActionError(`Erro ao pesquisar órgãos: ${error.message}`, 500);
-    }
-
-    return agencies as Partial<Agency>[] || [];
-  });
-}
-
-export async function createAgency(agencyData: Omit<Agency, "id" | "created_at" | "updated_at">) {
-  return withErrorHandling(async () => {
-    if (!agencyData.name) {
-      throw new ServerActionError("Nome do órgão é obrigatório", 400);
-    }
-
-    const { data: agency, error } = await supabase
+    // Criar órgão
+    console.log("📝 Inserindo órgão na tabela agencies...");
+    const { data: agency, error: agencyError } = await supabase
       .from("agencies")
       .insert({
-        ...agencyData,
-        status: agencyData.status || "active",
+        name: agencyData.name,
+        cnpj: agencyData.cnpj.replace(/\D/g, ""),
+        agency_type: agencyData.agency_type,
+        sphere: agencyData.sphere,
+        address: agencyData.address,
+        email: agencyData.email,
+        phone: agencyData.phone.replace(/\D/g, ""),
+        website: agencyData.website || null,
+        description: agencyData.description || null,
+        status: "pending",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
       .select()
       .single();
 
-    if (error) {
-      console.error("Error creating agency:", error);
+    if (agencyError) {
+      console.error("Erro ao criar órgão:", agencyError);
+      throw new ServerActionError(`Erro ao criar órgão: ${agencyError.message}`, 500);
+    }
 
-      if (error.code === "23505") {
-        throw new ServerActionError("Já existe um órgão com este CNPJ", 409);
+    if (!agency) {
+      throw new ServerActionError("Órgão não foi criado - dados não retornados", 500);
+    }
+
+    const agencyId = agency.id;
+    console.log("✅ Órgão criado com ID:", agencyId);
+
+    // Atualizar profile do usuário atual se solicitado (agora altera profile_type para 'agency')
+    let userProfileUpdated = false;
+    if (updateCurrentUserProfile && sessionData.profile?.profile_type === "citizen") {
+      console.log("👤 Atualizando agency_id e profile_type do usuário...");
+
+      const { error: updateProfileError } = await supabase
+        .from("profiles")
+        .update({
+          agency_id: agencyId,
+          profile_type: "agency",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", sessionData.user.id);
+
+      if (updateProfileError) {
+        console.error("Erro ao atualizar agency_id/profile_type do usuário:", updateProfileError);
       } else {
-        throw new ServerActionError(`Erro ao criar órgão: ${error.message}`, 500);
+        console.log("✅ agency_id e profile_type do usuário atualizados");
+        userProfileUpdated = true;
       }
     }
 
-    return agency as Agency;
-  });
-}
+    // Filtrar usuários válidos
+    const validUsers = users.filter(
+      (userInfo) =>
+        userInfo.name?.trim() &&
+        userInfo.email?.trim() &&
+        userInfo.document?.trim() &&
+        userInfo.role
+    );
 
-export async function updateAgency(agencyId: string, updateData: Partial<Agency>) {
-  return withErrorHandling(async () => {
-    if (!agencyId) {
-      throw new ServerActionError("Agency ID is required", 400);
+    console.log("👥 Criando usuários:", validUsers.length);
+
+    // Criar usuários sequencialmente
+    const userResults = [];
+    for (const userInfo of validUsers) {
+      // Usar o documento como senha temporária (sem formatação)
+      const tempPassword = userInfo.document.replace(/\D/g, "");
+
+      if (tempPassword.length < 6) {
+        userResults.push({
+          success: false,
+          email: userInfo.email,
+          error: "Documento deve ter pelo menos 6 dígitos para usar como senha",
+        });
+        continue;
+      }
+
+      const result = await createAgencyUser(userInfo, agencyId, tempPassword);
+      userResults.push(result);
+
+      // Pequena pausa entre criações
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
 
-    if (!updateData || Object.keys(updateData).length === 0) {
-      throw new ServerActionError("Update data is required", 400);
+    // Inserir documentos (se houver)
+    if (documents.length > 0) {
+      console.log("📄 Inserindo documentos...");
+      for (const doc of documents) {
+        const { error: docError } = await supabase.from("agency_documents").insert({
+          agency_id: agencyId,
+          user_id: sessionData.user.id,
+          ...doc,
+        });
+        if (docError) {
+          console.error("Erro ao inserir documento:", docError);
+          // Não falha o processo, apenas loga
+        }
+      }
     }
 
-    const { data: agency, error } = await supabase
-      .from("agencies")
-      .update({
-        ...updateData,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", agencyId)
-      .select()
-      .single();
+    // Contar sucessos e falhas
+    const successfulUsers = userResults.filter((result) => result.success);
+    const failedUsers = userResults.filter((result) => !result.success);
 
-    if (error) {
-      console.error("Error updating agency:", error);
-      throw new ServerActionError(`Erro ao atualizar órgão: ${error.message}`, 500);
-    }
-
-    return agency as Agency;
-  });
-}
-
-export async function deleteAgency(agencyId: string) {
-  return withErrorHandling(async () => {
-    if (!agencyId) {
-      throw new ServerActionError("Agency ID is required", 400);
-    }
-
-    // Soft delete - marcar como inativo
-    const { data: agency, error } = await supabase
-      .from("agencies")
-      .update({
-        status: "inactive",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", agencyId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Error deleting agency:", error);
-      throw new ServerActionError(`Erro ao deletar órgão: ${error.message}`, 500);
-    }
-
-    return agency as Agency;
-  });
-}
-
-export async function getAgencyStats(agencyId: string) {
-  return withErrorHandling(async () => {
-    if (!agencyId) {
-      throw new ServerActionError("Agency ID is required", 400);
-    }
-
-    // Buscar estatísticas básicas
-    const { data: tenderStats, error: statsError } = await supabase
-      .from("tenders")
-      .select("status, estimated_value")
-      .eq("agency_id", agencyId);
-
-    if (statsError) {
-      console.error("Error fetching agency stats:", statsError);
-      throw new ServerActionError(`Erro ao buscar estatísticas: ${statsError.message}`, 500);
-    }
-
-    const activeTenders = tenderStats?.filter(t => ["published", "in_progress"].includes(t.status)).length || 0;
-    const completedTenders = tenderStats?.filter(t => t.status === "completed").length || 0;
-    const totalTenders = tenderStats?.length || 0;
-    const totalValue = tenderStats?.reduce((sum, t) => sum + (t.estimated_value || 0), 0) || 0;
+    console.log(`✅ Usuários criados com sucesso: ${successfulUsers.length}`);
+    console.log(`❌ Usuários que falharam: ${failedUsers.length}`);
 
     return {
-      totalTenders,
-      activeTenders,
-      completedTenders,
-      totalValue,
+      agency,
+      userResults: {
+        successful: successfulUsers,
+        failed: failedUsers,
+      },
+      userProfileUpdated,
     };
   });
 }
 
-export async function fetchAgencyTypes() {
+export async function fetchAllAgencies() {
   return withErrorHandling(async () => {
-    const agencyTypes: { value: string; label: string }[] = [
-      { value: "ministerio", label: "Ministério" },
-      { value: "secretaria", label: "Secretaria" },
-      { value: "autarquia", label: "Autarquia" },
-      { value: "fundacao", label: "Fundação" },
-      { value: "empresa_publica", label: "Empresa Pública" },
-      { value: "sociedade_economia_mista", label: "Sociedade de Economia Mista" },
-      { value: "agencia_reguladora", label: "Agência Reguladora" },
-      { value: "tribunal", label: "Tribunal" },
-      { value: "prefeitura", label: "Prefeitura" },
-      { value: "camara_municipal", label: "Câmara Municipal" },
-      { value: "assembleia_legislativa", label: "Assembleia Legislativa" },
-      { value: "outro", label: "Outro" },
-    ];
-
-    return agencyTypes;
-  });
-}
-
-export async function fetchAgencySpheres() {
-  return withErrorHandling(async () => {
-    const spheres: { value: string; label: string }[] = [
-      { value: "federal", label: "Federal" },
-      { value: "estadual", label: "Estadual" },
-      { value: "municipal", label: "Municipal" },
-      { value: "distrital", label: "Distrital" },
-    ];
-
-    return spheres;
-  });
-}
-
-export async function validateAgencyData(agencyData: Partial<Agency>) {
-  return withErrorHandling(async () => {
-    const errors: string[] = [];
-
-    if (!agencyData.name) {
-      errors.push("Nome é obrigatório");
-    }
-
-    if (agencyData.cnpj) {
-      const cnpjDigits = agencyData.cnpj.replace(/\D/g, '');
-      if (cnpjDigits.length !== 14) {
-        errors.push("CNPJ deve ter 14 dígitos");
-      }
-
-      const { data: existingAgency, error } = await supabase
-        .from("agencies")
-        .select("id")
-        .eq("cnpj", agencyData.cnpj)
-        .single();
-
-      if (error && error.code !== "PGRST116") {
-        throw new ServerActionError(`Erro ao validar CNPJ: ${error.message}`, 500);
-      }
-
-      if (existingAgency) {
-        errors.push("Já existe um órgão com este CNPJ");
-      }
-    }
-
-    if (agencyData.email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(agencyData.email)) {
-        errors.push("Email deve ter um formato válido");
-      }
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-    };
-  });
-}
-
-export async function fetchRecentAgencies(limit: number = 10) {
-  return withErrorHandling(async () => {
-    const { data: agencies, error } = await supabase
+    const { data, error } = await supabase
       .from("agencies")
       .select("*")
-      .eq("status", "active")
-      .order("created_at", { ascending: false })
-      .limit(limit);
+      .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error fetching recent agencies:", error);
-      throw new ServerActionError(`Erro ao buscar órgãos recentes: ${error.message}`, 500);
+      throw new ServerActionError(`Erro ao buscar órgãos: ${error.message}`, 500);
     }
 
-    return agencies as Agency[] || [];
+    return data;
+  });
+}
+
+export async function fetchAgencyById(agencyId: string) {
+  return withErrorHandling(async () => {
+    const { data, error } = await supabase
+      .from("agencies")
+      .select("*")
+      .eq("id", agencyId)
+      .single();
+
+    if (error) {
+      throw new ServerActionError(`Erro ao buscar órgão: ${error.message}`, 500);
+    }
+
+    return data;
+  });
+}
+
+export async function fetchAgencyDocuments(agencyId: string) {
+  return withErrorHandling(async () => {
+    const { data, error } = await supabase
+      .from("agency_documents")
+      .select("*")
+      .eq("agency_id", agencyId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw new ServerActionError(`Erro ao buscar documentos do órgão: ${error.message}`, 500);
+    }
+
+    return data;
+  });
+}
+
+export async function updateAgencyStatus(agencyId: string, status: string) {
+  return withErrorHandling(async () => {
+    const sessionData = await getSessionWithProfile();
+
+    if (!sessionData?.user) {
+      throw new ServerActionError("Usuário não autenticado", 401);
+    }
+
+    if (sessionData.profile?.profile_type !== "admin") {
+      throw new ServerActionError("Acesso negado: apenas administradores podem alterar status", 403);
+    }
+
+    const { data, error } = await supabase
+      .from("agencies")
+      .update({ 
+        status, 
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", agencyId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new ServerActionError(`Erro ao atualizar status do órgão: ${error.message}`, 500);
+    }
+
+    if (status === "active") {
+      const { error: updateProfilesError } = await supabase
+      .from("profiles")
+      .update({ 
+        profile_type: "agency",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("agency_id", agencyId)
+      .eq("profile_type", "citizen");
+
+      if (updateProfilesError) {
+      console.error("Erro ao atualizar perfis dos usuários:", updateProfilesError);
+      // Não falha o processo
+      }
+    }
+
+    return data;
   });
 }

@@ -1,15 +1,13 @@
-"use client"
+// app/dashboard/agency/manage-users/page.tsx
+"use client";
 
-import type React from "react"
-
-import { DashboardHeader } from "@/components/dashboard-header"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { getSupabaseClient } from "@/lib/supabase/client-singleton"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { PlusCircle, Edit, Trash2, Loader2 } from "lucide-react"
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { DashboardHeader } from "@/components/dashboard-header";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PlusCircle, Edit, Trash2, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,241 +15,217 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { toast } from "sonner"
-import { createAgencyUser } from "@/serverAction/agencyUserAction"
-import { useAuth } from "@/lib/supabase/auth-context"
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import {
+  fetchAgencyUsers,
+  createAgencyUser,
+  updateAgencyUser,
+  deleteAgencyUser,
+  getAgencyInfo,
+} from "@/lib/actions/agencyUserAction";
 
-interface UserProfile {
-  id: string
-  name: string
-  email: string
-  profile_type: string
-}
-
-interface Profile {
-  profile_type: string
-  agency_id: string
+interface AgencyUser {
+  id: string;
+  name: string;
+  email: string;
+  profile_type: string;
+  created_at?: string;
 }
 
 export default function ManageAgencyUsersPage() {
-  const [agencyUsers, setAgencyUsers] = useState<UserProfile[]>([])
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [editDialogOpen, setEditDialogOpen] = useState<string | null>(null)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null)
-  const [creating, setCreating] = useState(false)
-  const [updating, setUpdating] = useState<string | null>(null)
-  const [deleting, setDeleting] = useState<string | null>(null)
-  const { signIn, session, isLoading } = useAuth()
+  const [users, setUsers] = useState<AgencyUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [updating, setUpdating] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
-  const router = useRouter()
-  const supabase = getSupabaseClient()
+  const router = useRouter();
+  const { toast } = useToast();
 
+  // Carregar dados iniciais
   useEffect(() => {
-    async function fetchData() {
+    async function loadData() {
       try {
-        // Get current session
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
+        setLoading(true);
+        setError(null);
 
-        if (!session) {
-          router.push("/login")
-          return
+        // Verificar autenticação e permissões
+        const authResult = await getAgencyInfo();
+        if (!authResult.success) {
+          router.push("/login");
+          return;
         }
 
-        // Get user profile
-        const { data: userProfile, error: profileError } = await supabase
-          .from("profiles")
-          .select("profile_type, agency_id")
-          .eq("id", session.user.id)
-          .single()
-
-        if (profileError || (userProfile?.profile_type !== "agency" && userProfile?.profile_type !== "admin")) {
-          router.push("/dashboard")
-          return
+        if (!authResult.data?.isAgencyUser) {
+          router.push("/dashboard");
+          return;
         }
 
-        setProfile(userProfile)
-
-        // Check if agency_id exists before making the query
-        if (!userProfile.agency_id) {
-          console.log("User has no agency_id, not fetching users")
-          setAgencyUsers([]) // Set empty array if no agency_id
-          return
+        if (!authResult.data?.hasAgency) {
+          setUsers([]);
+          setError("Usuário não está vinculado a um órgão");
+          return;
         }
 
-        // Get agency users only if agency_id is not null
-        const { data: users, error: usersError } = await supabase
-          .from("profiles")
-          .select("id, name, email, profile_type") // Alterado de full_name para name, e role para profile_type
-          .eq("agency_id", userProfile.agency_id)
-          .neq("id", session.user.id) // Exclude the current user from the list
-
-        console.log("Fetched users:", users)
-
-        if (usersError) {
-          setError(usersError.message)
+        // Carregar usuários
+        const usersResult = await fetchAgencyUsers();
+        if (usersResult.success) {
+          setUsers(usersResult.data || []);
         } else {
-          setAgencyUsers(users || [])
+          setError(usersResult.error || "Erro ao carregar usuários");
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro desconhecido")
+        console.error("Erro ao carregar dados:", err);
+        setError("Erro inesperado ao carregar dados");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    fetchData()
-  }, [supabase, router])
+    loadData();
+  }, [router]);
 
   const handleCreateUser = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const formData = new FormData(event.currentTarget)
+    event.preventDefault();
+    
+    if (creating) return;
 
-    if (creating) return
-
+    const formData = new FormData(event.currentTarget);
+    
     try {
-      setCreating(true)
+      setCreating(true);
 
-      if (!session) {
-        toast.error("Usuário não autenticado")
-        return
+      const result = await createAgencyUser(formData);
+      
+      if (result.success) {
+        if (result.data) {
+          setUsers(prev => [result.data as AgencyUser, ...prev]);
+        }
+        toast({
+          title: "Sucesso",
+          description: "Usuário criado com sucesso",
+        });
+        event.currentTarget.reset();
+        setDialogOpen(false);
+      } else {
+        toast({
+          title: "Erro",
+          description: result.error || "Erro ao criar usuário",
+          variant: "destructive",
+        });
       }
-
-      // Adicionar token e user_id ao FormData
-      formData.append("access_token", session.access_token)
-      formData.append("user_id", session.user.id)
-
-      console.log("Enviando dados:", {
-        token: session.access_token ? "Presente" : "Ausente",
-        user_id: session.user.id,
-      })
-
-      const name = formData.get("name") as string // Alterado de fullName para name
-      const email = formData.get("email") as string
-      const password = formData.get("password") as string
-      const profile_type = formData.get("profile_type") as string // Alterado de role para profile_type
-
-      if (!name || !email || !password || !profile_type || !profile) {
-        // Alterado de fullName para name, e role para profile_type
-        toast.error("Todos os campos são obrigatórios")
-        return
-      }
-
-      formData.append("name", name) // Adicionar name ao FormData
-      formData.append("profile_type", profile_type) // Adicionar profile_type ao FormData
-
-      const result = await createAgencyUser(formData)
-
-      console.log("Resultado:", result)
-
-      if (!result.success) {
-        toast.error(result.error)
-        return
-      }
-
-      // Add new user to local state
-      setAgencyUsers((prev) => [...prev, result.user!]) // result.user já deve ter 'name' e 'profile_type'
-      toast.success("Usuário criado com sucesso")
-
-      // Reset form and close dialog
-      event.currentTarget.reset()
-      setDialogOpen(false)
     } catch (err) {
-      console.error("Erro:", err)
-      toast.error(err instanceof Error ? err.message : "Erro ao criar usuário")
+      console.error("Erro ao criar usuário:", err);
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao criar usuário",
+        variant: "destructive",
+      });
     } finally {
-      setCreating(false)
+      setCreating(false);
     }
-  }
-
-  useEffect(() => {
-    console.log("🔄 Estado creating mudou para:", creating)
-  }, [creating])
+  };
 
   const handleUpdateUser = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const formData = new FormData(event.currentTarget)
+    event.preventDefault();
+    
+    const formData = new FormData(event.currentTarget);
+    const userId = formData.get("userId") as string;
 
-    const userId = formData.get("userId") as string
+    if (!userId || updating === userId) return;
 
     try {
-      setUpdating(userId)
+      setUpdating(userId);
 
-      const name = formData.get("name") as string // Alterado de fullName para name
-      const email = formData.get("email") as string
-      const profile_type = formData.get("profile_type") as string // Alterado de role para profile_type
-
-      if (!userId || !name || !email || !profile_type) {
-        // Alterado de fullName para name, e role para profile_type
-        toast.error("Todos os campos são obrigatórios")
-        return
+      const result = await updateAgencyUser(userId, formData);
+      
+      if (result.success) {
+        setUsers(prev =>
+          prev.map(user =>
+            user.id === userId ? { ...user, ...result.data } : user
+          )
+        );
+        toast({
+          title: "Sucesso",
+          description: "Usuário atualizado com sucesso",
+        });
+        setEditDialogOpen(null);
+      } else {
+        toast({
+          title: "Erro",
+          description: result.error || "Erro ao atualizar usuário",
+          variant: "destructive",
+        });
       }
-
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          name: name, // Alterado de full_name para name
-          email: email,
-          profile_type: profile_type, // Alterado de role para profile_type
-        })
-        .eq("id", userId)
-
-      if (error) {
-        toast.error(error.message)
-        return
-      }
-
-      // Update local state
-      setAgencyUsers((prev) =>
-        prev.map((user) =>
-          user.id === userId
-            ? { ...user, name: name, email: email, profile_type: profile_type } // Alterado de full_name para name, e role para profile_type
-            : user,
-        ),
-      )
-
-      toast.success("Usuário atualizado com sucesso")
-      setEditDialogOpen(null)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao atualizar usuário")
+      console.error("Erro ao atualizar usuário:", err);
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao atualizar usuário",
+        variant: "destructive",
+      });
     } finally {
-      setUpdating(null)
+      setUpdating(null);
     }
-  }
+  };
 
   const handleDeleteUser = async (userId: string) => {
+    if (!userId || deleting === userId) return;
+
     try {
-      setDeleting(userId)
+      setDeleting(userId);
 
-      const { error } = await supabase.from("profiles").delete().eq("id", userId)
-
-      if (error) {
-        toast.error(error.message)
-        return
+      const result = await deleteAgencyUser(userId);
+      
+      if (result.success) {
+        setUsers(prev => prev.filter(user => user.id !== userId));
+        toast({
+          title: "Sucesso",
+          description: "Usuário removido com sucesso",
+        });
+        setDeleteDialogOpen(null);
+      } else {
+        toast({
+          title: "Erro",
+          description: result.error || "Erro ao remover usuário",
+          variant: "destructive",
+        });
       }
-
-      // Update local state
-      setAgencyUsers((prev) => prev.filter((user) => user.id !== userId))
-      toast.success("Usuário removido com sucesso")
-      setDeleteDialogOpen(null)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao remover usuário")
+      console.error("Erro ao remover usuário:", err);
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao remover usuário",
+        variant: "destructive",
+      });
     } finally {
-      setDeleting(null)
+      setDeleting(null);
     }
-  }
+  };
+
+  const getRoleLabel = (profileType: string) => {
+    const roleLabels: Record<string, string> = {
+      agency: "Agente de Contratação",
+      admin: "Administrador (Órgão)",
+      support: "Suporte do Órgão",
+      auctioneer: "Pregoeiro",
+      authority: "Autoridade Superior",
+      agency_support: "Equipe de Apoio",
+    };
+    return roleLabels[profileType] || profileType;
+  };
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-4 p-4 md:gap-8 md:p-6">
+      <div className="space-y-6">
         <DashboardHeader
           title="Gerenciar Usuários do Órgão"
           description="Adicione, edite ou remova usuários vinculados ao seu órgão."
@@ -263,11 +237,11 @@ export default function ManageAgencyUsersPage() {
           </CardHeader>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:gap-8 md:p-6">
+    <div className="space-y-6">
       <DashboardHeader
         title="Gerenciar Usuários do Órgão"
         description="Adicione, edite ou remova usuários vinculados ao seu órgão."
@@ -275,50 +249,66 @@ export default function ManageAgencyUsersPage() {
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button disabled={creating}>
-              <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Usuário
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Adicionar Usuário
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Adicionar Novo Usuário</DialogTitle>
-              <DialogDescription>Preencha os dados para adicionar um novo usuário ao seu órgão.</DialogDescription>
+              <DialogDescription>
+                Preencha os dados para adicionar um novo usuário ao seu órgão.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreateUser} className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="name" className="text-right">
-                  {" "}
-                  {/* Alterado de fullName para name */}
                   Nome Completo
                 </Label>
-                <Input id="name" name="name" className="col-span-3" required /> {/* Alterado de fullName para name */}
+                <Input
+                  id="name"
+                  name="name"
+                  className="col-span-3"
+                  required
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="email" className="text-right">
-                  Email
+                  E-mail
                 </Label>
-                <Input id="email" name="email" type="email" className="col-span-3" required />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  className="col-span-3"
+                  required
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="password" className="text-right">
                   Senha
                 </Label>
-                <Input id="password" name="password" type="password" className="col-span-3" required />
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  className="col-span-3"
+                  required
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="profile_type" className="text-right">
-                  {" "}
-                  {/* Alterado de role para profile_type */}
                   Função
                 </Label>
                 <Select name="profile_type" required>
-                  {" "}
-                  {/* Alterado de role para profile_type */}
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Selecione a função" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="agency">Agente de Contratação</SelectItem>
-                    <SelectItem value="admin">Administrador (Órgão)</SelectItem>
+                    <SelectItem value="auctioneer">Pregoeiro</SelectItem>
+                    <SelectItem value="authority">Autoridade Superior</SelectItem>
+                    <SelectItem value="agency_support">Equipe de Apoio</SelectItem>
                     <SelectItem value="support">Suporte do Órgão</SelectItem>
                   </SelectContent>
                 </Select>
@@ -340,160 +330,174 @@ export default function ManageAgencyUsersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Usuários do Órgão</CardTitle>
-          <CardDescription>Lista de todos os usuários vinculados ao seu órgão.</CardDescription>
+          <CardTitle>Usuários do Órgão ({users.length})</CardTitle>
+          <CardDescription>
+            Lista de todos os usuários vinculados ao seu órgão.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          {error && <p className="text-red-500">Erro ao carregar usuários: {error}</p>}
-          {agencyUsers.length === 0 ? (
-            <p>Nenhum usuário encontrado para este órgão.</p>
+          {error && (
+            <div className="text-red-500 mb-4">
+              Erro ao carregar usuários: {error}
+            </div>
+          )}
+          
+          {users.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <PlusCircle className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Nenhum usuário cadastrado
+              </h3>
+              <p>Adicione o primeiro usuário ao seu órgão.</p>
+            </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead> {/* Alterado de Nome para Nome Completo */}
-                  <TableHead>Email</TableHead>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>E-mail</TableHead>
                   <TableHead>Função</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {agencyUsers.map((user: UserProfile) => (
+                {users.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>{" "}
-                    {/* Alterado de user.full_name para user.name */}
+                    <TableCell className="font-medium">{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      {user.profile_type === "agency" && "Agente de Contratação"}
-                      {user.profile_type === "admin" && "Administrador (Órgão)"}
-                      {user.profile_type === "support" && "Suporte do Órgão"}
-                    </TableCell>
+                    <TableCell>{getRoleLabel(user.profile_type)}</TableCell>
                     <TableCell className="text-right">
-                      <Dialog
-                        open={editDialogOpen === user.id}
-                        onOpenChange={(open) => setEditDialogOpen(open ? user.id : null)}
-                      >
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="mr-2"
-                            disabled={updating === user.id || deleting === user.id}
-                          >
-                            <Edit className="h-4 w-4" />
-                            <span className="sr-only">Editar</span>
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
-                          <DialogHeader>
-                            <DialogTitle>Editar Usuário</DialogTitle>
-                            <DialogDescription>Edite os dados do usuário.</DialogDescription>
-                          </DialogHeader>
-                          <form onSubmit={handleUpdateUser} className="grid gap-4 py-4">
-                            <input type="hidden" name="userId" value={user.id} />
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="editName" className="text-right">
-                                {" "}
-                                {/* Alterado de editFullName para editName */}
-                                Nome Completo
-                              </Label>
-                              <Input
-                                id="editName" // Alterado de editFullName para editName
-                                name="name" // Alterado de fullName para name
-                                defaultValue={user.name} // Alterado de user.full_name para user.name
-                                className="col-span-3"
-                                required
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="editEmail" className="text-right">
-                                Email
-                              </Label>
-                              <Input
-                                id="editEmail"
-                                name="email"
-                                type="email"
-                                defaultValue={user.email}
-                                className="col-span-3"
-                                required
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="editProfileType" className="text-right">
-                                {" "}
-                                {/* Alterado de editRole para editProfileType */}
-                                Função
-                              </Label>
-                              <Select name="profile_type" defaultValue={user.profile_type} required>
-                                {" "}
-                                {/* Alterado de role para profile_type, e user.role para user.profile_type */}
-                                <SelectTrigger className="col-span-3">
-                                  <SelectValue placeholder="Selecione a função" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="agency">Agente de Contratação</SelectItem>
-                                  <SelectItem value="admin">Administrador (Órgão)</SelectItem>
-                                  <SelectItem value="support">Suporte do Órgão</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <Button type="submit" className="w-full" disabled={updating === user.id}>
-                              {updating === user.id ? (
-                                <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Salvando...
-                                </>
-                              ) : (
-                                "Salvar Alterações"
-                              )}
-                            </Button>
-                          </form>
-                        </DialogContent>
-                      </Dialog>
-                      <Dialog
-                        open={deleteDialogOpen === user.id}
-                        onOpenChange={(open) => setDeleteDialogOpen(open ? user.id : null)}
-                      >
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="icon" disabled={updating === user.id || deleting === user.id}>
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Remover</span>
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Confirmar Remoção</DialogTitle>
-                            <DialogDescription>
-                              Tem certeza que deseja remover o usuário {user.name}? Esta ação não pode ser desfeita.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="flex gap-2 pt-4">
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Botão Editar */}
+                        <Dialog
+                          open={editDialogOpen === user.id}
+                          onOpenChange={(open) => setEditDialogOpen(open ? user.id : null)}
+                        >
+                          <DialogTrigger asChild>
                             <Button
-                              variant="outline"
-                              className="flex-1"
-                              onClick={() => setDeleteDialogOpen(null)}
-                              disabled={deleting === user.id}
+                              variant="ghost"
+                              size="icon"
+                              disabled={updating === user.id || deleting === user.id}
                             >
-                              Cancelar
+                              <Edit className="h-4 w-4" />
+                              <span className="sr-only">Editar</span>
                             </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                              <DialogTitle>Editar Usuário</DialogTitle>
+                              <DialogDescription>
+                                Edite os dados do usuário.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={handleUpdateUser} className="grid gap-4 py-4">
+                              <input type="hidden" name="userId" value={user.id} />
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="editName" className="text-right">
+                                  Nome Completo
+                                </Label>
+                                <Input
+                                  id="editName"
+                                  name="name"
+                                  defaultValue={user.name}
+                                  className="col-span-3"
+                                  required
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="editEmail" className="text-right">
+                                  E-mail
+                                </Label>
+                                <Input
+                                  id="editEmail"
+                                  name="email"
+                                  type="email"
+                                  defaultValue={user.email}
+                                  className="col-span-3"
+                                  required
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="editProfileType" className="text-right">
+                                  Função
+                                </Label>
+                                <Select name="profile_type" defaultValue={user.profile_type} required>
+                                  <SelectTrigger className="col-span-3">
+                                    <SelectValue placeholder="Selecione a função" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="agency">Agente de Contratação</SelectItem>
+                                    <SelectItem value="auctioneer">Pregoeiro</SelectItem>
+                                    <SelectItem value="authority">Autoridade Superior</SelectItem>
+                                    <SelectItem value="agency_support">Equipe de Apoio</SelectItem>
+                                    <SelectItem value="support">Suporte do Órgão</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <Button type="submit" className="w-full" disabled={updating === user.id}>
+                                {updating === user.id ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Salvando...
+                                  </>
+                                ) : (
+                                  "Salvar Alterações"
+                                )}
+                              </Button>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+
+                        {/* Botão Remover */}
+                        <Dialog
+                          open={deleteDialogOpen === user.id}
+                          onOpenChange={(open) => setDeleteDialogOpen(open ? user.id : null)}
+                        >
+                          <DialogTrigger asChild>
                             <Button
-                              variant="destructive"
-                              className="flex-1"
-                              onClick={() => handleDeleteUser(user.id)}
-                              disabled={deleting === user.id}
+                              variant="ghost"
+                              size="icon"
+                              disabled={updating === user.id || deleting === user.id}
                             >
-                              {deleting === user.id ? (
-                                <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Removendo...
-                                </>
-                              ) : (
-                                "Remover Usuário"
-                              )}
+                              <Trash2 className="h-4 w-4" />
+                              <span className="sr-only">Remover</span>
                             </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Confirmar Remoção</DialogTitle>
+                              <DialogDescription>
+                                Tem certeza que deseja remover o usuário {user.name}? Esta ação não pode ser desfeita.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="flex gap-2 pt-4">
+                              <Button
+                                variant="outline"
+                                className="flex-1"
+                                onClick={() => setDeleteDialogOpen(null)}
+                                disabled={deleting === user.id}
+                              >
+                                Cancelar
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                className="flex-1"
+                                onClick={() => handleDeleteUser(user.id)}
+                                disabled={deleting === user.id}
+                              >
+                                {deleting === user.id ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Removendo...
+                                  </>
+                                ) : (
+                                  "Remover Usuário"
+                                )}
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -503,5 +507,5 @@ export default function ManageAgencyUsersPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

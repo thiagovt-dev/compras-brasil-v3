@@ -9,6 +9,7 @@ import { createClientSupabaseClient } from "./client";
 import { getSession } from "@/lib/supabase/auth-utils";
 import { signUpAction } from "../actions/authAction";
 import { fetchProfile } from "../actions/profileAction";
+import { fetchAgencyById } from "../actions/agencyAction";
 
 type AuthContextType = {
   user: User | null;
@@ -42,8 +43,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const loadingTimeout = setTimeout(() => {
       setIsLoading(false);
-    }, 2000); 
-    
+    }, 2000);
+
     return () => clearTimeout(loadingTimeout);
   }, []);
 
@@ -102,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const getInitialSession = async () => {
       if (!isMounted) return;
-      
+
       try {
         // Limpar tokens expirados
         try {
@@ -123,7 +124,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!isMounted) return;
 
         if (session) {
-          
           setSession(session);
           setUser(session.user);
 
@@ -168,7 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setProfile(null);
         }
       } finally {
-        if (isMounted && event !== 'TOKEN_REFRESHED') {
+        if (isMounted && event !== "TOKEN_REFRESHED") {
           setIsLoading(false);
         }
       }
@@ -218,10 +218,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (data.user) {
         const userProfile = await loadProfile(data.user.id);
+        const agency = await fetchAgencyById(profile?.agency_id ?? "");
+        let route = "/dashboard/citizen";
 
-        if (userProfile?.agency_id) {
+        if (profile?.agency_id && agency.data.status === "active") {
+          route = "/dashboard/agency";
           router.push("/dashboard/agency");
-        } else if (userProfile?.supplier_id) {
+        } else if (userProfile?.supplier_id && userProfile.profile_type === "supplier") {
           router.push("/dashboard/supplier");
         } else if (userProfile?.profile_type === "admin") {
           router.push("/dashboard/admin");
@@ -282,12 +285,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       console.log("👋 Iniciando logout...");
-      
+
       await supabase.auth.signOut();
-      
+
       // Limpar localStorage
       localStorage.removeItem("sb-jfbuistvgwkfpnujygwx-auth-token");
-      
+
       // Limpar todos os cookies
       document.cookie.split(";").forEach((cookie) => {
         const eqPos = cookie.indexOf("=");

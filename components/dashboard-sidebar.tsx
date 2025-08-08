@@ -296,9 +296,9 @@ export function DashboardSidebar({ userRole = "citizen" }: SidebarNavProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
-                      isActive={isActive("/dashboard/admin/register-agency")}
+                      isActive={isActive("/dashboard/admin/agencies")}
                       className="h-12 px-4 rounded-lg hover:bg-green-50 hover:text-green-700 data-[active=true]:bg-green-100 data-[active=true]:text-green-700 data-[active=true]:font-medium gap-3">
-                      <Link href="/dashboard/admin/register-agency">
+                      <Link href="/dashboard/admin/agencies">
                         <Building2 className="h-6 w-6" />
                         <span className="font-medium text-lg">Órgãos</span>
                       </Link>

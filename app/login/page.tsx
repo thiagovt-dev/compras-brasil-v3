@@ -15,6 +15,7 @@ import { getSupabaseClient } from "@/lib/supabase/client-singleton";
 import { detectDocumentType } from "@/lib/utils/document-utils";
 import { signInWithEmailOrDocument } from "@/lib/supabase/auth-utils";
 import { clearAuthData } from "@/lib/auth-debug";
+import { fetchAgencyById } from "@/lib/actions/agencyAction";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,10 +30,11 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Função para redirecionar baseado no perfil
-  const redirectToDashboard = (profile: any) => {
-    let route = "/dashboard/citizen"; // default
+  const redirectToDashboard = async (profile: any) => {
+    const agency = await fetchAgencyById(profile.agency_id);
+    let route = "/dashboard/citizen";
 
-    if (profile?.agency_id) {
+    if (profile?.agency_id && agency.data.status === "active") {
       route = "/dashboard/agency";
     } else if (profile.supplier_id && profile.profile_type === "supplier") {
       route = "/dashboard/supplier";

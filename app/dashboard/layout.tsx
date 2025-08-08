@@ -24,7 +24,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   // Determine user role based on agency_id/supplier_id first, then profile_type
   const getUserRole = () => {
-    if (profile?.agency_id) return "agency";
+    if (profile?.agency_id && profile?.profile_type === "agency") return "agency";
     if (profile?.supplier_id && profile?.profile_type === "supplier") return "supplier";
     return profile?.profile_type || "citizen";
   };
