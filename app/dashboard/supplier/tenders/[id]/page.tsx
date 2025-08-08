@@ -1,14 +1,18 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { 
-  fetchTenderById, 
-  fetchTenderDocuments, 
+import {
+  fetchTenderById,
+  fetchTenderDocuments,
   fetchTenderParticipants,
-  checkTenderFavorite 
+  checkTenderFavorite,
 } from "@/lib/actions/tenderAction";
+import { fetchUserProposalsForTender, debugUserProposals } from "@/lib/actions/supplierAction";
 import { getSessionWithProfile } from "@/lib/actions/authAction";
 import TenderDetailClient from "@/components/tender-details-client-components/tender-detail-client";
-import { transformSupabaseDocument, transformSupabaseParticipant } from "@/lib/utils/formats-supabase-data";
+import {
+  transformSupabaseDocument,
+  transformSupabaseParticipant,
+} from "@/lib/utils/formats-supabase-data";
 
 interface TenderDetailPageProps {
   params: Promise<{
@@ -16,21 +20,16 @@ interface TenderDetailPageProps {
   }>;
 }
 
-export default async function CitizenTenderDetailPage({ params }: TenderDetailPageProps) {
+export default async function SupplierTenderDetailPage({ params }: TenderDetailPageProps) {
   const resolvedParams = await params;
   const tenderId = resolvedParams.id;
 
   // Buscar dados em paralelo
-  const [
-    tenderResult,
-    documentsResult,
-    participantsResult,
-    sessionData
-  ] = await Promise.all([
+  const [tenderResult, documentsResult, participantsResult, sessionData] = await Promise.all([
     fetchTenderById(tenderId),
     fetchTenderDocuments(tenderId),
     fetchTenderParticipants(tenderId),
-    getSessionWithProfile()
+    getSessionWithProfile(),
   ]);
 
   // Verificar se a licitação existe
@@ -38,22 +37,78 @@ export default async function CitizenTenderDetailPage({ params }: TenderDetailPa
     notFound();
   }
 
- const tender: Tender = tenderResult.data;
-const documents: TenderDocument[] =
-  documentsResult.success && documentsResult.data
-    ? documentsResult.data.map(transformSupabaseDocument)
-    : [];
+  const tender: Tender = tenderResult.data;
+  const documents: TenderDocument[] =
+    documentsResult.success && documentsResult.data
+      ? documentsResult.data.map(transformSupabaseDocument)
+      : [];
 
-const participants: TenderParticipant[] =
-  participantsResult.success && participantsResult.data
-    ? participantsResult.data.map(transformSupabaseParticipant)
-    : [];
+  const participants: TenderParticipant[] =
+    participantsResult.success && participantsResult.data
+      ? participantsResult.data.map(transformSupabaseParticipant)
+      : [];
 
   let isFavorite = false;
   if (sessionData?.user) {
     const favoriteResult = await checkTenderFavorite(tenderId, sessionData.user.id);
     isFavorite = favoriteResult.success ? (favoriteResult.data ?? false) : false;
   }
+
+  // CORREÇÃO: Buscar propostas do usuário para esta licitação
+  let userProposalsByLot: Record<string, any[]> = {};
+  let userProposals: Record<string, any> = {};
+  const isSupplier = sessionData?.profile?.profile_type === "supplier";
+
+  console.log("🔍 Dados da sessão:", {
+    userId: sessionData?.user?.id,
+    profileType: sessionData?.profile?.profile_type,
+    isSupplier,
+    tenderLots: tender.tender_lots?.length || 0
+  });
+
+  if (isSupplier && sessionData?.user) {
+    console.log("🔍 Fornecedor logado - buscando propostas para tender:", tenderId);
+    
+    try {
+      // DEBUG: Executar função de debug primeiro
+      const debugResult = await debugUserProposals(tenderId, sessionData.user.id);
+      console.log("🐛 DEBUG COMPLETO:", debugResult);
+      
+      // Buscar propostas do usuário para esta licitação
+      const proposalsResult = await fetchUserProposalsForTender(tenderId, sessionData.user.id);
+      
+      if (proposalsResult.success && proposalsResult.data) {
+        userProposalsByLot = proposalsResult.data;
+        console.log("✅ Propostas agrupadas por lote:", userProposalsByLot);
+        
+        // Transformar para o formato esperado pelo componente (primeira proposta de cada lote)
+        Object.entries(userProposalsByLot).forEach(([lotId, proposals]) => {
+          if (proposals && proposals.length > 0) {
+            // Pegar a proposta mais recente do lote
+            userProposals[lotId] = proposals[0];
+            console.log(`📋 Lote ${lotId}: proposta encontrada (${proposals[0].id})`);
+          }
+        });
+      } else {
+        console.log("❌ Erro ao buscar propostas:", proposalsResult.error);
+      }
+    } catch (error) {
+      console.error("💥 Erro fatal ao buscar propostas:", error);
+    }
+  } else {
+    console.log("❌ Não é fornecedor ou não está logado:", {
+      isSupplier,
+      hasUser: !!sessionData?.user,
+      profileType: sessionData?.profile?.profile_type
+    });
+  }
+
+  console.log("📋 RESULTADO FINAL - User Proposals:", userProposals);
+  console.log("📊 Resumo:", {
+    totalLotes: tender.tender_lots?.length || 0,
+    totalPropostasEncontradas: Object.keys(userProposals).length,
+    lotesComProposta: Object.keys(userProposals)
+  });
 
   // Verificar se houve erros críticos
   const hasErrors = !tenderResult.success;
@@ -95,6 +150,9 @@ const participants: TenderParticipant[] =
           isAuthenticated={!!sessionData?.user}
           hasDocumentError={!documentsResult.success}
           hasParticipantError={!participantsResult.success}
+          userProposals={userProposals}
+          isSupplier={isSupplier}
+          userId={sessionData?.user?.id}
         />
       </Suspense>
     </div>

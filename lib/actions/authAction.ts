@@ -47,11 +47,12 @@ export async function getSessionWithProfile(): Promise<SessionWithProfile | null
       return null;
     }
 
-    const { data: profile, error: profileError } = await serverSupabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", session.user.id)
       .single();
+
 
     if (profileError) {
       console.error("Error fetching profile:", profileError);

@@ -1,3 +1,4 @@
+// lib/supabase/auth-context.tsx
 "use client";
 
 import type React from "react";
@@ -37,27 +38,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // CORREÇÃO: Timeout de segurança reduzido com logs
   useEffect(() => {
     const loadingTimeout = setTimeout(() => {
       setIsLoading(false);
-    }, 10000);
+    }, 2000); 
+    
     return () => clearTimeout(loadingTimeout);
   }, []);
 
+  // Sincronização cookie/localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("sb-jfbuistvgwkfpnujygwx-auth-token");
-      const hasCookie = document.cookie.includes("sb-jfbuistvgwkfpnujygwx-auth-token");
+      try {
+        const token = localStorage.getItem("sb-jfbuistvgwkfpnujygwx-auth-token");
+        const hasCookie = document.cookie.includes("sb-jfbuistvgwkfpnujygwx-auth-token");
 
-      if (token && !hasCookie) {
-        try {
+        if (token && !hasCookie) {
           const parsed = JSON.parse(token);
-          document.cookie = `sb-jfbuistvgwkfpnujygwx-auth-token=${encodeURIComponent(
-            token
-          )}; path=/; expires=${new Date(parsed.expires_at * 1000).toUTCString()}`;
-        } catch {
-          localStorage.removeItem("sb-jfbuistvgwkfpnujygwx-auth-token");
+          // Verificar se o token não expirou
+          if (parsed.expires_at && new Date(parsed.expires_at * 1000) > new Date()) {
+            document.cookie = `sb-jfbuistvgwkfpnujygwx-auth-token=${encodeURIComponent(
+              token
+            )}; path=/; expires=${new Date(parsed.expires_at * 1000).toUTCString()}`;
+          } else {
+            localStorage.removeItem("sb-jfbuistvgwkfpnujygwx-auth-token");
+          }
         }
+      } catch (error) {
+        console.error("❌ Erro ao sincronizar tokens:", error);
+        localStorage.removeItem("sb-jfbuistvgwkfpnujygwx-auth-token");
       }
     }
   }, []);
@@ -81,18 +91,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshProfile = async () => {
     if (user?.id) {
+      console.log("🔄 Refreshing profile para usuário:", user.id);
       await loadProfile(user.id);
     }
   };
 
+  // Inicialização e gerenciamento de state
   useEffect(() => {
     let isMounted = true;
 
     const getInitialSession = async () => {
       if (!isMounted) return;
-
-      setIsLoading(true);
+      
       try {
+        // Limpar tokens expirados
         try {
           const storedSession = localStorage.getItem("sb-jfbuistvgwkfpnujygwx-auth-token");
           if (storedSession) {
@@ -105,16 +117,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.removeItem("sb-jfbuistvgwkfpnujygwx-auth-token");
         }
 
+        // Buscar sessão atual
         const session = await getSession();
 
         if (!isMounted) return;
 
-        setSession(session);
-        setUser(session?.user ?? null);
+        if (session) {
+          
+          setSession(session);
+          setUser(session.user);
 
-        if (session?.user) {
+          // Carregar perfil
           await loadProfile(session.user.id);
         } else {
+          setSession(null);
+          setUser(null);
           setProfile(null);
         }
       } catch (error) {
@@ -137,8 +154,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
 
-      setIsLoading(false);
-
       try {
         setSession(session);
         setUser(session?.user ?? null);
@@ -149,9 +164,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setProfile(null);
         }
       } catch (error) {
-        if (isMounted) setProfile(null);
-      } finally {
         if (isMounted) {
+          setProfile(null);
+        }
+      } finally {
+        if (isMounted && event !== 'TOKEN_REFRESHED') {
           setIsLoading(false);
         }
       }
@@ -195,6 +212,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) {
+        console.error("❌ Erro no login:", error.message);
         throw error;
       }
 
@@ -214,6 +232,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return data;
     } catch (error) {
+      console.error("❌ Erro fatal no login:", error);
       throw error;
     }
   };
@@ -224,11 +243,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     inputType: string
   ) => {
     try {
+      console.log("🔍 Login com documento:", { inputType, document: emailOrDocument });
       let email = emailOrDocument;
 
       if (inputType !== "email") {
         const documentField = inputType === "cpf" ? "cpf" : "cnpj";
         const cleanDocument = emailOrDocument.replace(/[^\d]/g, "");
+
+        console.log("🔍 Buscando email pelo documento:", cleanDocument);
 
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
@@ -237,39 +259,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single();
 
         if (profileError) {
+          console.error("❌ Documento não encontrado:", profileError);
           throw new Error("Documento não encontrado. Verifique se está cadastrado.");
         }
 
         if (!profile?.email) {
+          console.error("❌ Email não encontrado para documento");
           throw new Error("Email não encontrado para este documento.");
         }
 
         email = profile.email;
+        console.log("✅ Email encontrado para documento:", email);
       }
 
       return await signIn(email, password);
     } catch (error) {
+      console.error("❌ Erro no login com documento:", error);
       throw error;
     }
   };
 
   const signOut = async () => {
     try {
+      console.log("👋 Iniciando logout...");
+      
       await supabase.auth.signOut();
+      
+      // Limpar localStorage
       localStorage.removeItem("sb-jfbuistvgwkfpnujygwx-auth-token");
-
+      
+      // Limpar todos os cookies
       document.cookie.split(";").forEach((cookie) => {
         const eqPos = cookie.indexOf("=");
         const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
         document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
       });
 
+      // Limpar state
       setUser(null);
       setSession(null);
       setProfile(null);
 
+      console.log("✅ Logout realizado - redirecionando...");
       window.location.href = "/login";
     } catch (error) {
+      console.error("❌ Erro no logout:", error);
+      // Limpar state mesmo com erro
       setUser(null);
       setSession(null);
       setProfile(null);
@@ -278,33 +313,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-const resetPassword = async (email: string) => {
-  console.log("Resetting password for email:", email);
-  try {
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
+  const resetPassword = async (email: string) => {
+    try {
+      console.log("🔐 Enviando reset de senha para:", email);
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
 
-    console.log("Reset password data:", data);
+      if (error) {
+        console.error("❌ Erro ao enviar reset:", error);
+        throw error;
+      }
 
-    if (error) {
+      console.log("✅ Email de reset enviado:", data);
+    } catch (error) {
+      console.error("❌ Erro fatal no reset:", error);
       throw error;
     }
-  } catch (error) {
-    throw error;
-  }
-};
+  };
 
   const updatePassword = async (newPassword: string) => {
     try {
+      console.log("🔐 Atualizando senha...");
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
 
       if (error) {
+        console.error("❌ Erro ao atualizar senha:", error);
         throw error;
       }
+
+      console.log("✅ Senha atualizada com sucesso");
     } catch (error) {
+      console.error("❌ Erro fatal na atualização de senha:", error);
       throw error;
     }
   };

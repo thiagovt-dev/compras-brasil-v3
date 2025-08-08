@@ -1,3 +1,4 @@
+// components/tender-details-client-components/tender-detail-client.tsx
 "use client";
 
 import { useState } from "react";
@@ -18,6 +19,9 @@ interface TenderDetailClientProps {
   isAuthenticated: boolean;
   hasDocumentError: boolean;
   hasParticipantError: boolean;
+  userProposals?: Record<string, any>;
+  isSupplier?: boolean;
+  userId?: string;
 }
 
 export default function TenderDetailClient({
@@ -28,6 +32,9 @@ export default function TenderDetailClient({
   isAuthenticated,
   hasDocumentError,
   hasParticipantError,
+  userProposals = {},
+  isSupplier = false,
+  userId,
 }: TenderDetailClientProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
@@ -61,7 +68,12 @@ export default function TenderDetailClient({
         </TabsContent>
 
         <TabsContent value="lots">
-          <TenderLots tender={tender} />
+          <TenderLots 
+            tender={tender} 
+            userProposals={userProposals}
+            isSupplier={isSupplier}
+            userId={userId}
+          />
         </TabsContent>
 
         <TabsContent value="documents">
